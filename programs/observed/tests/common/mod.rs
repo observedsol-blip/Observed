@@ -405,6 +405,11 @@ pub fn ix_pause(env: &Env, flag: bool) -> Instruction {
 /// LiteSVM with the program, the real SGT fixtures (owner patched to our test player),
 /// config + calendar + round 0 created, clock inside the commit window.
 pub fn setup() -> Env {
+    setup_day(DAY0)
+}
+
+/// Same, but the round's windows are built around `day0` (commit open at day0, outcome +24 h).
+pub fn setup_day(day0: i64) -> Env {
     let mut svm = LiteSVM::new();
     let so = include_bytes!(concat!(
         env!("CARGO_TARGET_TMPDIR"),
@@ -433,9 +438,9 @@ pub fn setup() -> Env {
         feed_id,
         offset_bps: OFFSET_BPS,
         max_conf_bps: MAX_CONF_BPS,
-        commit_open: DAY0,
-        commit_close: COMMIT_CLOSE,
-        outcome_time: OUTCOME_TIME,
+        commit_open: day0,
+        commit_close: day0 + 12 * 3600,
+        outcome_time: day0 + 24 * 3600,
     };
     let terms_hash = terms.hash(SEASON, 0);
     let (root, proof) = calendar(&terms_hash, 0);
@@ -452,7 +457,7 @@ pub fn setup() -> Env {
         terms,
         proof: proof.clone(),
     };
-    set_time(&mut env.svm, DAY0 + 60);
+    set_time(&mut env.svm, day0 + 60);
     let payer_pk = env.payer.pubkey();
     let auth_pk = env.authority.pubkey();
     let payer = env.payer.insecure_clone();
@@ -514,4 +519,11 @@ pub fn read_player(env: &Env) -> observed::Player {
         .get_account(&player_pda(env.sgt_mint))
         .expect("player account");
     anchor_lang::AccountDeserialize::try_deserialize(&mut acc.data.as_slice()).expect("player")
+}
+
+/// Put a fixture account on chain unchanged (used for the real mainnet Pyth update).
+pub fn put_fixture_account(env: &mut Env, name: &str) -> Pubkey {
+    let (key, owner, lamports, data) = fixture(name);
+    put(&mut env.svm, key, owner, lamports, data);
+    key
 }

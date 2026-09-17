@@ -663,3 +663,54 @@ fn create_round_rejects_bad_windows() {
         "BadWindows",
     );
 }
+
+// ---------------------------------------------------------------- real mainnet evidence
+
+/// The real, fully verified SOL/USD update from Spike 1 (mainnet bytes, posted on devnet):
+/// publish_time 2026-09-17 00:00:00 UTC, prev 23:59:59, price 98.57775490, conf 0.01822971.
+#[test]
+fn real_mainnet_price_update_is_accepted() {
+    const REAL_PUBLISH: i64 = 1_789_603_200;
+    let mut env = setup_day(REAL_PUBLISH - 24 * 3600); // outcome_time == that update's publish_time
+    let payer = env.payer.insecure_clone();
+
+    set_time(&mut env.svm, REAL_PUBLISH - 12 * 3600 + 5);
+    let data = price_update(
+        env.feed_id,
+        9_857_775_490,
+        1_822_971,
+        -8,
+        REAL_PUBLISH - 12 * 3600,
+        REAL_PUBLISH - 12 * 3600 - 1,
+        VerificationLevel::Full,
+    );
+    let r = put_price_update(&mut env, data);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, r)]).expect("set_reference");
+
+    set_time(&mut env.svm, REAL_PUBLISH + 5);
+    let real = put_fixture_account(&mut env, "pyth/real-sol-outcome");
+    sendx!(env, &payer, [ix_resolve(&env, 0, real)]).expect("resolve with the real update");
+    let round = read_round(&env, 0);
+    assert_eq!(
+        round.evidence_price, 9_857_775_490,
+        "price decoded from real bytes"
+    );
+    assert_eq!(round.evidence_publish_time, REAL_PUBLISH);
+    assert_eq!(round.evidence_prev_publish_time, REAL_PUBLISH - 1);
+    // 98.577… vs threshold 99.563… (98.577 × 1.01) → No
+    assert_eq!(round.outcome, observed::Outcome::No as u8);
+}
+
+/// The real partially verified account from Spike 1 must be refused.
+#[test]
+fn real_partially_verified_update_is_refused() {
+    const REAL_PUBLISH: i64 = 1_789_603_200;
+    let mut env = setup_day(REAL_PUBLISH - 24 * 3600);
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, REAL_PUBLISH - 12 * 3600 + 5);
+    let partial = put_fixture_account(&mut env, "pyth/real-sol-partial");
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, partial)]),
+        "NotFullyVerified",
+    );
+}
