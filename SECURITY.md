@@ -11,6 +11,12 @@
 
 **Trust assumptions, stated plainly:** the upgrade authority can replace program code (announced, never silent); round creation is permissionless and only possible inside the published calendar (Merkle root on-chain, see CALENDAR.md); the calendar authority sets that root once per season; the cron is a convenience, not an authority — anyone with Pyth access (API key) can post evidence and call `set_reference`/`resolve`, and the program verifies the evidence regardless of who posts it; if nobody posts in time, the round ends as NO_RESOLVE. Solana Mobile controls the Seeker Genesis Token (freeze authority, permanent delegate); Observed cannot change that.
 
+**Bekannt und akzeptiert (Review 18.09.2026, Owner-Entscheidung):**
+- **Salt ohne Biometrie-Bindung.** Der Reveal-Salt liegt AES-256-GCM-verschlüsselt im Android-Keystore, aber ohne `requireAuthentication`. Wer Zugriff auf den entsperrten App-Prozess hat, kann ihn lesen. Begründung: Prozesszugriff heißt kompromittiertes Gerät; der Salt gibt nur die eigene, noch nicht aufgedeckte Antwort frei, kein Geld; eine zweite biometrische Abfrage pro Tag widerspricht „eine Geste am Tag". Backup und Gerätetransfer sind ausgeschlossen (`allowBackup=false` plus Backup-Regeln, im Release-APK verifiziert).
+- **`Round` und `Player` sind nie schließbar.** Rund 0,218 SOL pro Saison bleiben als Miete gebunden, dazu 0,0013 SOL pro Gerät für `Player`. Eine `close_round`-Instruktion wäre neue Angriffsfläche für eine Ersparnis unterhalb der Reviewkosten.
+- **Priority-Fee-Schätzung ist beeinflussbar.** Der Resolver liest die jüngsten Fees der betroffenen Konten; wer dorthin schreibt, kann sie anheben. Gedeckelt auf 1 000 000 µLamports pro Transaktion, Schaden also auf wenige Lamports begrenzt.
+- **Keine Rotation der Autoritäten.** `calendar_authority` und `pause_authority` lassen sich nicht umsetzen; ein Schlüsselverlust ist nur über ein Programm-Upgrade heilbar.
+
 **Threat model:** docs/01-PROGRAM.md §5b. **Tests:** `anchor test` with fixtures in `tests/fixtures/` (account snapshots, no keys).
 
 **Report a vulnerability:** _contact_ — please do not open a public issue for exploitable findings.

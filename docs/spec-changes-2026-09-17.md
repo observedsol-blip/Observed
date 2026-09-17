@@ -91,3 +91,21 @@ Zwei Wege, beide noch nicht entschieden (zusammen mit dem Seal-Moment):
 1. **Zeile ehrlich umformulieren** — Poster benennen, statt ein Gerät zu behaupten (z. B. „Reading posted by the Observed resolver" bzw. den Namen des postenden Schlüssels), die „this phone"-Fassung nur, wenn der Poster tatsächlich dieses Gerät war.
 2. **App darf selbst posten**, der Dienst springt nur ein — schöner, kostet aber Pyth-Zugang auf dem Gerät (Proxy-Route, mehrere Freigaben, Kosten beim Spieler). Nicht ohne Prüfung.
 Vermerkt als Frage in `docs/03-SCREEN-MAP.md` §6.
+
+## 13. Missing kostet einen vollen Fehlschlag statt 0,250 (Review 18.09., dringend)
+**Warum:** Das Reveal-Fenster öffnet **nach** dem Ausgang. Wer aufdeckt, weiß bereits, ob er richtig lag — Schweigen ist damit immer eine informierte Entscheidung. Bei 0,250 lohnt sich Schweigen für **jede** Antwort, deren Brier über 0,250 liegt, also jede selbstsichere Fehlprognose. Simulation (400 000 Durchläufe je Zeile): ehrlich kalibriert bei q=0,60 → 0,238; „immer 100 % und nur Treffer aufdecken" → 0,098. In 20 von 21 Buckets gibt es einen Ausgang, bei dem Schweigen zahlt. Der angezeigte Brier misst dann Schweigebereitschaft, nicht Kalibrierung.
+- Stelle: §6, Punkt „**Missing kostet.**"
+  - alt: „Jeder Missing Reveal in einer aufgelösten Runde geht mit 0,250 (der Immer-50-%-Wert) in den Verlauf ein, gekennzeichnet als „missing, scored as 50 %"."
+  - neu: „Jeder Missing Reveal in einer aufgelösten Runde geht mit **1,000** in den Verlauf ein — dem schlechtesten Wert, den eine aufgedeckte Antwort bekommen kann —, gekennzeichnet als „missing, counts as a full miss". Damit ist Schweigen nie billiger als Aufdecken; bei 0 % oder 100 % auf der falschen Seite ist es gleich teuer, nie günstiger."
+- Stelle: §6, Punkt „Missing = Commits − Reveals − offene", Satz zu annullierten Runden.
+  - alt: „In annullierten Runden: kein Score, Missing zählt nur als Zahl."
+  - neu: „In annullierten Runden (NO_RESOLVE): **kein Score und kein Missing** — niemand trägt einen vollen Fehlschlag für eine Runde ohne Ausgang. Ausnutzbar ist das nicht: Im Reveal-Fenster (bis 12:00) weiß niemand, ob die Runde nach 36 h storniert wird."
+- **Verworfene Alternative** (zur Dokumentation): Reveal-Fenster vor den Ausgang legen oder auf 36 h verlängern. Im Code ist es eine Konstante, im Design nicht: §3 („Aufdecken 00:00–12:00"), CALENDAR.md, 01 §3 (`reveal_close = outcome_time + 12 h`), das Client-Muster „reveal R−1 im Commit von R" und die Zusage „höchstens zwei offene Einträge" hängen daran. 36 h ließen zwei Reveal-Fenster überlappen und verschöben Scoring und `close_entry` um einen Tag.
+- Datierte Zeile: „18.09.2026 — Missing kostet 1,000 statt 0,250 (selektives Aufdecken war sonst die dominante Strategie); NO_RESOLVE wertet niemanden, auch nicht als Missing."
+
+## 14. §8 Regel 6: Einzelschlüssel statt Multisig, ehrlich benannt (Owner-Entscheidung)
+- Stelle: §8, Regel 6.
+  - alt: „… Autoritäten als Multisig auf Hardware, SECURITY.md mit Bedrohungsmodell und Kontakt, keine Schlüssel im Repo."
+  - neu: „… Autoritäten als **einzelner, offline gehaltener Schlüssel** (Squads-Multisig erst nach dem 9. Okt 2026; die Vertrauensannahme steht so in SECURITY.md), SECURITY.md mit Bedrohungsmodell und Kontakt, keine Schlüssel im Repo."
+- Ergänzend in §8 Regel 3 oder SECURITY.md festhalten: Es gibt **keine** Instruktion zum Rotieren von `calendar_authority`/`pause_authority`; ein verlorener Schlüssel ist nur über ein Programm-Upgrade heilbar. Bewusst so, weil eine Rotations-Instruktion selbst Angriffsfläche wäre.
+- Datierte Zeile: „18.09.2026 — Regel 6: Einzelschlüssel offline statt Multisig bis zur Deadline; keine Rotations-Instruktion, Schlüsselverlust nur per Upgrade heilbar."
