@@ -9,7 +9,7 @@ PRODUCT: attached 00-SPEC.md (source of truth) and 03-SCREEN-MAP.md (screens, st
 
 ORIGIN, decided: "Korrekturfahne bei Nacht" — a newspaper proof on the night desk. Dark ground #1C1F1D (warm paper), text #E8E0D4, meta #8B8680, rules #E8E0D4 at 18%, pencil blue #3A6EA5 used ONLY for: the user's own value/cursor, the user's bucket in the distribution, and the strike through "pending". Never for outcomes, never for the CTA. No purple/green, no gradients, no glow, no shadows, no card radii, no icon rows, no emoji, no texture on the dark ground. The share card is the only light object (#F0F1EC paper, perforation edge).
 
-TYPE: Literata for the question and the reading sentence ("Yes happened."); IBM Plex Mono for digits, ticks, times, Brier; IBM Plex Sans for controls and labels. Give the full type scale (sp, line height, tracking) for Seeker (6.36", 2670×1200, ~390 dp wide).
+TYPE: Literata for the question and the reading sentence ("It happened." / "It did not happen."); IBM Plex Mono for digits, ticks, times, Brier; IBM Plex Sans for controls and labels. Give the full type scale (sp, line height, tracking) for Seeker (6.36", 2670×1200, ~390 dp wide).
 
 DELIVER:
 1. Tokens: color (with contrast ratios against ground), type scale, spacing grid, hairline rules (max two per screen), radii (0), elevation (none).
@@ -28,7 +28,7 @@ End with the three decisions you made that the brief left open, and why.
 - Blau kommt nur an den drei erlaubten Stellen vor.
 - Kein Wort aus der Verbotsliste in Copy-Beispielen.
 - Scale-Komponente ist für Eingabe und Verteilung dieselbe Geometrie (21 Positionen).
-- Hero auf Result ist „Yes happened.“, nicht die Zahl.
+- Hero auf Result ist „It happened.“ / „It did not happen.“, nicht die Zahl.
 - Missing Reveals und NO_RESOLVE haben definierte Darstellung.
 - Keine Radien, keine Schatten, keine Verläufe, keine Textur auf dem dunklen Grund.
 - Zeiten immer UTC + lokal.

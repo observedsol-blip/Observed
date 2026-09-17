@@ -19,9 +19,9 @@ Leitet sich aus `00-SPEC.md` ab. Alles, was hier steht, ist Umsetzung der Spec; 
 
 ## 2. Accounts (Felder)
 
-**Config**: `version u8`, `question_authority Pubkey`, `pause_authority Pubkey`, `paused bool`, `next_round_id u32`, `season u16`, `calendar_root [u8;32]`, `first_round_id u32`, `max_round_id u32`, `bump`. (Upgrade-Autorität ist keine Config-Größe; sie ist die Programm-Autorität und wird als solche angezeigt.)
+**Config**: `version u8`, `calendar_authority Pubkey`, `pause_authority Pubkey`, `paused bool`, `next_round_id u32`, `season u16`, `calendar_root [u8;32]`, `first_round_id u32`, `max_round_id u32`, `bump`. (Upgrade-Autorität ist keine Config-Größe; sie ist die Programm-Autorität und wird als solche angezeigt.)
 
-**Round**: `round_id u32`, `terms_hash [u8;32]` (Hash der maschinenlesbaren Bedingungen), `question_text String(≤120)`, `feed_id [u8;32]`, `threshold_mantissa i64`, `threshold_expo i32`, `max_conf_bps u16`, `commit_open i64`, `commit_close i64`, `outcome_time i64` (T), `reveal_close i64`, `resolve_deadline i64` (T+86 400), `status u8` {Open, Closed, Resolved, Cancelled}, `outcome u8` {Unset, Yes, No}, `evidence_price i64`, `evidence_conf u64`, `evidence_publish_time i64`, `evidence_prev_publish_time i64`, `resolver Pubkey`, `commit_count u32`, `reveal_count u32`, `histogram [u32;21]`, `bump`.
+**Round**: `round_id u32`, `terms_hash [u8;32]` (Hash der maschinenlesbaren Bedingungen), `feed_id [u8;32]`, `offset_bps i32` (Schwelle = Referenz × (1 + offset/10 000); kann negativ sein), `max_conf_bps u16`, `commit_open i64`, `commit_close i64`, `outcome_time i64` (T), `reveal_close i64`, `resolve_deadline i64` (T+86 400), `status u8` {Open, Closed, Referenced, Resolved, Cancelled}, `outcome u8` {Unset, Yes, No}, `ref_price i64`, `ref_expo i32`, `ref_conf u64`, `ref_publish_time i64`, `ref_prev_publish_time i64`, `threshold_mantissa i64` (berechnet, gleicher Exponent wie ref), `referencer Pubkey`, `evidence_price i64`, `evidence_conf u64`, `evidence_publish_time i64`, `evidence_prev_publish_time i64`, `resolver Pubkey`, `commit_count u32`, `reveal_count u32`, `histogram [u32;21]`, `bump`. Kein Fragetext on-chain — der Client erzeugt ihn aus Regel und Zahlen.
 
 **Entry**: `round Pubkey`, `sgt_mint Pubkey`, `beneficiary Pubkey`, `rent_refund_to Pubkey`, `commitment [u8;32]`, `committed_at i64`, `revealed bool`, `p_bps u16`, `scored bool`, `scored_as_missing bool`, `score_bps u16`, `bump`.
 
@@ -31,17 +31,24 @@ Größen mit `#[derive(InitSpace)]` berechnen; nie schätzen.
 
 ## 3. Instruktionen
 
-### `initialize(game_id, question_authority, pause_authority)`
+### `initialize(game_id, calendar_authority, pause_authority)`
 Legt `Config` an. Autoritäten werden in Settings der App und im Repo veröffentlicht.
 
-### `publish_calendar(season, calendar_root, leaf_count)` — nur `question_authority`
+### `publish_calendar(season, calendar_root, leaf_count)` — nur `calendar_authority`
 - Zulässig nur wenn `calendar_root == [0;32]` (erste Saison) **oder** `next_round_id > max_round_id` (vorherige Saison vollständig). `1 ≤ leaf_count ≤ 64`, sonst Fehler (kein Unterlauf bei `leaf_count − 1`). Setzt `season`, `calendar_root`, `first_round_id = next_round_id`, `max_round_id = first_round_id + leaf_count − 1` (checked).
 
-### `create_round(round_id, terms, merkle_proof)` — nur `question_authority`
+### `create_round(round_id, terms, merkle_proof)` — **permissionless** (jeder darf aufrufen, Payer zahlt die Round-Miete)
 - Prüft `round_id == next_round_id ≤ max_round_id`, `commit_open < commit_close < outcome_time`, `reveal_close = outcome_time + 12 h`, `resolve_deadline = outcome_time + 24 h`.
-- **`terms_hash` kanonisch**, Byte für Byte: `sha256("observed/terms/v1" ‖ season_u16_le ‖ round_id_u32_le ‖ feed_id[32] ‖ threshold_mantissa_i64_le ‖ threshold_expo_i32_le ‖ max_conf_bps_u16_le ‖ commit_open_i64_le ‖ commit_close_i64_le ‖ outcome_time_i64_le ‖ len(question_text)_u16_le ‖ question_text_utf8)`. Text und Schwelle sind damit untrennbar.
+- **`terms_hash` kanonisch**, Byte für Byte: `sha256("observed/terms/v2" ‖ season_u16_le ‖ round_id_u32_le ‖ feed_id[32] ‖ offset_bps_i32_le ‖ max_conf_bps_u16_le ‖ commit_open_i64_le ‖ commit_close_i64_le ‖ outcome_time_i64_le)` — ohne Schwelle und ohne Text.
 - Verifiziert `terms_hash` als Blatt an Index `round_id − first_round_id` unter `calendar_root`. Merkle mit Domänentrennung gegen Second-Preimage: `leaf = sha256(0x00 ‖ terms_hash)`, `node = sha256(0x01 ‖ left ‖ right)`; ungerade Ebenen werden mit sich selbst gepaart; der Beweis ist `Vec<[u8;32]>` und die Position wird aus den Bits des Index abgeleitet (kein frei wählbares Links/Rechts). Blatt-Tiefe fest: 64 Blätter (Tiefe 6), damit eine Saison die Kohorte **und** den gesamten Bewertungszeitraum bis zur Gewinnerbekanntgabe am 11. November abdeckt; unbenutzte Blätter = `sha256(0x00 ‖ [0;32])`. Gleichheit ist immer Nein — es gibt kein Feld dafür.
-- Speichert Bedingungen. Ohne gültigen Beweis keine Runde: die Authority kann keine Frage nachschieben.
+- Speichert Bedingungen. Ohne gültigen Beweis keine Runde — niemand, auch keine Autorität, kann eine Frage nachschieben.
+
+### `set_reference(round)` — permissionless
+Accounts: `round`, `price_update: Account<PriceUpdateV2>`, `referencer (Signer)`.
+- `round.status == Open`, `now ≥ commit_close`, `now < resolve_deadline`.
+- Update: `feed_id` gleich, `Full`, `prev_publish_time < R ≤ publish_time ≤ R+60` mit R = `commit_close`, `price > 0`, Konfidenzregel (kein Ersatz durch späteres Update).
+- `threshold_mantissa = ref_price × (10 000 + offset_bps) / 10 000` in i128, checked, gleicher Exponent; Rundung zur Null. Kopiert Referenzwerte, setzt `Referenced`, `referencer`.
+- Zweiter Aufruf → Fehler. Ohne gültige Referenz bis `resolve_deadline` → `cancel_round`.
 
 ### `commit(round, commitment, sgt_mint)` — Signer = Spieler
 Accounts: `player_wallet (Signer, payer)`, `sgt_mint`, `sgt_token_account`, `round`, `entry (init)`, `player (init_if_needed)`, `config`, `token_2022_program`, `system_program`.
@@ -73,8 +80,8 @@ Kein Klartext, kein `p_bps` in dieser Instruktion. Die Zuordnung Wallet ↔ Ger�
 
 ### `resolve(round)` — permissionless
 Accounts: `round`, `price_update: Account<PriceUpdateV2>` (Anchor prüft Owner = Pyth-Receiver-Programm-ID als Konstante und den Diskriminator; nie als `UncheckedAccount`), `resolver (Signer)`. Kein CPI in dieser Instruktion.
-- `round.status ∈ {Open, Closed}` (Open erlaubt, weil Commit-Fenster zu diesem Zeitpunkt vorbei ist), `now ≥ outcome_time`, `now < resolve_deadline`.
-- Update: `price_message.feed_id == round.feed_id`, `verification_level == Full`, `prev_publish_time < T ≤ publish_time ≤ T+60`, `price > 0`, `conf·10 000 / price ≤ max_conf_bps` (u128-Arithmetik; sonst Fehler; kein Ersatz durch späteres Update). `exponent` des Updates wird gegen `threshold_expo` normiert; weichen sie ab, wird auf den kleineren Exponenten skaliert (checked) — nie abgeschnitten.
+- `round.status == Referenced` (ohne Referenz keine Auflösung), `now ≥ outcome_time`, `now < resolve_deadline`.
+- Update: `price_message.feed_id == round.feed_id`, `verification_level == Full`, `prev_publish_time < T ≤ publish_time ≤ T+60`, `price > 0`, `conf·10 000 / price ≤ max_conf_bps` (u128-Arithmetik; sonst Fehler; kein Ersatz durch späteres Update). `exponent` des Updates wird gegen `ref_expo` normiert; weichen sie ab, wird auf den kleineren Exponenten skaliert (checked) — nie abgeschnitten.
 - Outcome: `price > threshold → Yes`; sonst `No` (Gleichheit = Nein; Mantisse/Exponent normieren, checked math).
 - Kopiert Evidenzwerte, setzt `Resolved`, `resolver`. Zweiter Aufruf → Fehler `AlreadyResolved` (kein zweiter Effekt).
 
@@ -88,13 +95,13 @@ Accounts: `round`, `price_update: Account<PriceUpdateV2>` (Anchor prüft Owner =
 Blockiert nur `commit`.
 
 ### Autoritäten (Betrieb)
-- `question_authority` und `pause_authority`: je ein Squads-Multisig (2-von-3, Hardware-Key + Seeker + Backup) — kein Einzel-Keypair auf einem Rechner. Für den Hackathon mindestens ein Hardware-Wallet, nie ein Keypair im Repo oder im Claude-Code-Arbeitsverzeichnis.
+- `calendar_authority` und `pause_authority`: je ein Squads-Multisig (2-von-3, Hardware-Key + Seeker + Backup) — kein Einzel-Keypair auf einem Rechner. Für den Hackathon mindestens ein Hardware-Wallet, nie ein Keypair im Repo oder im Claude-Code-Arbeitsverzeichnis.
 - Upgrade-Autorität: gleiches Multisig; jede Änderung mit öffentlicher Ankündigung (SECURITY.md) vor dem Deploy.
 - **Verifiable Build**: `solana-verify build` + `solana-verify verify-from-repo`, damit die Jury on-chain Bytes gegen das Repo prüfen kann. Program-ID, Commit-Hash und Build-Hash in SECURITY.md.
 - Resolver-Cron-Key: Hot Wallet mit Kleinstbetrag (nur Gebühren für Oracle-Posting + `resolve`), rotierbar, keine Autorität im Programm.
 
 ## 4. Client-Muster (keine eigene Instruktion)
-Tägliche Transaktion des Spielers = `[reveal(R−1), score_entry(R−1) falls Resolved, commit(R)]`. Jede Instruktion bleibt einzeln aufrufbar (fehlender Salt, annullierte Vorrunde, Pause).
+Tägliche Transaktion des Spielers = `[reveal(R−1), score_entry(R−1) falls Resolved, commit(R)]`. Jede Instruktion bleibt einzeln aufrufbar (fehlender Salt, annullierte Vorrunde, Pause). `set_reference` und `resolve` inklusive Oracle-Posting sind **nicht** Teil dieser Transaktion — sie kosten mehrere Freigaben und laufen standardmäßig über den Cron; in der App optional als eigener Knopf.
 
 Reihenfolge im Client, festgezogen:
 1. Salt erzeugen, Commitment rechnen, Reveal-Datensatz `{round, p_bps, salt, commitment, status: pending}` verschlüsselt persistieren.
@@ -132,8 +139,11 @@ Reihenfolge im Client, festgezogen:
 | Resolver liefert fremdes/gefälschtes Oracle-Konto | `Account<PriceUpdateV2>`, Owner = Receiver-Programm, Diskriminator |
 | Zwei Resolver im selben Slot | erster gewinnt, zweiter `AlreadyResolved`; kein doppelter Effekt |
 | Resolve und Cancel gleichzeitig | disjunkte Zeitprädikate |
-| Autorität schiebt Frage nach / ändert Schwelle | Merkle-Wurzel on-chain, index-gebundener Beweis, kanonischer `terms_hash` (§3 create_round) |
-| Autorität pausiert, um Reveals zu verhindern | `pause` blockiert nur `commit` |
+| Jemand schiebt Frage nach / ändert Regel | Merkle-Wurzel on-chain, index-gebundener Beweis, kanonischer `terms_hash`; `create_round` permissionless, es gibt keine Fragen-Autorität (§3) |
+| Spätes Versiegeln mit Wissen über die Kursbewegung | Referenzpreis = erstes Update **nach** Abgabeschluss; beim Versiegeln kennt ihn niemand (§3 set_reference) |
+| Referenzposter wählt günstiges Update | eindeutiges erstes Update nach R, Full, Feed, Konfidenz ohne Ersatz (§3 set_reference) |
+| Kalender-Autorität setzt falsche Regeln | einmal pro Saison, vor der ersten Runde, veröffentlicht in CALENDAR.md; Regeln ohne Zahlen sind vorab prüfbar |
+| Pause-Autorität will Reveals verhindern | `pause` blockiert nur `commit` |
 | Autoritäts-Key gestohlen | Multisig, Hardware, keine Keys im Repo; Upgrade nur mit Ankündigung |
 | Programm-Upgrade ändert Regeln still | Verifiable Build, SECURITY.md, veröffentlichte Autoritäten (Vertrauensannahme benannt) |
 | Client-Salt gestohlen (Root/Backup) | Keystore-verschlüsselt, Backup ausgeschlossen; Schaden = eine Antwort früher sichtbar, kein Geld |
@@ -152,9 +162,9 @@ Nicht abgedeckt, bewusst: Kollusion mehrerer Geräte, Automatisierung der Antwor
 Eine Instruktion ist fertig, wenn ihre Positivfälle **und** alle sie betreffenden Zeilen aus §5b/§6 als Anchor-Tests grün sind, `cargo clippy -- -D warnings` leer ist, und der Reviewer-Subagent keine Lücke gegen dieses Dokument meldet.
 
 ## 6. Tests (Pflicht vor Mainnet)
-Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps ohne Schlüssel), damit jeder die Tests ohne Seeker ausführen kann. Fixtures: echte SGT (Owner, altes Nullkonto nach Migration, falsche Wallet, falsches Programm, Fake-Mint mit kopierten Pointern ohne Gruppenmitgliedschaft, Fake-`TokenGroupMember` mit falscher Gruppe); Pyth: falscher Feed, `Partial`-Verifikation, fremder Owner, Update mit `prev_publish_time ≥ T`, Update außerhalb 60 s, Konfidenz zu groß, Preis ≤ 0, abweichender Exponent; Reveal: falscher Salt, falsches p, doppelt, außerhalb des Fensters, falscher Signer, Entry anderer Runde; Score: Entry/Player-Mismatch, Missing vor `reveal_close` (muss scheitern), Missing nach `reveal_close` (= 2 500); Kalender: Runde ohne Beweis, falscher Index, vertauschte Geschwister, `round_id > max_round_id`, zweites `publish_calendar` vor Saisonende, `leaf_count = 0` und `leaf_count = 65` (müssen scheitern), `publish_calendar` als erste Saison mit `calendar_root == 0`; Close: vor `reveal_close`; bei `Resolved` ohne `scored` (muss scheitern); Zeit: alle Fenstergrenzen ±1 s; Overflow-Fälle.
+Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps ohne Schlüssel), damit jeder die Tests ohne Seeker ausführen kann. Fixtures: echte SGT (Owner, altes Nullkonto nach Migration, falsche Wallet, falsches Programm, Fake-Mint mit kopierten Pointern ohne Gruppenmitgliedschaft, Fake-`TokenGroupMember` mit falscher Gruppe); Pyth (für Referenz und Ergebnis getrennt): falscher Feed, `Partial`-Verifikation, fremder Owner, Update mit `prev_publish_time ≥ T`, Update außerhalb 60 s, Konfidenz zu groß, Preis ≤ 0, abweichender Exponent, `resolve` ohne Referenz (muss scheitern), Schwellenberechnung mit negativem Offset und Überlauf; Reveal: falscher Salt, falsches p, doppelt, außerhalb des Fensters, falscher Signer, Entry anderer Runde; Score: Entry/Player-Mismatch, Missing vor `reveal_close` (muss scheitern), Missing nach `reveal_close` (= 2 500); Kalender: Runde ohne Beweis, falscher Index, vertauschte Geschwister, `round_id > max_round_id`, zweites `publish_calendar` vor Saisonende, `leaf_count = 0` und `leaf_count = 65` (müssen scheitern), `publish_calendar` als erste Saison mit `calendar_root == 0`; Close: vor `reveal_close`; bei `Resolved` ohne `scored` (muss scheitern); Zeit: alle Fenstergrenzen ±1 s; Overflow-Fälle.
 
 ## 7. Spikes (Tag 1, in dieser Reihenfolge)
-1. **Pyth:** mehrere Stunden altes Update via `@pythnetwork/pyth-solana-receiver` (`addPostPriceUpdates`, Full) posten, Minimalinstruktion konsumiert es; Tx-Zahl, Bytes, `unitsConsumed`, Fees, Rent notieren; alle Ablehnfälle aus §6 prüfen.
-2. **SGT:** eigenen Token dekodieren; Verifier gegen Fixtures; Migration simulieren, zweiter Eintrag muss scheitern.
+1. **Pyth:** mehrere Stunden altes Update via `@pythnetwork/pyth-solana-receiver` (`addPostPriceUpdates`, Full) posten, Minimalinstruktion konsumiert es; Tx-Zahl, Bytes, `unitsConsumed`, Fees, Rent notieren — für zwei Postings pro Tag (Referenz 12:00, Ergebnis 00:00), also die Tageskosten des Cron; zusätzlich: wie viele Wallet-Freigaben kostet ein Spieler, der selbst postet? Alle Ablehnfälle aus §6 prüfen.
+2. **SGT:** eigenen Token dekodieren; Verifier gegen Fixtures; Migration simulieren, zweiter Eintrag muss scheitern. Bleibt die Mint bei einer Migration gleich? Solange nicht bestätigt, ist die Bedrohungsmodell-Zeile „Mehrfachstimme durch SGT-Migration“ offen.
 3. **Seeker:** Tx mit `reveal + commit` über MWA; Freigaben zählen; App nach Broadcast killen, Preimage gegen `Entry` abgleichen; fehlender Salt, offenes Ergebnis, annullierte Vorrunde, Pause.

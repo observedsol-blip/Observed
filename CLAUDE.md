@@ -1,4 +1,4 @@
-# Observed — Clock In Hackathon (deadline 8 Oct 2026, 23:59 PST)
+# Observed — Clock In Hackathon (deadline 8 Oct 2026, 23:59 PDT = 9 Oct 08:59 CEST)
 
 Source of truth: @docs/00-SPEC.md
 Program design: @docs/01-PROGRAM.md · Stack: @docs/02-TECH-STACK.md · Screens/copy: @docs/03-SCREEN-MAP.md

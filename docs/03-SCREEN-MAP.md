@@ -15,25 +15,25 @@ Wallet erst beim ersten Seal.
 
 ## 2. Today
 Zustände:
-- **Offen, unbeantwortet:** Fensterzeile „Seal by 12:00 UTC · 14:00 where you are“ (ab 11:50 UTC: „Network is busy — seal now“); „ROUND 42 · 17 SEP“; „Genesis · verified“; Frage (Literata); große Zahl + „chance this is Yes“; horizontaler Maßstab mit 21 Ticks, Cursor, `−5` / `+5`; ein Primary „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday reveals in this same signature“); Kostenzeile (identisch mit Spec §11): „No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the round closes.“
+- **Offen, unbeantwortet:** Fensterzeile „Seal by 12:00 UTC · 14:00 where you are“ (ab 11:50 UTC: „Network is busy — seal now“); „ROUND 42 · 17 SEP“; „Genesis · verified“; Frage (Literata; vor 12:00 relativ: „Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“); große Zahl + „chance this is Yes“; horizontaler Maßstab mit 21 Ticks, Cursor, `−5` / `+5`; ein Primary „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday reveals in this same signature“); Kostenzeile (identisch mit Spec §11): „No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the round closes.“
 - **Versiegelt (Vormittag):** Frage bleibt, Status „Sealed · 09:12 UTC“, kein zweites Hero. Hinweis „Hidden until you reveal tomorrow.“
-- **Pending (Nachmittag, nach Schluss):** kein leeres Plakat. Frage klein, Status graphit „pending · observed at 00:00 UTC“, nächstes Fenster mit lokaler Zeit. Die eigene Zahl wird nicht wiederholt.
+- **Pending (Nachmittag, nach Schluss):** kein leeres Plakat. Frage klein, jetzt mit Zahl („above $151.50 · 12:00 reference $150.00“), Status graphit „pending · observed at 00:00 UTC“, nächstes Fenster mit lokaler Zeit. Die eigene Zahl wird nicht wiederholt.
 - **Verpasst (nicht versiegelt, Fenster zu):** „Window closed · next question 00:00 UTC“. Kein Vorwurf, kein Streak.
 - **Nicht eligible:** „No Genesis Token found in this wallet.“ + Erklärung, was zählt (das Gerät), Link zu Settings.
-- **Keine Runde heute** (Autorität hat nicht angelegt): „No question today. Yesterday still reveals.“ — Reveal-only-Pfad, kein leerer Fehler.
+- **Keine Runde heute** (niemand hat sie angelegt — `create_round` ist permissionless, der Cron hat gefehlt): „No question today. Yesterday still reveals.“ — Reveal-only-Pfad, kein leerer Fehler.
 
 ## 3. Result (Kern)
 Kicker: „READING · 16 SEP“ (nie „Yesterday / 16 Sep“). Reihenfolge von oben:
 1. Frage klein.
 2. Strich-Moment: „pending“ durchgestrichen, „observed“ in Pencil-Blau darüber (einzige Animation der App).
-3. Hero in Literata: **„No happened.“** (Beispielrunde; sonst „Yes happened.“) — nicht die Zahl.
+3. Hero in Literata: **„It did not happen.“** (Beispielrunde; sonst „It happened.“) — nicht die Zahl. Kleine Meta-Zeile „Outcome · No“ erlaubt.
 4. „You gave Yes a 40% chance.“ (Beispiel: 40 % Ja, Ausgang Nein → Brier (0,40 − 0)² = 0,160; die Menge lag mit 64 daneben.)
 5. Maßstab wird Verteilung: dieselben 21 Positionen, Menge in Graphit, dein Bucket in Blau, Mean als Linie. „63 revealed“.
 6. Fakten-Zeile: „Crowd 64 · You 40“ (kein „closer“).
 7. Protokollzeile: „Brier 0.160 · Record 0.229 · 9 scored · 1 missing (scored as 50%)“ (Brier = score_bps / 10 000; Record immer inklusive Missing; kein Pfeil).
 8. „One round added. No verdict on your skill.“
-9. Evidence-Referenz klein: Feed, Zeitstempel, Resolver („This phone posted the oracle reading.“ wenn zutreffend), Explorer-Link.
-Zustände: **Resolved** (oben; ab ≈ 00:05 mit Teilmenge „63 of 71 revealed · closes 12:00 UTC“, ab 12:00 final) · **NO_RESOLVE** (Programmstatus `Cancelled`: „No valid reading in the window. Nobody scored.“, Evidenz-Fenster genannt) · **Sample** (Banner).
+9. Evidence-Referenz klein: Feed, Referenz (12:00) und Ergebnis (00:00) mit Zeitstempeln, Poster („This phone posted the oracle reading.“ wenn zutreffend), Explorer-Links.
+Zustände: **Resolved** (oben; ab ≈ 00:05 mit Teilmenge „63 of 71 revealed · closes 12:00 UTC“, ab 12:00 final) · **NO_RESOLVE** (Programmstatus `Cancelled`: „No valid reading in the window. Nobody scored.“; das Evidenz-Fenster nennt, welches Update fehlte: „Reference 12:00–12:01 UTC · missing“ bzw. „Outcome 00:00–00:01 UTC · missing“ — beide Fenster 60 s) · **Sample** (Banner).
 
 ## 4. Record
 - Kumulativer Brier groß (inklusive Missing, so beschriftet); darunter die drei ehrlichen Zahlen: **Commits · Reveals · Missing** mit Fußnote „missing counts as 50%“.
@@ -43,13 +43,13 @@ Zustände: **Resolved** (oben; ab ≈ 00:05 mit Teilmenge „63 of 71 revealed �
 - Demo-Toggle „Show sample record (36 rounds)“ mit Banner „Sample data · not your phone“.
 
 ## 5. Round Detail
-Frage · dein P(Yes) · Ausgang · Verteilung · Brier · Evidence (Feed-ID, `publish_time`, `prev_publish_time`, Preis, Konfidenz, Resolver, Tx) · NO_RESOLVE-Grund falls zutreffend.
+Frage · dein P(Yes) · Ausgang · Verteilung · Brier · Evidence (Feed-ID; Referenz und Ergebnis je `publish_time`, `prev_publish_time`, Preis, Konfidenz; Poster; Tx) · NO_RESOLVE-Grund falls zutreffend: „No valid reading in the window. Nobody scored.“ plus das fehlende Fenster („Reference 12:00–12:01 UTC · missing“ bzw. „Outcome 00:00–00:01 UTC · missing“; je 60 s).
 
-## 6. Publication (nur wenn dieses Gerät aufgelöst hat)
-Kleiner, würdiger Zustand, kein Preis-Screen: „This phone posted the oracle reading for round 41 · 63 entries.“ Erst nach bestätigtem `Round.resolver`.
+## 6. Publication (nur wenn dieses Gerät gepostet hat)
+Kleiner, würdiger Zustand, kein Preis-Screen: „This phone posted the oracle reading for round 41 · 63 entries.“ Erst nach bestätigtem `Round.resolver` bzw. `referencer`. Der Knopf dafür ist optional („Post the reading · needs several approvals“) und nie Teil der täglichen Geste.
 
 ## 7. Settings
-Wallet · „Genesis · verified“ mit Mint · Autoritäten: question und pause (aus Config), upgrade (Programm-Autorität) mit Adressen · Kosten in Klartext (dieselbe Zeile wie Today) · „The answer belongs to the wallet that sealed it.“ · Push-Zeiten (lokal) · „Observed does not charge you.“ · Export des Reveal-Backups (optional, v1 nur Hinweis) · Sample-Toggle.
+Wallet · „Genesis · verified“ mit Mint · Autoritäten: calendar und pause (aus Config), upgrade (Programm-Autorität) mit Adressen · Kosten in Klartext (dieselbe Zeile wie Today) · „The answer belongs to the wallet that sealed it.“ · Push-Zeiten (lokal) · „Observed does not charge you.“ · Export des Reveal-Backups (optional, v1 nur Hinweis) · Sample-Toggle.
 
 ## 8. Push (Texte)
 - 00:00 UTC: „Outcome is in. Reveal window open until 12:00 UTC.“
@@ -67,11 +67,11 @@ Gedruckter Abzug auf Papier (einziges helles Objekt): Frage, Ausgang „No“, �
 Je Zustand eine Information und eine Aktion; Wortmarke klein oben links; eine Haarlinie; Aktion als Textlink mit Pfeil (kein Pill-Button — die Systemrundung des Widgets ist die einzige Rundung).
 - **Open:** Kicker „Today / open“; Frage in Serif (max. zwei Zeilen); Zeile mit der **Seal-Frist**, nicht der Ereigniszeit: „Seal by 12:00 UTC · 14:00 where you are“; Link „Set probability →“ (öffnet Today). Ab 11:50 UTC: „Seal by 12:00 UTC · closing soon“.
 - **Sealed:** Kicker „Sealed“; **kein Wert auf dem Home-Screen** (Shoulder-Surfing; der versiegelte Wert bleibt in der App) — stattdessen „pending · observed at 00:00 UTC · 02:00 where you are“; Link „View seal →“.
-- **Yesterday in:** Kicker „Yesterday“; Hero „No happened.“ (Beispiel) / „Yes happened.“; darunter klein „Crowd 64 · You 40“ erst, wenn der Nutzer das in Settings erlaubt (Standard aus); Link „See reading →“.
+- **Yesterday in:** Kicker „Yesterday“; Hero „It did not happen.“ (Beispiel) / „It happened.“; darunter klein „Crowd 64 · You 40“ erst, wenn der Nutzer das in Settings erlaubt (Standard aus); Link „See reading →“.
 - **NO_RESOLVE:** Kicker „Yesterday“; „No valid reading. Nobody scored.“; Link „See why →“.
 - **Kein Wallet / kein SGT:** „Connect to seal today →“.
 Aktualisierung: bei App-Öffnen, per Push (Mitternacht, Mittag) und alle 30 Min über WorkManager; Zustand aus lokalem Cache, kein RPC-Aufruf im Widget selbst.
 Technik (02): Android-Widgets sind RemoteViews — keine eigenen Schriftarten. Serif entweder als System-Serif (Noto Serif) oder Hero-Zeile als gerenderte Bitmap; Entscheidung nach Sichtprüfung auf dem Seeker.
 
 ## Beispielzahlen (überall identisch)
-Runde 41 · 16 SEP · Frage „Will SOL close above $150 at 00:00 UTC?“ · Ausgang **No** (SOL $149.82) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.229 · 9 scored · 1 missing.
+Runde 41 · 16 SEP · Regel SOL/USD +1 % · Frage vor 12:00 „Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“ · Referenz 12:00 $150.00 → Schwelle $151.50 · Ausgang **No** — Hero „It did not happen.“ (SOL $149.82 at 00:00) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.229 · 9 scored · 1 missing.

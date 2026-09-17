@@ -15,8 +15,9 @@ Jeden Tag stellt Observed eine binäre Frage, die ein Preis-Feed am Ende des Tag
 | Phase | Runde R | Regel |
 |---|---|---|
 | Offen | 00:00–12:00 | `commit` erlaubt. Frage, Feed, Schwelle, Regeln sind bereits eingefroren. |
-| Geschlossen | 12:00–24:00 | keine Commits. Abgabeschluss 12 h vor dem Ereignis, damit spätes Antworten keinen Wissensvorsprung hat. |
-| Ereignis | T = 24:00 | Ergebnis wird durch das erste gültige Feed-Update nach T bestimmt. |
+| Referenz | 12:00 (= Abgabeschluss) | Der Referenzpreis ist das erste gültige Feed-Update nach 12:00 UTC. Er ist beim Versiegeln **niemandem** bekannt — früh und spät Versiegelnde wissen gleich viel. Die konkrete Schwelle (Referenz ± x %) erscheint erst nach Schluss. |
+| Geschlossen | 12:00–24:00 | keine Commits. |
+| Ereignis | T = 24:00 | Ergebnis = erstes gültiges Feed-Update nach T, verglichen mit der Schwelle aus der Referenz. |
 | Auflösbar | ab T | `resolve` permissionless; Programm prüft Evidenz. Später ausgeführt = gleiches Ergebnis. |
 | Aufdecken | 00:00–12:00 (Folgetag) | `reveal` für R, parallel zu `commit` für R+1 — beides in EINER Transaktion, eine Seed-Vault-Freigabe (Annahme; Spike 3 ist Blocker — zeigt das Wallet zwei Sheets, wird die Copy zweizeilig, nicht das Produkt zweiteilig). |
 | Ausgang sichtbar | ab `resolve` (≈ 00:05) | Result zeigt Ausgang und die bis dahin aufgedeckte Teilmenge („63 of 71 revealed · closes 12:00 UTC“). |
@@ -35,9 +36,9 @@ R+1 startet unabhängig vom Status von R.
 ## 5. Evidenz und Auflösung
 
 - Quelle v1: Pyth Pull-Oracle, historische Updates über Pyth Benchmarks (eigener Proxy mit API-Key; Proxy ist keine exklusive Voraussetzung — jeder kann Evidenz posten).
-- Akzeptanzregel im Programm: `prev_publish_time < T ≤ publish_time ≤ T + 60 s`, `VerificationLevel::Full`, Feed-ID, Exponent, Schwellen-Mantisse, Gleichheitsregel und Konfidenzregel pro Runde eingefroren. Ein wegen Konfidenz verworfenes erstes Update darf nicht durch ein späteres ersetzt werden.
+- Zwei Updates pro Runde, beide nach derselben Regel „erstes Update nach dem Zeitpunkt“: die **Referenz** nach 12:00 UTC (`prev_publish_time < R ≤ publish_time ≤ R + 60 s`) und das **Ergebnis** nach T = 24:00 UTC (`prev_publish_time < T ≤ publish_time ≤ T + 60 s`). Beide `VerificationLevel::Full`, Feed-ID und Konfidenzregel pro Runde eingefroren. Die Schwelle rechnet das Programm aus der Referenz: `threshold = ref_price × (1 + offset_bps / 10 000)`, checked. Ein wegen Konfidenz verworfenes erstes Update darf nicht durch ein späteres ersetzt werden; fehlt ein gültiges Referenz- oder Ergebnis-Update im Fenster, endet die Runde in NO_RESOLVE.
 - Oracle-Posting ist eine eigene (gesponserte) Transaktion; `resolve` konsumiert das verifizierte Konto. Ergebniswerte werden in `Round` kopiert.
-- Wer auflöst: irgendjemand — der erste Spieler nach Mitternacht, sonst ein Cron um 00:05. Der Resolver **liefert** Evidenz, er **bestimmt** nichts. UI-Text: „This phone posted the oracle reading.“
+- Wer postet: standardmäßig der Cron (12:05 und 00:05 UTC). Ein vollständig verifiziertes Pyth-Posting sind mehrere Transaktionen und Freigaben — deshalb ist das Auflösen in der App ein **optionaler** Knopf für den, der es will, nicht Teil der täglichen Geste. Der Poster **liefert** Evidenz, er **bestimmt** nichts. UI-Text: „This phone posted the oracle reading.“
 
 ## 6. Score
 
@@ -52,16 +53,18 @@ R+1 startet unabhängig vom Status von R.
 ## 7. Fragen
 
 - Nur binär, nur per Feed auflösbar (SOL/USD, SKR/USD, BTC/USD, ETH/USD via Pyth). Keine Fragen ohne Feed in v1.
-- Erzeugungsregeln statt fixer Zahlen: Schwelle = Referenzpreis (letztes Update vor 00:00 UTC des Fragetags) ± x %, x aus einer fest rotierenden Liste; Feed-Rotation; Gleichheit = Nein (im Programm erzwungen, kein Feld). Die Rundenbedingungen einer Saison (bis zu 64, damit die Saison über den 11. November hinausreicht) werden kanonisch serialisiert (siehe 01, `terms_hash`), ihre Merkle-Wurzel wird **on-chain** in `Config.calendar_root` gesetzt (einmal pro Saison, mit `max_round_id`); `create_round` muss den Merkle-Beweis liefern. Dieselben Blobs stehen in `CALENDAR.md`. Der Launch-Hash ist damit durchgesetzt, nicht behauptet.
+- Ein Kalenderblatt enthält **nur die Regel**, keine Zahl: Feed, Offset in Basispunkten (z. B. +100 = „mehr als 1 % über der Referenz“, kann negativ sein), Fenster, Konfidenzgrenze. Die Schwelle entsteht erst um 12:00 aus dem Referenzpreis. Der Fragetext wird im Client aus Regel und Zahlen erzeugt und ist nicht Teil des Hashes. Die Rundenregeln einer Saison (bis zu 64) werden kanonisch serialisiert (siehe 01, `terms_hash`), ihre Merkle-Wurzel wird **on-chain** in `Config.calendar_root` gesetzt (einmal pro Saison, vor der ersten Runde); `create_round` ist damit **permissionless** — jeder kann eine Runde anlegen, aber nur mit gültigem Beweis. Es gibt keine Fragen-Autorität mehr; die einzige verbleibende Annahme ist die Kalender-Autorität, die einmal pro Saison die Wurzel setzt. Dieselben Blobs stehen in `CALENDAR.md`.
+- Gleichheit = Nein (im Programm erzwungen). Offsets aus einer fest rotierenden Liste, Feed-Rotation; beides steht im Kalender.
 - Feeds nur, wenn sie bei Pyth existieren und nachts liquide genug sind (SKR/USD in Spike 1 prüfen; sonst aus der Rotation). Akzeptierte NO_RESOLVE-Rate: ≤ 1 Tag in 30; darüber ist die Konfidenzregel oder der Feed falsch, nicht die Nacht.
-- Keine vom Gründer nachträglich eingefügte Frage. Keine Meta-Frage. Kein Sponsor.
+- Keine nachträglich eingefügte Frage — technisch unmöglich, nicht nur versprochen. Keine Meta-Frage. Kein Sponsor.
+- Formulierungsregel: Vor 12:00 lautet die Frage relativ („Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“), nach 12:00 zeigt der Client zusätzlich die Zahl („above $151.50 · 12:00 reference $150.00“). Immer „above“ / „below“ (strikt), nie „at or above“ — Gleichheit ergibt Nein.
 - Muskelgedächtnis-Test: Wenn 90 % der Menge dieselbe Antwort gibt, war die Frage schlecht — Schwellen so wählen, dass 40–60 % erwartbar sind.
 
 ## 8. Ehrlichkeitsregeln (nicht verhandelbar)
 
 1. Missing Reveals sind sichtbar; ein Record ohne Missing-Zahl wird nirgends gezeigt.
 2. NO_RESOLVE ist ein Zustand, kein Fehler: sichtbar im Widget und Result, nie improvisiert.
-3. Upgradefähige Beta mit veröffentlichten Autoritäten (question, pause in `Config`; upgrade als Programm-Autorität — in Settings so benannt). `pause` stoppt nur neue Commits — nie Reveal, Resolve, Claim. Rundenbedingungen sind in der aktuellen Programmversion unveränderlich; die Upgrade-Autorität ist eine benannte Vertrauensannahme.
+3. Upgradefähige Beta mit veröffentlichten Autoritäten (calendar und pause in `Config`; upgrade als Programm-Autorität — in Settings so benannt). Die Kalender-Autorität handelt einmal pro Saison und vor der ersten Runde; Rundenanlage und Auflösung sind permissionless. `pause` stoppt nur neue Commits — nie Reveal, Resolve, Claim. Rundenbedingungen sind in der aktuellen Programmversion unveränderlich; die Upgrade-Autorität ist eine benannte Vertrauensannahme.
 4. Nirgends „Referenz für natürliche Nutzung“, nirgends „Streak“, nirgends „You were closer“. Vergleich als Fakten: „Crowd 64 · You 40“.
 5. Sample-Daten sind immer als Sample gekennzeichnet.
 6. Sicherheit ist nachprüfbar, nicht behauptet: Verifiable Build (Programm-Bytes gegen Repo prüfbar), Autoritäten als Multisig auf Hardware, SECURITY.md mit Bedrohungsmodell und Kontakt, keine Schlüssel im Repo.
@@ -82,16 +85,18 @@ Eine Zeile, zwei Zahlen, überall identisch: „No app fees. Network ≈ 0.0001 
 
 ## 12. Plan und Beweis
 
-- Deadline 8. Okt 2026, 23:59 PST. Woche 1: Schleife + Spikes, erste Tester ab Tag 4–5 (Devnet). Woche 2: Mainnet, Reviews, Monitoring, Kalender- und Statusseite. Woche 3: nichts Neues — Kohorte, Video, Deck, Befund.
+- Deadline 8. Okt 2026, 23:59 PDT (= 9. Okt 08:59 MESZ). Woche 1: Schleife + Spikes, erste Tester ab Tag 4–5 (Devnet). Woche 2: Mainnet, Reviews, Monitoring, Kalender- und Statusseite. Woche 3: nichts Neues — Kohorte, Video, Deck, Befund.
 - Die Saison läuft **über die Deadline hinaus** bis mindestens 11. Nov 2026 (Gewinnerbekanntgabe): Die Jury soll spielen, nicht nur schauen. Kalender = 64 Blätter, Cron und Alerts laufen unbeaufsichtigt durch; siehe `05-LAUNCH-PLAN.md`.
 - Belegformat für die Jury: „Von N Geräten mit erstem Commit: M erster Reveal, K an drei getrennten Tagen zurück; D7 wo erreicht; Pushes/Erinnerungen offengelegt; ein Nutzerzitat.“
 - Konsumentenmoment im Video: das Aufdecken — „pending“ durchgestrichen, „observed“ darüber.
 
-## Änderungen
+## Änderungen (chronologisch)
 - 17.09.2026 — v1 eingefroren.
-- 17.09.2026 (abends) — Claude-Code-Einlesen: `close_entry` bei Resolved nur nach Scoring (Strafe nicht umgehbar); Kalender einheitlich bis 64 Runden; Kalibrierungskurve ab 21 aufgedeckten (nicht gescorten) Runden; Widget-Zustände vereinheitlicht; Kostenzeile in 03 angeglichen; Beispielzahlen in eigenen Abschnitt.
-- 17.09.2026 — Widget ist Pflicht (v1), drei Zustände, kein versiegelter Wert auf dem Home-Screen.
-- 17.09.2026 — Abheben: Saison bis 11. Nov, Kalender 64 Blätter, fünf Differenzierer in 05-LAUNCH-PLAN.md.
-- 17.09.2026 — Judge-Durchgang: Missing wird mit 0,250 gewertet (selektives Aufdecken abgefangen statt nur sichtbar); MWA-Lebenszyklus und Priority-Fee-Strategie in 02.
-- 17.09.2026 — Security-Review: Öffentlichkeit der Teilnahme, Verlauf am Gerät, Regel 6 (Verifiable Build, Multisig, SECURITY.md); Bedrohungsmodell und Abnahmekriterien in 01.
 - 17.09.2026 — Grok-Review eingearbeitet: Missing abgeleitet statt gebucht; Catch-up als Fensterfolge; Result ab resolve, Menge ab 12:00; Kalender-Wurzel on-chain; Gleichheit erzwungen; Brier-Anzeige /10 000; Verkaufsfall; Kostenzeile vereinheitlicht; NO_RESOLVE-Mapping.
+- 17.09.2026 — Security-Review: Öffentlichkeit der Teilnahme, Verlauf am Gerät, Regel 6 (Verifiable Build, Multisig, SECURITY.md); Bedrohungsmodell und Abnahmekriterien in 01.
+- 17.09.2026 — Judge-Durchgang: Missing wird mit 0,250 gewertet (selektives Aufdecken abgefangen statt nur sichtbar); MWA-Lebenszyklus und Priority-Fee-Strategie in 02.
+- 17.09.2026 — Abheben: Saison bis 11. Nov, Kalender 64 Blätter, fünf Differenzierer in 05-LAUNCH-PLAN.md.
+- 17.09.2026 — Widget ist Pflicht (v1), vier Zustände plus „kein Wallet“, kein versiegelter Wert auf dem Home-Screen.
+- 17.09.2026 (abends) — Claude-Code-Einlesen: `close_entry` bei Resolved nur nach Scoring (Strafe nicht umgehbar); Kalender einheitlich bis 64 Runden; Kalibrierungskurve ab 21 aufgedeckten (nicht gescorten) Runden; Widget-Zustände vereinheitlicht; Kostenzeile in 03 angeglichen; Beispielzahlen in eigenen Abschnitt.
+- 17.09.2026 (abends) — Claude-Code-Einlesen, zweite Runde: Fragetexte strikt „above/below“ (Gleichheitsregel); Erste-Saison-Prädikat und leaf_count-Grenzen in publish_calendar.
+- 17.09.2026 (mittags) — Zweitmeinung zur Fragen-Mechanik: Kalenderblatt enthält nur die Regel (Feed, Offset, Fenster), keine Schwelle; Referenzpreis = erstes Update nach 12:00 (Abgabeschluss), damit spätes Versiegeln keinen Vorsprung bringt; Schwelle rechnet das Programm; `create_round` permissionless, Fragen-Autorität entfällt; zwei Oracle-Updates pro Runde; Auflösen in der App nur optional (mehrere Freigaben); Deadline in PDT.

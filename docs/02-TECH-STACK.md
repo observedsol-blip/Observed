@@ -32,7 +32,7 @@ Nichts Neues. Alles hier ist entweder aus Echo bekannt oder Standard im Solana-M
 - Betriebszahlen ab Devnet-Tag 1 loggen: Runden aufgelöst / NO_RESOLVE, Median-Verzögerung der Auflösung, Anteil Commits mit Retry. Diese drei Zahlen kommen ins Deck.
 
 ## Backend (minimal, dokumentiert als Vertrauensannahme)
-- **Resolver-Cron** (00:05 UTC): holt Benchmarks-Update, postet es, ruft `resolve`. Fällt er aus, kann jeder Spieler es tun; die App bietet es beim Öffnen an.
+- **Cron** (12:05 UTC: Benchmarks-Update für die Referenz posten, `set_reference`; 00:05 UTC: Ergebnis-Update posten, `resolve`; außerdem `create_round` für den Folgetag und nach `reveal_close` `score_entry` für Missing). Fällt er aus, kann jeder es tun; die App bietet es als optionalen Knopf an (mehrere Freigaben, im UI so gesagt).
 - **Benchmarks-Proxy**: eine Route, API-Key serverseitig, Cache pro Runde.
 - **Push-Sender**: FCM-Topics pro Zeitzone-Bucket für die lokale Erinnerung.
 - Hosting: ein kleiner Node-Service (Fly/Railway/Cloud Run), Secrets nicht im Repo.
@@ -77,4 +77,4 @@ observed/
 - Runbook: Cron ausgefallen → manuell `resolve`; Benchmarks down → Runde läuft in `cancel` (NO_RESOLVE), nie improvisieren; Pyth-Ausreißer → Regel ist Regel, Screenshot des Updates in der Evidence-Ansicht.
 
 ## Bewusst nicht
-Kein Tuktuk-Worker, kein Hintergrunddienst, kein Fee-Payer-Relay, kein Token, kein Off-chain-Indexer für Histogramme (liegen on-chain).
+Kein Tuktuk-Worker, kein Hintergrund-Worker für Chain-Arbeit (WorkManager nur für den Widget-Cache), kein Fee-Payer-Relay, kein Token, kein Off-chain-Indexer für Histogramme (liegen on-chain).

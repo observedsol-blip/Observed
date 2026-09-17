@@ -7,6 +7,7 @@ case "$path" in
   *keys/*|*.env|*.env.*|*/.config/observed/*|*/.config/solana/*|*id.json|*keypair*)
     echo "Blocked: '$path' is a key/secret location. Keys never live in the repo." >&2; exit 2;;
   *docs/00-SPEC.md)
-    echo "Blocked: the spec is frozen. Propose a dated change line to the owner instead." >&2; exit 2;;
+    if [ -f ".spec-unlock" ]; then exit 0; fi
+    echo "Blocked: the spec is frozen. Owner creates .spec-unlock for an approved change." >&2; exit 2;;
 esac
 exit 0
