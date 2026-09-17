@@ -1,0 +1,9 @@
+target/
+node_modules/
+.anchor/
+app/android/app/build/
+*.keystore
+keys/
+.env
+.env.*
+test-ledger/

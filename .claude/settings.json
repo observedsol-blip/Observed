@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(anchor build*)", "Bash(anchor test*)", "Bash(cargo fmt*)", "Bash(cargo clippy*)", "Bash(cargo test*)",
+      "Bash(npm run typecheck*)", "Bash(npm test*)", "Bash(npm run android:seeker*)", "Bash(npm install*)",
+      "Bash(git status*)", "Bash(git diff*)", "Bash(git add*)", "Bash(git commit*)", "Bash(git log*)", "Bash(gh pr create*)",
+      "Bash(solana config get*)", "Bash(solana balance*)", "Bash(solana airdrop*)"
+    ],
+    "deny": [
+      "Read(./keys/**)", "Read(**/.env*)", "Read(~/.config/observed/**)", "Read(~/.config/solana/**)",
+      "Write(./keys/**)", "Write(**/.env*)", "Write(./docs/00-SPEC.md)",
+      "Bash(anchor deploy*)", "Bash(solana program*)", "Bash(rm -rf*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      { "matcher": "Edit|Write|MultiEdit",
+        "hooks": [ { "type": "command", "command": ".claude/hooks/guard-paths.sh" } ] }
+    ],
+    "PostToolUse": [
+      { "matcher": "Edit|Write|MultiEdit",
+        "hooks": [ { "type": "command", "command": ".claude/hooks/format-and-lint.sh" } ] }
+    ]
+  }
+}
