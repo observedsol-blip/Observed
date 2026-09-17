@@ -46,6 +46,7 @@ Zustände: **Resolved** (oben; ab ≈ 00:05 mit Teilmenge „63 of 71 revealed �
 Frage · dein P(Yes) · Ausgang · Verteilung · Brier · Evidence (Feed-ID; Referenz und Ergebnis je `publish_time`, `prev_publish_time`, Preis, Konfidenz; Poster; Tx) · NO_RESOLVE-Grund falls zutreffend: „No valid reading in the window. Nobody scored.“ plus das fehlende Fenster („Reference 12:00–12:01 UTC · missing“ bzw. „Outcome 00:00–00:01 UTC · missing“; je 60 s).
 
 ## 6. Publication (nur wenn dieses Gerät gepostet hat)
+> **Offene Frage (Owner entscheidet, 18.09.):** Solange der Resolver-Dienst jede Runde postet, trifft „This phone posted the oracle reading." nie zu. Entweder die Zeile wird ehrlich umformuliert (Poster benennen), oder die App postet selbst, wenn sie kann, und der Dienst springt nur ein — Letzteres braucht Pyth-Zugang auf dem Gerät. Wird zusammen mit dem Seal-Moment entschieden; bis dahin bleibt der Zustand ungebaut.
 Kleiner, würdiger Zustand, kein Preis-Screen: „This phone posted the oracle reading for round 41 · 63 entries.“ Erst nach bestätigtem `Round.resolver` bzw. `referencer`. Der Knopf dafür ist optional („Post the reading · needs several approvals“) und nie Teil der täglichen Geste.
 
 ## 7. Settings

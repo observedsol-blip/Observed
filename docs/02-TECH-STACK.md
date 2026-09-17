@@ -32,7 +32,7 @@ Nichts Neues. Alles hier ist entweder aus Echo bekannt oder Standard im Solana-M
 - Betriebszahlen ab Devnet-Tag 1 loggen: Runden aufgelöst / NO_RESOLVE, Median-Verzögerung der Auflösung, Anteil Commits mit Retry. Diese drei Zahlen kommen ins Deck.
 
 ## Backend (minimal, dokumentiert als Vertrauensannahme)
-- **Cron** (12:05 UTC: Benchmarks-Update für die Referenz posten, `set_reference`; 00:05 UTC: Ergebnis-Update posten, `resolve`; außerdem `create_round` für den Folgetag und nach `reveal_close` `score_entry` für Missing). Fällt er aus, kann jeder es tun; die App bietet es als optionalen Knopf an (mehrere Freigaben, im UI so gesagt).
+- **Resolver** als **Cloudflare Worker mit stündlichem Cron Trigger** (`services/resolver`, Workers Paid): Jeder Lauf liest den Chain-Zustand und arbeitet mit Zeitbudget ab — fehlende Referenz, fehlende Auflösung, fällige `cancel_round`, dann gebündeltes `score_entry`. Kein separater Nachhol-Modus, ein verpasster Lauf heilt beim nächsten; Idempotenz kommt aus dem Zustand. Runden werden **nicht** täglich angelegt, sondern zu Saisonbeginn alle 64 auf einmal (docs/operations-daily-job.md). Fällt der Worker aus, kann jeder mit Pyth-Zugang posten; die App bietet es als optionalen Knopf an (mehrere Freigaben, im UI so gesagt). Totmann-Schalter: zwei Healthchecks (Lauf, Rückstand/Guthaben).
 - **Benchmarks-Proxy**: eine Route, API-Key serverseitig, Cache pro Runde.
 - **Push-Sender**: FCM-Topics pro Zeitzone-Bucket für die lokale Erinnerung.
 - Hosting: ein kleiner Node-Service (Fly/Railway/Cloud Run), Secrets nicht im Repo.

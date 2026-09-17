@@ -1,0 +1,22 @@
+{
+  "name": "observed-resolver",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "dependencies": {
+    "@pythnetwork/pyth-solana-receiver": "0.16.0",
+    "@solana/web3.js": "1.99.0",
+    "bs58": "5.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260917.1",
+    "typescript": "~5.9.2",
+    "wrangler": "^4.0.0"
+  },
+  "overrides": { "jito-ts": { "@solana/web3.js": "$@solana/web3.js" } }
+}

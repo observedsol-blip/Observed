@@ -79,3 +79,15 @@ Heute sperrt die Spec die Kalibrierungskurve bis 21 aufgedeckte Runden (§6) —
 - neu: „Ab 10 aufgedeckten Runden zeigt Record einen vorläufigen Befund mit Unsicherheitsspanne („Leaning hot / Leaning cold / Leaning true"), die Kurve selbst bleibt bis 21 gesperrt. Der Befund nennt immer die Stichprobengröße und die Spanne; er ist eine Tendenz, kein Urteil."
 - Folge für 03-SCREEN-MAP §4 (Record): dritter Zustand zwischen „gesperrt" und „Kurve" — Text und Spanne dort festlegen. Copy-Vorschlag, noch nicht gesetzt: „Leaning hot · 12 revealed · ±14 pts" (hot = überkonfident, cold = unterkonfident, true = innerhalb der Spanne).
 - Datierte Zeile: „17.09.2026 (abends, 5) — Record zeigt ab 10 aufgedeckten Runden einen vorläufigen Befund mit Unsicherheitsspanne; Kurve weiterhin ab 21."
+
+## 11. Betriebsgrenze ehrlich benennen (Owner, 17.09.)
+- Stelle: §5, nach dem Punkt „Wer postet: …".
+- einfügen: „Betriebsgrenze, offen gesagt: `set_reference` und `resolve` sind im Programm permissionless — jeder Schlüssel darf sie aufrufen, das Programm prüft die Evidenz, nicht den Absender. Praktisch hängt das Posten an unserem Pyth-Zugang: Wer ohne uns auflösen will, braucht eigene signierte Pyth-Daten (API-Key seit 26.08.2026). Bleibt eine Runde bis `resolve_deadline` unaufgelöst — rund 36 Stunden nach Abgabeschluss — endet sie als NO_RESOLVE; niemand wird gescored, die Commits bleiben sichtbar."
+- Datierte Zeile: „18.09.2026 — Betriebsgrenze in §5: permissionless im Programm, praktisch an unseren Pyth-Zugang gebunden; 36-Stunden-Fenster, NO_RESOLVE als Endzustand."
+
+## 12. Offene Frage: „This phone posted the oracle reading" (Owner entscheidet, nicht Claude)
+Wenn der Resolver jede Runde referenziert und auflöst, ist der Poster **immer unser Dienst** — die Zeile in 03 §3.9/§6 erzählt dann etwas, das nie passiert.
+Zwei Wege, beide noch nicht entschieden (zusammen mit dem Seal-Moment):
+1. **Zeile ehrlich umformulieren** — Poster benennen, statt ein Gerät zu behaupten (z. B. „Reading posted by the Observed resolver" bzw. den Namen des postenden Schlüssels), die „this phone"-Fassung nur, wenn der Poster tatsächlich dieses Gerät war.
+2. **App darf selbst posten**, der Dienst springt nur ein — schöner, kostet aber Pyth-Zugang auf dem Gerät (Proxy-Route, mehrere Freigaben, Kosten beim Spieler). Nicht ohne Prüfung.
+Vermerkt als Frage in `docs/03-SCREEN-MAP.md` §6.
