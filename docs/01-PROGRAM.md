@@ -167,5 +167,5 @@ Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps oh
 
 ## 7. Spikes (Tag 1, in dieser Reihenfolge)
 1. **Pyth:** mehrere Stunden altes Update via `@pythnetwork/pyth-solana-receiver` (`addPostPriceUpdates`, Full) posten, Minimalinstruktion konsumiert es; Tx-Zahl, Bytes, `unitsConsumed`, Fees, Rent notieren — für zwei Postings pro Tag (Referenz 12:00, Ergebnis 00:00), also die Tageskosten des Cron; zusätzlich: wie viele Wallet-Freigaben kostet ein Spieler, der selbst postet? Alle Ablehnfälle aus §6 prüfen.
-2. **SGT:** eigenen Token dekodieren; Verifier gegen Fixtures; Migration simulieren, zweiter Eintrag muss scheitern. Bleibt die Mint bei einer Migration gleich? Solange nicht bestätigt, ist die Bedrohungsmodell-Zeile „Mehrfachstimme durch SGT-Migration“ offen.
+2. **SGT:** eigenen Token dekodieren; Verifier gegen Fixtures; Migration simulieren, zweiter Eintrag muss scheitern. Erledigt 17.09. (docs/spikes/sgt.md): Mint bleibt bei Migration gleich (Solana-Mobile-Doku), Test `migrated_sgt_cannot_vote_twice_in_same_round` grün; SGT-Konten sind `frozen`.
 3. **Seeker:** Tx mit `reveal + commit` über MWA; Freigaben zählen; App nach Broadcast killen, Preimage gegen `Entry` abgleichen; fehlender Salt, offenes Ergebnis, annullierte Vorrunde, Pause.

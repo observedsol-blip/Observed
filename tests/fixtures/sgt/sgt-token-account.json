@@ -1,0 +1,9 @@
+{
+  "pubkey": "Ngvup8HSSNEiJ4pD22tCuGQaZMZKK4wu8y7rE67M9Bp",
+  "note": "real SGT token account, byte-exact EXCEPT owner (bytes 32..64) replaced by the test key sha256('observed/test/sgt-owner') so no third-party wallet is stored; state as on mainnet; account address replaced by the test key sha256(\"observed/test/sgt-token-account\") (the real address would link to the holder)",
+  "source": "mainnet getAccountInfo, slot 447817852, 2026-09-17T14:27:52.101Z",
+  "owner": "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb",
+  "lamports": 1513840,
+  "executable": false,
+  "data_base64": "buUm2iUgu6Ta3lixyXtWIr6DxQ9hHzxcU0Gj+yWP8i3piEMWxmam9MpbHROzpCR59erfeD1+f8QO77zO/clUZQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAgcAAAA="
+}
