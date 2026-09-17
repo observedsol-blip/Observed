@@ -50,3 +50,9 @@ Das Programm erhöht `scored_rounds` auch für Missing (01 §3 `score_entry`).
 
 ## Datierte Zeile für „## Änderungen (chronologisch)“ (ans Ende)
 - 17.09.2026 (abends, 3) — Nach Spike 1 und Spike-2-Vorbereitung: SKR/USD aus der Rotation (Pyth-Plan); `max_conf_bps` = 50; Evidenz-Satz §5 präzisiert (Pyth-Zugang nötig, Programm prüft unabhängig); „scored“ = aufgedeckt + Missing definiert; Hintergrund-Worker nur für Chain-Arbeit ausgeschlossen, WorkManager fürs Widget erlaubt; Tester ab 25.09. auf Mainnet statt Tag 4–5 auf Devnet, Saison 1 ab 25.09.
+
+## 9. SGT-Prüfung als Handler-Guard (Owner-Entscheidung 17.09.)
+01-PROGRAM §3 `commit` ist direkt angepasst. Die Spec selbst nennt die Constraint-Form nicht; falls §4 das festhalten soll, Vorschlag:
+- Stelle: §4, Punkt „Ein Eintrag pro physischem Seeker …“, nach „Eligibility beim Commit (Token-2022-Gruppenmitgliedschaft, Owner = Signer, Betrag 1).“
+- einfügen: „Die Prüfung läuft als eine einzige Funktion und als erster Schritt vor jeder Zustandsänderung; alle Konten sind typisiert und über Constraints gebunden (01 §3 commit).“
+- Datierte Zeile: „17.09.2026 (abends, 4) — SGT-Extension-Prüfung als Handler-Guard erlaubt (typisierte Konten, eine Funktion, erster Aufruf); Reviewer prüft das.“

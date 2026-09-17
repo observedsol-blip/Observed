@@ -12,6 +12,7 @@ Report only findings that affect correctness or security, ordered by severity:
 - unchecked arithmetic, casts on price/exponent, i32/i64/u128 misuse
 - time-window predicates (inclusive/exclusive, resolve vs cancel disjointness, close_entry timing)
 - oracle validation for BOTH set_reference (R = commit_close, 12:00) and resolve (T = 24:00): owner, discriminator, feed id, verification level Full, prev_publish_time < R/T <= publish_time <= R/T+60, confidence rule without fallback; resolve requires status Referenced; threshold math i128 checked
+- SGT guard placement (commit): every account typed (InterfaceAccount<Mint>/InterfaceAccount<TokenAccount> with mint::token_program / token::token_program = Token-2022, token::mint, token::authority = signer, seeds and owners as constraints); the extension check is ONE function `verify_sgt(mint, token_account)`; it is the FIRST statement in the handler, before any state change (counters, entry fields, player). Report any write, CPI or event before it, any second/partial SGT check elsewhere, and any path that skips it.
 - SGT check: Token-2022 owner, TokenGroupMember group == GT22…, member.mint == mint, mint authority GT2z…, supply 1, decimals 0, token owner == signer, amount 1; token account state must NOT be required to be Initialized (real SGT accounts are frozen)
 - Merkle verification (domain separation 0x00/0x01, index-bound path, 64 leaves, depth 6)
 - any way a caller can choose a favorable account, replay a commitment, or reveal outside the window
