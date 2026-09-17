@@ -47,7 +47,7 @@ Legt `Config` an. Autoritäten werden in Settings der App und im Repo veröffent
 Accounts: `round`, `price_update: Account<PriceUpdateV2>`, `referencer (Signer)`.
 - `round.status == Open`, `now ≥ commit_close`, `now < resolve_deadline`.
 - Update: `feed_id` gleich, `Full`, `prev_publish_time < R ≤ publish_time ≤ R+60` mit R = `commit_close`, `price > 0`, Konfidenzregel (kein Ersatz durch späteres Update).
-- `threshold_mantissa = ref_price × (10 000 + offset_bps) / 10 000` in i128, checked, gleicher Exponent; Rundung zur Null. Kopiert Referenzwerte, setzt `Referenced`, `referencer`.
+- `threshold_mantissa = ref_price × (10 000 + offset_bps) / 10 000` in i128, checked, gleicher Exponent; Rundung zur Null. Kopiert Referenzwerte, setzt `Referenced`, `referencer`. Das Oracle-Konto darf danach in derselben Tx-Folge geschlossen werden (Spike 1: Posten + `set_reference` + Close = 2 Transaktionen, 0 Miete netto).
 - Zweiter Aufruf → Fehler. Ohne gültige Referenz bis `resolve_deadline` → `cancel_round`.
 
 ### `commit(round, commitment, sgt_mint)` — Signer = Spieler
@@ -55,7 +55,7 @@ Accounts: `player_wallet (Signer, payer)`, `sgt_mint`, `sgt_token_account`, `rou
 Prüfungen (alle als Anchor-Constraints, keine `UncheckedAccount`, keine `remaining_accounts`):
 1. `round` über Seeds an `config` gebunden; `!config.paused`; `round.status == Open`; `now ∈ [commit_open, commit_close)` (Clock-Sysvar).
 2. `sgt_mint.owner == TOKEN_2022_PROGRAM_ID` (Konstante, nicht als Account übergeben) und `sgt_token_account.owner == TOKEN_2022_PROGRAM_ID`; Mint via `StateWithExtensions::<Mint>::unpack`; `TokenGroupMember` vorhanden, `member.group == GT22…`, `member.mint == sgt_mint`; `mint_authority == GT2z…`; `supply == 1`, `decimals == 0`. Adressen als `const` im Programm, gegen die Doku verifiziert.
-3. Token-Account: `mint == sgt_mint`, `owner == player_wallet`, `amount == 1`; `delegate`/`state` sind irrelevant (non-transferable).
+3. Token-Account: `mint == sgt_mint`, `owner == player_wallet`, `amount == 1`; `delegate` und `state` werden **nicht** geprüft: echte SGT-Konten sind `frozen`, bewegt werden sie nur über den Permanent Delegate von Solana Mobile (Spike 2). Eine Prüfung auf `Initialized` würde jeden echten SGT ablehnen.
 4. `Entry` mit `init` (PDA garantiert Einmaligkeit pro Mint und Runde). `beneficiary = player_wallet`, `rent_refund_to = player_wallet`, `round = round.key()`, `sgt_mint = sgt_mint.key()`.
 5. `Player` mit `init_if_needed` **nur** mit Constraint `player.sgt_mint == sgt_mint.key()` (bei bereits existierendem Account) — sonst Reinit-Risiko; Seeds `["player", config, sgt_mint]`.
 6. `Player.commits += 1`, `Round.commit_count += 1` (checked).
@@ -132,7 +132,8 @@ Reihenfolge im Client, festgezogen:
 | Spieler deckt nur Treffer auf | Missing wird als 2 500 (= 50 %) gescored, Anzeige immer inklusive Missing (§3 score_entry, Spec §6); Verschweigen ist nie besser als ehrliche Unsicherheit |
 | Spieler rät Commitment anderer (21 Werte) | 32-Byte-Salt, Domäne, Runde, Mint, Begünstigter im Hash (Spec §4) |
 | Replay eines Commitments in anderer Runde/Gerät | round_pubkey + sgt_mint im Hash; Entry-PDA pro Runde und Mint |
-| Mehrfachstimme durch SGT-Migration | Entry- und Player-PDA über die **Mint**, nicht die Wallet |
+| Mehrfachstimme durch SGT-Migration | Entry- und Player-PDA über die **Mint**, nicht die Wallet; Mint bleibt bei Migration gleich (Solana-Mobile-Doku, Spike 2); Altkonto mit 0 scheitert an `amount == 1` |
+| Solana Mobile friert/verschiebt/schließt SGTs (Freeze-Authority, Permanent Delegate, Close-Authority = `GT2z…`) | außerhalb unserer Kontrolle, benannte Vertrauensannahme; offene Einträge hängen an der Mint, Reveal am Begünstigten und braucht keinen Tokenbesitz |
 | Gefälschte SGT (kopierte Pointer/Authority) | echte `TokenGroupMember`-Extension, Gruppe + Mint-Authority als Konstanten (§3 commit) |
 | Mehrere Geräte pro Person | akzeptiert, offen kommuniziert („ein Gerät, eine Antwort“) |
 | Resolver wählt günstiges Update | eindeutiges erstes Update (`prev_publish_time < T`), Full-Verifikation, Feed-ID, Konfidenzregel ohne Ersatz (§3 resolve) |
@@ -152,7 +153,7 @@ Reihenfolge im Client, festgezogen:
 | Reinit von `Player` mit fremder Mint | `init_if_needed` mit Mint-Constraint |
 | Integer-Overflow (Score, Zähler, Preis) | checked math, u128 für Konfidenzquote, i32/i64 für Brier |
 | Clock-Drift des Leaders (±Sekunden) | Fenster in Stunden; Pyth-Fenster nutzt `publish_time`, nicht die Chain-Uhr |
-| Proxy/Cron-Ausfall | jeder kann Evidenz posten; sonst NO_RESOLVE nach Frist, nie improvisiert |
+| Proxy/Cron-Ausfall | Posten braucht Pyth-Zugang (API-Key, seit 26.08.2026); jeder mit Zugang kann posten, das Programm prüft die Evidenz unabhängig vom Poster; postet niemand rechtzeitig, endet die Runde in NO_RESOLVE — nie improvisiert |
 | Spam-Commits | jeder Commit braucht ein SGT + Miete |
 | Deanonymisierung | Wallet ↔ Gerät ist on-chain öffentlich — Spec §4 sagt es; Salt schützt nur den Wert bis zum Reveal |
 
@@ -162,7 +163,7 @@ Nicht abgedeckt, bewusst: Kollusion mehrerer Geräte, Automatisierung der Antwor
 Eine Instruktion ist fertig, wenn ihre Positivfälle **und** alle sie betreffenden Zeilen aus §5b/§6 als Anchor-Tests grün sind, `cargo clippy -- -D warnings` leer ist, und der Reviewer-Subagent keine Lücke gegen dieses Dokument meldet.
 
 ## 6. Tests (Pflicht vor Mainnet)
-Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps ohne Schlüssel), damit jeder die Tests ohne Seeker ausführen kann. Fixtures: echte SGT (Owner, altes Nullkonto nach Migration, falsche Wallet, falsches Programm, Fake-Mint mit kopierten Pointern ohne Gruppenmitgliedschaft, Fake-`TokenGroupMember` mit falscher Gruppe); Pyth (für Referenz und Ergebnis getrennt): falscher Feed, `Partial`-Verifikation, fremder Owner, Update mit `prev_publish_time ≥ T`, Update außerhalb 60 s, Konfidenz zu groß, Preis ≤ 0, abweichender Exponent, `resolve` ohne Referenz (muss scheitern), Schwellenberechnung mit negativem Offset und Überlauf; Reveal: falscher Salt, falsches p, doppelt, außerhalb des Fensters, falscher Signer, Entry anderer Runde; Score: Entry/Player-Mismatch, Missing vor `reveal_close` (muss scheitern), Missing nach `reveal_close` (= 2 500); Kalender: Runde ohne Beweis, falscher Index, vertauschte Geschwister, `round_id > max_round_id`, zweites `publish_calendar` vor Saisonende, `leaf_count = 0` und `leaf_count = 65` (müssen scheitern), `publish_calendar` als erste Saison mit `calendar_root == 0`; Close: vor `reveal_close`; bei `Resolved` ohne `scored` (muss scheitern); Zeit: alle Fenstergrenzen ±1 s; Overflow-Fälle.
+Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps ohne Schlüssel), damit jeder die Tests ohne Seeker ausführen kann. Fixtures: echte SGT (Mint und Gruppe als Mainnet-Snapshot; Token-Konto `frozen` mit Test-Owner — muss **angenommen** werden; altes Nullkonto nach Migration, falsche Wallet, falsches Programm, Fake-Mint mit kopierten Pointern ohne Gruppenmitgliedschaft, Fake-`TokenGroupMember` mit falscher Gruppe, falsche Mint-Authority, supply ≠ 1, decimals ≠ 0, `member.mint ≠ mint`, zweiter Entry mit derselben Mint); Pyth (für Referenz und Ergebnis getrennt): falscher Feed, `Partial`-Verifikation, fremder Owner, Update mit `prev_publish_time ≥ T`, Update außerhalb 60 s, Konfidenz zu groß, Preis ≤ 0, abweichender Exponent, `resolve` ohne Referenz (muss scheitern), Schwellenberechnung mit negativem Offset und Überlauf; `set_reference`: vor `commit_close` (muss scheitern), nicht erstes Update nach 12:00, Konfidenz > `max_conf_bps`, zweiter Aufruf, kein gültiges Update bis `resolve_deadline` → nur `cancel_round` möglich; Reveal: falscher Salt, falsches p, doppelt, außerhalb des Fensters, falscher Signer, Entry anderer Runde; Score: Entry/Player-Mismatch, Missing vor `reveal_close` (muss scheitern), Missing nach `reveal_close` (= 2 500); Kalender: Runde ohne Beweis, falscher Index, vertauschte Geschwister, `round_id > max_round_id`, zweites `publish_calendar` vor Saisonende, `leaf_count = 0` und `leaf_count = 65` (müssen scheitern), `publish_calendar` als erste Saison mit `calendar_root == 0`; Close: vor `reveal_close`; bei `Resolved` ohne `scored` (muss scheitern); Zeit: alle Fenstergrenzen ±1 s; Overflow-Fälle.
 
 ## 7. Spikes (Tag 1, in dieser Reihenfolge)
 1. **Pyth:** mehrere Stunden altes Update via `@pythnetwork/pyth-solana-receiver` (`addPostPriceUpdates`, Full) posten, Minimalinstruktion konsumiert es; Tx-Zahl, Bytes, `unitsConsumed`, Fees, Rent notieren — für zwei Postings pro Tag (Referenz 12:00, Ergebnis 00:00), also die Tageskosten des Cron; zusätzlich: wie viele Wallet-Freigaben kostet ein Spieler, der selbst postet? Alle Ablehnfälle aus §6 prüfen.
