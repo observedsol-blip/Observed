@@ -280,3 +280,38 @@ Option 5 (nicht pinbarer Renderer).
 - Expo Docs: `sdk/sharing`, `sdk/media-library`, `sdk/filesystem`, `sdk/imagemanipulator`
 - `expo/expo` PR #20907 und #36142 (granulare Android-Medienberechtigungen,
   `granularPermissions`-Option im Media-Library-Plugin)
+
+
+## Nachweis auf dem Emulator (17.09.2026) — Schriften rendern korrekt
+
+Der Owner wollte vor der Festlegung Bilder sehen, keine Empfehlung auf Papier. Gebaut in `spikes/sharecard`
+(Expo 54, RN 0.81.5, `@shopify/react-native-skia` 2.2.12), gerendert **offscreen** auf einem Android-35-Emulator,
+kein Screenshot. Ergebnis: `sharecard-proof.png` (gebündelte TTFs) und `sharecard-systemfont.png` (Systemschrift),
+beide exakt 1200×675 RGBA.
+
+**Befund: unsere Schriften rendern, und zwar messbar anders als die Systemschrift.**
+- Pixel-Unterschied: 6,87 % aller Pixel (|ΔRGB| > 12); Headline-Band 16,4 %, Ziffernzeile 9,3 %, Statuszeile 10,5 %.
+- Das Band mit der Kurve: **0,00 %** Unterschied — der Unterschied steckt also in den Glyphen, nicht im Layout.
+- Glyph-IDs für „040.": `[56,62,56,75]` (gebündelte Mono) gegen `[21,25,21,19]` (System); `measureText("40")@180px` = 200,00 gegen 188,16.
+
+**Wichtig für die Ziffern:** Die Null von IBM Plex Mono ist **gepunktet** (Punkt in der Mitte), nicht durchgestrichen —
+bei 180 px unübersehbar, bei 72 px noch sichtbar. Plex Mono liefert keine unmarkierte Alternative mit. Große Zahlen
+laufen deshalb über IBM Plex Sans (siehe `app/README.md`), Mono bleibt für Ticks, Zeiten, Preise, IDs.
+
+**Welche API das Bild erzeugt hat:** `Skia.Surface.Make(1200,675)` (CPU-Raster) → `makeImageSnapshot()` →
+`encodeToBase64(PNG)` → `expo-file-system`, dann `adb pull`.
+
+**Fallen, die im Produktivcode zählen:**
+1. `Surface.MakeOffscreen` liefert nicht `null`, sondern **stürzt ab** (SIGSEGV) ohne GL-Kontext. `Surface.Make` nehmen.
+2. Schriftdaten werden von der GC eingesammelt, während Skia sie noch benutzt → SIGSEGV. `SkData`/Typeface müssen
+   für die Lebensdauer der App festgehalten werden. **Produktionsrelevant.**
+3. Skia 2.x braucht `react-native-reanimated`; `babel-preset-expo` muss 54.x sein; Lint-Task mit `-x lint` überspringen.
+4. Es gibt keine implizite Standardschrift: `Skia.Font()` zeichnet nichts, die Systemschrift braucht
+   `FontMgr.System().matchFamilyStyle(...)`.
+
+**Nicht verifiziert:** echte Hardware und GPU-Pfad (nur Emulator, SwiftShader, CPU-Raster), der React-Pfad
+`<Canvas>`/`drawAsImage`, Familiennamen der Typefaces (API gibt sie nicht her), Textumbruch über `Paragraph`,
+andere Schnitte als 400. Emulator-Boot 27 s, Gesamtaufwand rund 77 Minuten.
+
+**Stand der Entscheidung:** Skia ist damit **noch nicht bestätigt** — der Nachweis liegt beim Owner. Offen bleibt der
+Test auf echtem Seeker (GPU, 16-KB-Pages) aus der Checkliste oben.
