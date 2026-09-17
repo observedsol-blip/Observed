@@ -1,0 +1,29 @@
+--- a/docs/00-SPEC.md	2026-09-17 11:41:22.846938800 +0200
++++ b/docs/00-SPEC.md	2026-09-17 11:41:22.887335900 +0200
+@@ -55,6 +55,7 @@
+ - Erzeugungsregeln statt fixer Zahlen: Schwelle = Referenzpreis (letztes Update vor 00:00 UTC des Fragetags) ± x %, x aus einer fest rotierenden Liste; Feed-Rotation; Gleichheit = Nein (im Programm erzwungen, kein Feld). Die Rundenbedingungen einer Saison (bis zu 64, damit die Saison über den 11. November hinausreicht) werden kanonisch serialisiert (siehe 01, `terms_hash`), ihre Merkle-Wurzel wird **on-chain** in `Config.calendar_root` gesetzt (einmal pro Saison, mit `max_round_id`); `create_round` muss den Merkle-Beweis liefern. Dieselben Blobs stehen in `CALENDAR.md`. Der Launch-Hash ist damit durchgesetzt, nicht behauptet.
+ - Feeds nur, wenn sie bei Pyth existieren und nachts liquide genug sind (SKR/USD in Spike 1 prüfen; sonst aus der Rotation). Akzeptierte NO_RESOLVE-Rate: ≤ 1 Tag in 30; darüber ist die Konfidenzregel oder der Feed falsch, nicht die Nacht.
+ - Keine vom Gründer nachträglich eingefügte Frage. Keine Meta-Frage. Kein Sponsor.
++- Formulierungsregel: Fragetexte sagen immer „above“ / „below“ (strikt), nie „at or above“ — weil Gleichheit im Programm Nein ergibt. Der Text darf nichts versprechen, was die Auflösung nicht hält.
+ - Muskelgedächtnis-Test: Wenn 90 % der Menge dieselbe Antwort gibt, war die Frage schlecht — Schwellen so wählen, dass 40–60 % erwartbar sind.
+ 
+ ## 8. Ehrlichkeitsregeln (nicht verhandelbar)
+@@ -87,11 +88,12 @@
+ - Belegformat für die Jury: „Von N Geräten mit erstem Commit: M erster Reveal, K an drei getrennten Tagen zurück; D7 wo erreicht; Pushes/Erinnerungen offengelegt; ein Nutzerzitat.“
+ - Konsumentenmoment im Video: das Aufdecken — „pending“ durchgestrichen, „observed“ darüber.
+ 
+-## Änderungen
++## Änderungen (chronologisch)
+ - 17.09.2026 — v1 eingefroren.
+-- 17.09.2026 (abends) — Claude-Code-Einlesen: `close_entry` bei Resolved nur nach Scoring (Strafe nicht umgehbar); Kalender einheitlich bis 64 Runden; Kalibrierungskurve ab 21 aufgedeckten (nicht gescorten) Runden; Widget-Zustände vereinheitlicht; Kostenzeile in 03 angeglichen; Beispielzahlen in eigenen Abschnitt.
+-- 17.09.2026 — Widget ist Pflicht (v1), drei Zustände, kein versiegelter Wert auf dem Home-Screen.
+-- 17.09.2026 — Abheben: Saison bis 11. Nov, Kalender 64 Blätter, fünf Differenzierer in 05-LAUNCH-PLAN.md.
+-- 17.09.2026 — Judge-Durchgang: Missing wird mit 0,250 gewertet (selektives Aufdecken abgefangen statt nur sichtbar); MWA-Lebenszyklus und Priority-Fee-Strategie in 02.
+-- 17.09.2026 — Security-Review: Öffentlichkeit der Teilnahme, Verlauf am Gerät, Regel 6 (Verifiable Build, Multisig, SECURITY.md); Bedrohungsmodell und Abnahmekriterien in 01.
+ - 17.09.2026 — Grok-Review eingearbeitet: Missing abgeleitet statt gebucht; Catch-up als Fensterfolge; Result ab resolve, Menge ab 12:00; Kalender-Wurzel on-chain; Gleichheit erzwungen; Brier-Anzeige /10 000; Verkaufsfall; Kostenzeile vereinheitlicht; NO_RESOLVE-Mapping.
++- 17.09.2026 — Security-Review: Öffentlichkeit der Teilnahme, Verlauf am Gerät, Regel 6 (Verifiable Build, Multisig, SECURITY.md); Bedrohungsmodell und Abnahmekriterien in 01.
++- 17.09.2026 — Judge-Durchgang: Missing wird mit 0,250 gewertet (selektives Aufdecken abgefangen statt nur sichtbar); MWA-Lebenszyklus und Priority-Fee-Strategie in 02.
++- 17.09.2026 — Abheben: Saison bis 11. Nov, Kalender 64 Blätter, fünf Differenzierer in 05-LAUNCH-PLAN.md.
++- 17.09.2026 — Widget ist Pflicht (v1), drei Zustände, kein versiegelter Wert auf dem Home-Screen.
++- 17.09.2026 (abends) — Claude-Code-Einlesen: `close_entry` bei Resolved nur nach Scoring (Strafe nicht umgehbar); Kalender einheitlich bis 64 Runden; Kalibrierungskurve ab 21 aufgedeckten (nicht gescorten) Runden; Widget-Zustände vereinheitlicht; Kostenzeile in 03 angeglichen; Beispielzahlen in eigenen Abschnitt.
++- 17.09.2026 (abends) — Claude-Code-Einlesen, zweite Runde: Fragetexte strikt „above/below“ (Gleichheitsregel); Erste-Saison-Prädikat und leaf_count-Grenzen in publish_calendar.

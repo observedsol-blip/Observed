@@ -74,4 +74,4 @@ Aktualisierung: bei App-Öffnen, per Push (Mitternacht, Mittag) und alle 30 Min 
 Technik (02): Android-Widgets sind RemoteViews — keine eigenen Schriftarten. Serif entweder als System-Serif (Noto Serif) oder Hero-Zeile als gerenderte Bitmap; Entscheidung nach Sichtprüfung auf dem Seeker.
 
 ## Beispielzahlen (überall identisch)
-Runde 41 · 16 SEP · Frage „Will SOL close at or above $150 at 00:00 UTC?“ · Ausgang **No** (SOL $149.82) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.229 · 9 scored · 1 missing.
+Runde 41 · 16 SEP · Frage „Will SOL close above $150 at 00:00 UTC?“ · Ausgang **No** (SOL $149.82) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.229 · 9 scored · 1 missing.
