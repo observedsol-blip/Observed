@@ -14,7 +14,7 @@ Jeden Tag stellt Observed eine binäre Frage, die ein Preis-Feed am Ende des Tag
 
 | Phase | Runde R | Regel |
 |---|---|---|
-| Offen | 00:00–12:00 | `commit` erlaubt. Frage, Feed, Schwelle, Regeln sind bereits eingefroren. |
+| Offen | 00:00–12:00 | `commit` erlaubt. Regel, Feed, Offset und Fenster sind bereits eingefroren; die Schwelle entsteht um 12:00. |
 | Referenz | 12:00 (= Abgabeschluss) | Der Referenzpreis ist das erste gültige Feed-Update nach 12:00 UTC. Er ist beim Versiegeln **niemandem** bekannt — früh und spät Versiegelnde wissen gleich viel. Die konkrete Schwelle (Referenz ± x %) erscheint erst nach Schluss. |
 | Geschlossen | 12:00–24:00 | keine Commits. |
 | Ereignis | T = 24:00 | Ergebnis = erstes gültiges Feed-Update nach T, verglichen mit der Schwelle aus der Referenz. |
@@ -58,7 +58,7 @@ R+1 startet unabhängig vom Status von R.
 - Feeds nur, wenn sie bei Pyth existieren und nachts liquide genug sind (SKR/USD in Spike 1 prüfen; sonst aus der Rotation). Akzeptierte NO_RESOLVE-Rate: ≤ 1 Tag in 30; darüber ist die Konfidenzregel oder der Feed falsch, nicht die Nacht.
 - Keine nachträglich eingefügte Frage — technisch unmöglich, nicht nur versprochen. Keine Meta-Frage. Kein Sponsor.
 - Formulierungsregel: Vor 12:00 lautet die Frage relativ („Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“), nach 12:00 zeigt der Client zusätzlich die Zahl („above $151.50 · 12:00 reference $150.00“). Immer „above“ / „below“ (strikt), nie „at or above“ — Gleichheit ergibt Nein.
-- Muskelgedächtnis-Test: Wenn 90 % der Menge dieselbe Antwort gibt, war die Frage schlecht — Schwellen so wählen, dass 40–60 % erwartbar sind.
+- Muskelgedächtnis-Test: Wenn 90 % der Menge dieselbe Antwort gibt, war die Frage schlecht — Offsets so wählen, dass 40–60 % erwartbar sind.
 
 ## 8. Ehrlichkeitsregeln (nicht verhandelbar)
 
@@ -100,3 +100,4 @@ Eine Zeile, zwei Zahlen, überall identisch: „No app fees. Network ≈ 0.0001 
 - 17.09.2026 (abends) — Claude-Code-Einlesen: `close_entry` bei Resolved nur nach Scoring (Strafe nicht umgehbar); Kalender einheitlich bis 64 Runden; Kalibrierungskurve ab 21 aufgedeckten (nicht gescorten) Runden; Widget-Zustände vereinheitlicht; Kostenzeile in 03 angeglichen; Beispielzahlen in eigenen Abschnitt.
 - 17.09.2026 (abends) — Claude-Code-Einlesen, zweite Runde: Fragetexte strikt „above/below“ (Gleichheitsregel); Erste-Saison-Prädikat und leaf_count-Grenzen in publish_calendar.
 - 17.09.2026 (mittags) — Zweitmeinung zur Fragen-Mechanik: Kalenderblatt enthält nur die Regel (Feed, Offset, Fenster), keine Schwelle; Referenzpreis = erstes Update nach 12:00 (Abgabeschluss), damit spätes Versiegeln keinen Vorsprung bringt; Schwelle rechnet das Programm; `create_round` permissionless, Fragen-Autorität entfällt; zwei Oracle-Updates pro Runde; Auflösen in der App nur optional (mehrere Freigaben); Deadline in PDT.
+- 17.09.2026 (nachmittags) — Nachzug: §3 „Offen“ friert Regel/Offset statt Schwelle ein; §7 Muskelgedächtnis-Test wählt Offsets statt Schwellen.
