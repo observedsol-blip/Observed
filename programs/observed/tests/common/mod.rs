@@ -45,6 +45,9 @@ pub struct Env {
     pub feed_id: [u8; 32],
     pub terms: RoundTerms,
     pub proof: Vec<[u8; 32]>,
+    pub day0: i64,
+    pub root: [u8; 32],
+    pub proofs: Vec<Vec<[u8; 32]>>,
 }
 
 fn fixture(name: &str) -> (Pubkey, Pubkey, u64, Vec<u8>) {
@@ -91,7 +94,46 @@ fn node(l: &[u8; 32], r: &[u8; 32]) -> [u8; 32] {
     Sha256::digest([&[NODE_TAG][..], l, r].concat()).into()
 }
 
-/// Full 64-leaf tree; leaf `index` carries `terms_hash`, every other leaf is the empty leaf.
+/// Terms of round `round_id` in a season that starts at `day0` (one round per day).
+pub fn terms_of(day0: i64, round_id: u32, feed_id: [u8; 32]) -> RoundTerms {
+    let open = day0 + round_id as i64 * 86_400;
+    RoundTerms {
+        feed_id,
+        offset_bps: OFFSET_BPS,
+        max_conf_bps: MAX_CONF_BPS,
+        commit_open: open,
+        commit_close: open + 12 * 3600,
+        outcome_time: open + 24 * 3600,
+    }
+}
+
+/// A full season: 64 leaves, one per round, with a proof for each.
+pub fn season_tree(day0: i64, feed_id: [u8; 32]) -> ([u8; 32], Vec<Vec<[u8; 32]>>) {
+    let leaves: Vec<[u8; 32]> = (0..CALENDAR_LEAVES)
+        .map(|i| leaf(&terms_of(day0, i, feed_id).hash(SEASON, i)))
+        .collect();
+    let mut levels = vec![leaves];
+    while levels[levels.len() - 1].len() > 1 {
+        let prev = levels[levels.len() - 1].clone();
+        let next: Vec<[u8; 32]> = prev.chunks(2).map(|p| node(&p[0], &p[1])).collect();
+        levels.push(next);
+    }
+    let root = levels[levels.len() - 1][0];
+    let proofs = (0..CALENDAR_LEAVES as usize)
+        .map(|index| {
+            let mut idx = index;
+            let mut proof = Vec::new();
+            for level in levels.iter().take(levels.len() - 1) {
+                proof.push(level[idx ^ 1]);
+                idx /= 2;
+            }
+            proof
+        })
+        .collect();
+    (root, proofs)
+}
+
+/// Single-leaf tree helper (used where a deliberately different root is needed).
 pub fn calendar(terms_hash: &[u8; 32], index: u32) -> ([u8; 32], Vec<[u8; 32]>) {
     let empty = leaf(&[0u8; 32]);
     let mut level: Vec<[u8; 32]> = (0..CALENDAR_LEAVES)
@@ -434,16 +476,9 @@ pub fn setup_day(day0: i64) -> Env {
 
     let feed_id: [u8; 32] =
         hex_to_32("ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d");
-    let terms = RoundTerms {
-        feed_id,
-        offset_bps: OFFSET_BPS,
-        max_conf_bps: MAX_CONF_BPS,
-        commit_open: day0,
-        commit_close: day0 + 12 * 3600,
-        outcome_time: day0 + 24 * 3600,
-    };
-    let terms_hash = terms.hash(SEASON, 0);
-    let (root, proof) = calendar(&terms_hash, 0);
+    let terms = terms_of(day0, 0, feed_id);
+    let (root, proofs) = season_tree(day0, feed_id);
+    let proof = proofs[0].clone();
 
     let mut env = Env {
         svm,
@@ -456,6 +491,9 @@ pub fn setup_day(day0: i64) -> Env {
         feed_id,
         terms,
         proof: proof.clone(),
+        day0,
+        root,
+        proofs,
     };
     set_time(&mut env.svm, day0 + 60);
     let payer_pk = env.payer.pubkey();

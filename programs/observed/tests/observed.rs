@@ -714,3 +714,124 @@ fn real_partially_verified_update_is_refused() {
         "NotFullyVerified",
     );
 }
+
+// ---------------------------------------------------------------- calendar fixture
+
+/// The generator (services/calendar/generate.mjs) and the program must agree byte for byte:
+/// every terms_hash, every proof and the root are recomputed here with the program's own code.
+#[test]
+fn calendar_fixture_matches_program() {
+    let path = format!(
+        "{}/../../tests/fixtures/calendar/season1.json",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    let raw = std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("{path}: {e}"));
+    let v: serde_json::Value = serde_json::from_str(&raw).expect("json");
+    let season = v["season"].as_u64().expect("season") as u16;
+    let root = hex_to_32(v["merkleRoot"].as_str().expect("root"));
+    let rounds = v["rounds"].as_array().expect("rounds");
+    assert_eq!(rounds.len(), 64, "season 1 has 64 leaves");
+
+    for r in rounds {
+        let round_id = r["roundId"].as_u64().expect("roundId") as u32;
+        let terms = observed::RoundTerms {
+            feed_id: hex_to_32(r["feedId"].as_str().expect("feedId")),
+            offset_bps: r["offsetBps"].as_i64().expect("offsetBps") as i32,
+            max_conf_bps: r["maxConfBps"].as_u64().expect("maxConfBps") as u16,
+            commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
+            commit_close: r["commitClose"].as_i64().expect("commitClose"),
+            outcome_time: r["outcomeTime"].as_i64().expect("outcomeTime"),
+        };
+        let hash = terms.hash(season, round_id);
+        assert_eq!(
+            hash,
+            hex_to_32(r["termsHash"].as_str().expect("termsHash")),
+            "terms_hash mismatch in round {round_id}"
+        );
+        let proof: Vec<[u8; 32]> = r["proof"]
+            .as_array()
+            .expect("proof")
+            .iter()
+            .map(|p| hex_to_32(p.as_str().expect("proof hex")))
+            .collect();
+        assert_eq!(proof.len(), 6, "depth 6");
+        assert!(
+            observed::verify_leaf(&hash, round_id, &proof, &root),
+            "proof does not verify for round {round_id}"
+        );
+        // windows must satisfy what create_round enforces
+        assert!(terms.commit_open < terms.commit_close && terms.commit_close < terms.outcome_time);
+        assert_eq!(terms.max_conf_bps, 50);
+    }
+
+    // a tampered rule must not verify under the published root
+    let mut tampered = observed::RoundTerms {
+        feed_id: hex_to_32(rounds[0]["feedId"].as_str().expect("feedId")),
+        offset_bps: 999,
+        max_conf_bps: 50,
+        commit_open: rounds[0]["commitOpen"].as_i64().expect("o"),
+        commit_close: rounds[0]["commitClose"].as_i64().expect("c"),
+        outcome_time: rounds[0]["outcomeTime"].as_i64().expect("t"),
+    };
+    let proof: Vec<[u8; 32]> = rounds[0]["proof"]
+        .as_array()
+        .expect("proof")
+        .iter()
+        .map(|p| hex_to_32(p.as_str().expect("hex")))
+        .collect();
+    assert!(!observed::verify_leaf(
+        &tampered.hash(season, 0),
+        0,
+        &proof,
+        &root
+    ));
+    tampered.offset_bps = rounds[0]["offsetBps"].as_i64().expect("offset") as i32;
+    assert!(
+        observed::verify_leaf(&tampered.hash(season, 0), 0, &proof, &root),
+        "untampered still verifies"
+    );
+}
+
+/// Backs docs/operations-daily-job.md: rounds can be created in advance, in one go, so a dead
+/// cron cannot stop players from committing. create_round only enforces the id order.
+#[test]
+fn rounds_can_be_created_in_advance() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let payer_pk = payer.pubkey();
+    let feed = env.feed_id;
+    let day0 = env.day0;
+
+    // three future rounds, created today, while round 0 is still open and unresolved
+    for round_id in 1..=3u32 {
+        let terms = terms_of(day0, round_id, feed);
+        let proof = env.proofs[round_id as usize].clone();
+        sendx!(
+            env,
+            &payer,
+            [ix_create_round(&payer_pk, round_id, terms, proof)]
+        )
+        .unwrap_or_else(|e| panic!("create_round {round_id}: {e}"));
+        let r = read_round(&env, round_id);
+        assert_eq!(r.status, RoundStatus::Open as u8);
+        assert_eq!(r.commit_open, day0 + round_id as i64 * 86_400);
+    }
+
+    // and today's round still accepts a commit
+    let player = env.player.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    assert_eq!(read_round(&env, 0).commit_count, 1);
+
+    // a commit for a future round is refused by its own window, not by ordering
+    set_time(&mut env.svm, day0 + 60);
+    let c = commitment(&env, 1, 4_000, SALT);
+    expect_err(
+        sendx!(env, &player, [ix_commit(&env, 1, c)]),
+        "OutsideCommitWindow",
+    );
+}

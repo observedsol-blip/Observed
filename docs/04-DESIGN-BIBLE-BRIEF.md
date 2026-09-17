@@ -7,7 +7,7 @@ Use the taste skill (brandkit + gpt-taste). Dials: DESIGN_VARIANCE 6, MOTION_INT
 
 PRODUCT: attached 00-SPEC.md (source of truth) and 03-SCREEN-MAP.md (screens, states, copy). Do not change mechanics, copy rules or scope.
 
-ORIGIN, decided: "Korrekturfahne bei Nacht" — a newspaper proof on the night desk. Dark ground #1C1F1D (warm paper), text #E8E0D4, meta #8B8680, rules #E8E0D4 at 18%, pencil blue #3A6EA5 used ONLY for: the user's own value/cursor, the user's bucket in the distribution, and the strike through "pending". Never for outcomes, never for the CTA. No purple/green, no gradients, no glow, no shadows, no card radii, no icon rows, no emoji, no texture on the dark ground. The share card is the only light object (#F0F1EC paper, perforation edge).
+ORIGIN, decided: "Korrekturfahne bei Nacht" — a newspaper proof on the night desk. Dark ground #1C1F1D (warm paper), text #E8E0D4, meta #8B8680, rules #E8E0D4 at 18%, pencil blue #5B7CFA used ONLY for: the user's own value/cursor, the user's bucket in the distribution, and the strike through "pending". Never for outcomes, never for the CTA. No purple/green, no gradients, no glow, no shadows, no card radii, no icon rows, no emoji, no texture on the dark ground. The share card is the only light object (#F0F1EC paper, perforation edge).
 
 TYPE: Literata for the question and the reading sentence ("It happened." / "It did not happen."); IBM Plex Mono for digits, ticks, times, Brier; IBM Plex Sans for controls and labels. Give the full type scale (sp, line height, tracking) for Seeker (6.36", 2670×1200, ~390 dp wide).
 
@@ -23,6 +23,9 @@ DELIVER:
 
 End with the three decisions you made that the brief left open, and why.
 ```
+
+## Farbentscheidung (Owner, 17.09.2026)
+Pencil ist **#5B7CFA**, nicht #3A6EA5. Grund: Auf dem Grund #1C1F1D erreicht #3A6EA5 nur 3,1:1, #5B7CFA liegt bei 4,5:1. Die Farbe trägt Bedeutung (= meine Antwort), also muss sie lesbar sein. Kein zweiter Blauton daneben.
 
 ## Abnahme (Claude prüft gegen diese Liste)
 - Blau kommt nur an den drei erlaubten Stellen vor.

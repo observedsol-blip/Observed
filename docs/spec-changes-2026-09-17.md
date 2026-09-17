@@ -3,6 +3,22 @@
 Nur Vorschläge. Die Übernahme macht der Owner. Stand der Spec: Commit `55787f6`.
 Format je Punkt: **Status** · Stelle · alter Satz → neuer Satz.
 
+## In zehn Minuten abhaken — eine Zeile pro Vorschlag
+| # | Stelle | Was sich inhaltlich ändert | Nötig? |
+|---|---|---|---|
+| 1 | §5 | Nur ein Beleg-Satz: Spike 1 hat die 12:00/00:00-Regel an 180 von 180 Zeitpunkten bestätigt. Keine Mechanikänderung. | optional |
+| 2 | §7 | Nichts — „above/below" steht bereits so in der Spec. | nein |
+| 3 | §5 | Ehrlichkeit: Evidenz posten kann nur, wer Pyth-Zugang hat; das Programm prüft sie unabhängig vom Poster. | **ja** |
+| 4 | §5 | Konfidenzgrenze wird festgeschrieben: `max_conf_bps` = 50 (gemessenes Maximum 8). | **ja** |
+| 5 | §7 | SKR/USD fliegt aus der Feedliste und der Rotation (Pyth-Plan sperrt den Feed). | **ja** |
+| 6 | §6 | Definition: „scored" = aufgedeckte **und** Missing-Runden, „revealed" nur aufgedeckte. Beispiel 9/8/1/9. | **ja** |
+| 7 | §9 | Ausschluss präzisiert: kein Hintergrund-Worker für Chain-Arbeit; WorkManager fürs Widget bleibt erlaubt. | **ja** |
+| 8 | §12 | Termin: Tester ab 25.09. auf Mainnet statt Tag 4–5 auf Devnet; Saison 1 startet an dem Tag. | **ja** |
+| 9 | §4 | Optional: festhalten, dass die SGT-Prüfung eine Funktion ist und vor jeder Zustandsänderung läuft. | optional |
+| 10 | §6 | **Neu:** Record zeigt ab 10 aufgedeckten Runden einen vorläufigen Befund mit Unsicherheitsspanne, statt nur bis 21 gesperrt zu sein. | **ja** |
+
+Dazu je eine datierte Zeile für „## Änderungen (chronologisch)" am Ende dieser Datei.
+
 ## 1. Frage-Mechanik (Referenz 12:00, Ergebnis 00:00)
 **Status: bereits in der Spec** (§3 Zeile „Referenz“, §5 „Zwei Updates pro Runde“, §7 Kalenderblatt/Formulierungsregel). Keine Textänderung nötig.
 Formulierung bleibt **„more than x% above“** (nicht „at least“ — „at least“ hieße ≥ und widerspräche Gleichheit = Nein).
@@ -56,3 +72,10 @@ Das Programm erhöht `scored_rounds` auch für Missing (01 §3 `score_entry`).
 - Stelle: §4, Punkt „Ein Eintrag pro physischem Seeker …“, nach „Eligibility beim Commit (Token-2022-Gruppenmitgliedschaft, Owner = Signer, Betrag 1).“
 - einfügen: „Die Prüfung läuft als eine einzige Funktion und als erster Schritt vor jeder Zustandsänderung; alle Konten sind typisiert und über Constraints gebunden (01 §3 commit).“
 - Datierte Zeile: „17.09.2026 (abends, 4) — SGT-Extension-Prüfung als Handler-Guard erlaubt (typisierte Konten, eine Funktion, erster Aufruf); Reviewer prüft das.“
+
+## 10. Record: vorläufiger Befund ab 10 aufgedeckten Runden (Owner, 17.09.)
+Heute sperrt die Spec die Kalibrierungskurve bis 21 aufgedeckte Runden (§6) — dazwischen sieht der Spieler nichts über sich.
+- Stelle: §6, Punkt „Kalibrierungskurve erst ab 21 …", ergänzen:
+- neu: „Ab 10 aufgedeckten Runden zeigt Record einen vorläufigen Befund mit Unsicherheitsspanne („Leaning hot / Leaning cold / Leaning true"), die Kurve selbst bleibt bis 21 gesperrt. Der Befund nennt immer die Stichprobengröße und die Spanne; er ist eine Tendenz, kein Urteil."
+- Folge für 03-SCREEN-MAP §4 (Record): dritter Zustand zwischen „gesperrt" und „Kurve" — Text und Spanne dort festlegen. Copy-Vorschlag, noch nicht gesetzt: „Leaning hot · 12 revealed · ±14 pts" (hot = überkonfident, cold = unterkonfident, true = innerhalb der Spanne).
+- Datierte Zeile: „17.09.2026 (abends, 5) — Record zeigt ab 10 aufgedeckten Runden einen vorläufigen Befund mit Unsicherheitsspanne; Kurve weiterhin ab 21."
