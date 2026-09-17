@@ -6,7 +6,8 @@
     "typecheck": "tsc --noEmit",
     "dev": "wrangler dev --test-scheduled",
     "deploy": "wrangler deploy",
-    "tail": "wrangler tail"
+    "tail": "wrangler tail",
+    "test": "node --test 'test/**/*.test.ts'"
   },
   "dependencies": {
     "@pythnetwork/pyth-solana-receiver": "0.16.0",
@@ -18,5 +19,9 @@
     "typescript": "~5.9.2",
     "wrangler": "^4.0.0"
   },
-  "overrides": { "jito-ts": { "@solana/web3.js": "$@solana/web3.js" } }
+  "overrides": {
+    "jito-ts": {
+      "@solana/web3.js": "$@solana/web3.js"
+    }
+  }
 }

@@ -33,8 +33,29 @@ export type Entry = {
   round: PublicKey;
   sgtMint: PublicKey;
   revealed: boolean;
+  pBps: number;
   scored: boolean;
+  scoredAsMissing: boolean;
+  scoreBps: number;
 };
+
+/** Byte offsets of the Entry account, derived from programs/observed/src/lib.rs (struct order).
+ *  Checked against a fixture the program itself serialises: test/decode.test.ts. */
+export const ENTRY_OFFSET = {
+  round: 8,
+  sgtMint: 40,
+  beneficiary: 72,
+  rentRefundTo: 104,
+  commitment: 136,
+  committedAt: 168,
+  revealed: 176,
+  pBps: 177,
+  scored: 179,
+  scoredAsMissing: 180,
+  scoreBps: 181,
+  bump: 183,
+  size: 184,
+} as const;
 
 const u8 = (b: Buffer, o: number) => b.readUInt8(o);
 const i64 = (b: Buffer, o: number) => Number(b.readBigInt64LE(o));
@@ -60,13 +81,18 @@ export function decodeRound(pubkey: PublicKey, data: Buffer): Round {
   return { pubkey, roundId, feedId, commitClose, outcomeTime, revealClose, resolveDeadline, status, commitCount, revealCount };
 }
 
-/** Entry layout: disc(8) round(32) sgt_mint(32) beneficiary(32) rent_refund_to(32) commitment(32) committed_at(8) revealed scored … */
 export function decodeEntry(pubkey: PublicKey, data: Buffer): Entry {
-  const round = new PublicKey(data.subarray(8, 40));
-  const sgtMint = new PublicKey(data.subarray(40, 72));
-  const revealed = data.readUInt8(168) === 1;
-  const scored = data.readUInt8(171) === 1;
-  return { pubkey, round, sgtMint, revealed, scored };
+  const o = ENTRY_OFFSET;
+  return {
+    pubkey,
+    round: new PublicKey(data.subarray(o.round, o.round + 32)),
+    sgtMint: new PublicKey(data.subarray(o.sgtMint, o.sgtMint + 32)),
+    revealed: data.readUInt8(o.revealed) === 1,
+    pBps: data.readUInt16LE(o.pBps),
+    scored: data.readUInt8(o.scored) === 1,
+    scoredAsMissing: data.readUInt8(o.scoredAsMissing) === 1,
+    scoreBps: data.readUInt16LE(o.scoreBps),
+  };
 }
 
 export const configPda = (gameId: bigint) => {

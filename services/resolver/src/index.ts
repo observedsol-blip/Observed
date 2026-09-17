@@ -76,14 +76,18 @@ async function run(env: Env): Promise<string[]> {
     const balance = await connection.getBalance(payer.publicKey);
     say(`payer ${payer.publicKey.toBase58()} balance ${(balance / 1e9).toFixed(4)} SOL`);
 
-    const rounds = await loadRounds(connection, config);
-    const active = rounds.filter((r) => now < r.resolveDeadline + 7 * 86_400);
-    say(`rounds: ${rounds.length} total, ${active.length} in the last week`);
+    // A round stays on the work list until it is FINISHED: resolved or cancelled AND every entry
+    // scored. No time cut — a forgotten round means an unpaid missing penalty and rent that can
+    // never be reclaimed (review 18.09.2026). Oldest first, so a backlog drains instead of growing.
+    const rounds = (await loadRounds(connection, config)).sort((a, b) => a.roundId - b.roundId);
+    const open = rounds.filter((r) => r.status !== RoundStatus.Resolved && r.status !== RoundStatus.Cancelled);
+    const resolved = rounds.filter((r) => r.status === RoundStatus.Resolved && r.commitCount > 0);
+    say(`rounds: ${rounds.length} total, ${open.length} unresolved, ${resolved.length} resolved with entries`);
 
     let actions = 0;
 
     // 1) missing reference: first valid update after commit close
-    for (const r of active) {
+    for (const r of open) {
       if (left() < 15_000) break;
       if (r.status !== RoundStatus.Open || now < r.commitClose || now >= r.resolveDeadline) continue;
       actions += await withReport(say, `set_reference round ${r.roundId}`, async () => {
@@ -101,7 +105,7 @@ async function run(env: Env): Promise<string[]> {
     }
 
     // 2) missing resolution: first valid update after the outcome time
-    for (const r of active) {
+    for (const r of open) {
       if (left() < 15_000) break;
       if (r.status !== RoundStatus.Referenced || now < r.outcomeTime || now >= r.resolveDeadline) continue;
       actions += await withReport(say, `resolve round ${r.roundId}`, async () => {
@@ -119,7 +123,7 @@ async function run(env: Env): Promise<string[]> {
     }
 
     // 3) rounds that ran out of time: NO_RESOLVE, stated rather than left hanging
-    for (const r of active) {
+    for (const r of open) {
       if (left() < 8_000) break;
       const unresolved = r.status === RoundStatus.Open || r.status === RoundStatus.Referenced;
       if (!unresolved || now < r.resolveDeadline) continue;
@@ -133,10 +137,14 @@ async function run(env: Env): Promise<string[]> {
 
     // 4) scoring, batched, for as long as the budget allows
     let scored = 0;
-    for (const r of active) {
-      if (left() < 8_000) break;
-      if (r.status !== RoundStatus.Resolved) continue;
+    let unfinished = 0;
+    for (const r of resolved) {
+      if (left() < 8_000) {
+        unfinished += 1;
+        continue;
+      }
       const entries = await loadUnscoredEntries(connection, r.pubkey);
+      if (entries.length > 0 && now - r.revealClose > BACKLOG_ALARM_SECS) unfinished += 1;
       // a missing reveal may only be scored once the reveal window is closed
       const due = now >= r.revealClose ? entries : entries.filter((e) => e.revealed);
       for (let i = 0; i < due.length && left() > 8_000; i += SCORE_BATCH) {
@@ -154,18 +162,16 @@ async function run(env: Env): Promise<string[]> {
     }
 
     // backlog check: anything stuck for more than 12 h, or an empty wallet, is an alarm
-    const stuck = active.filter(
-      (r) =>
-        (r.status === RoundStatus.Open || r.status === RoundStatus.Referenced) &&
-        now - r.outcomeTime > BACKLOG_ALARM_SECS,
-    );
-    const summary = `actions=${actions} scored=${scored} stuck=${stuck.length} balance=${(balance / 1e9).toFixed(4)} SOL ms=${Date.now() - started}`;
+    const stuck = open.filter((r) => now - r.outcomeTime > BACKLOG_ALARM_SECS);
+    const summary = `actions=${actions} scored=${scored} stuck=${stuck.length} unfinished=${unfinished} balance=${(balance / 1e9).toFixed(4)} SOL ms=${Date.now() - started}`;
     say(summary);
 
     if (balance < BALANCE_FLOOR_LAMPORTS) {
       await backlogAlarm(health, `hot wallet below floor: ${(balance / 1e9).toFixed(4)} SOL — top it up`);
     } else if (stuck.length > 0) {
       await backlogAlarm(health, `unresolved for more than 12 h: rounds ${stuck.map((r) => r.roundId).join(", ")}`);
+    } else if (unfinished > 0) {
+      await backlogAlarm(health, `${unfinished} resolved round(s) still carry unscored entries after 12 h`);
     } else {
       await backlogOk(health, summary);
     }

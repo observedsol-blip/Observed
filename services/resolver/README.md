@@ -13,7 +13,10 @@ Reihenfolge ab, bis das Budget aufgebraucht ist:
 4. **`score_entry`**, gebündelt zu 10 Instruktionen pro Transaktion, so viele wie ins Budget passen
 
 Es gibt keinen separaten „Nachhol-Modus": Was zu tun ist, ergibt sich aus dem Zustand. Ein
-ausgefallener Lauf heilt beim nächsten.
+ausgefallener Lauf heilt beim nächsten. **Und es gibt keinen Zeitschnitt:** Eine Runde bleibt auf
+der Arbeitsliste, bis sie aufgelöst oder storniert **und** jeder Eintrag gescored ist. Ein
+vergessener Eintrag wäre eine nicht gezahlte Missing-Strafe und dauerhaft gebundene Miete
+(Review 18.09.2026). Ältere Runden zuerst, damit ein Rückstand abfließt.
 
 **Idempotenz** kommt ebenfalls aus dem Zustand: Eine bereits referenzierte Runde lehnt
 `set_reference` mit `RoundNotOpen` ab, eine gescorte `Entry` lehnt `score_entry` mit `AlreadyScored`
@@ -51,6 +54,12 @@ Zwei Checks bei healthchecks.io (kostenlos):
   fehlgeschlagene Läufe oder ein toter Worker lösen die Mail von selbst aus.
 - **BACKLOG** — Ping nur, wenn nichts hängt. `/fail` bei: Runde länger als 12 h unaufgelöst, oder
   **Guthaben unter 0,05 SOL**. Ein Dienst, der nur wegen leerer Kasse steht, darf nicht still stehen.
+
+## Tests
+`npm test` dekodiert ein `Entry`, das **das Programm selbst** serialisiert hat
+(`tests/fixtures/generated/entry-layout.json`, erzeugt vom Rust-Test `entry_layout_fixture`), mit den
+Offsets aus `src/chain.ts`. Wer die Rust-Struktur umsortiert, bekommt hier einen roten Test statt
+eines stillen Fehlverhaltens im Betrieb.
 
 ## Secrets (nur als Worker Secrets, nie im Repo, nie im Log)
 ```

@@ -969,3 +969,67 @@ fn mainnet_build_does_not_use_the_devnet_authority() {
         "DEPLOY_AUTHORITY is still the placeholder"
     );
 }
+
+/// Writes the Entry account the program itself produced to tests/fixtures/generated, so the
+/// resolver (TypeScript) can prove its byte offsets against it — see
+/// services/resolver/test/decode.test.ts. Regenerated on every run of the suite.
+#[test]
+fn entry_layout_fixture() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 6_500, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    sendx!(env, &player, [ix_reveal(&env, 0, 6_500, SALT)]).expect("reveal");
+    sendx!(env, &payer, [ix_score(&env, 0)]).expect("score");
+
+    let key = entry_pda(round_pda(0), env.sgt_mint);
+    let account = env.svm.get_account(&key).expect("entry account");
+    let entry = read_entry(&env, 0).expect("entry");
+    let json = format!(
+        r#"{{
+  "note": "written by programs/observed/tests/observed.rs::entry_layout_fixture — do not edit by hand",
+  "pubkey": "{key}",
+  "owner": "{owner}",
+  "data_base64": "{data}",
+  "expected": {{
+    "round": "{round}",
+    "sgt_mint": "{mint}",
+    "revealed": {revealed},
+    "p_bps": {p_bps},
+    "scored": {scored},
+    "scored_as_missing": {missing},
+    "score_bps": {score_bps}
+  }}
+}}
+"#,
+        key = key,
+        owner = account.owner,
+        data = base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &account.data),
+        round = entry.round,
+        mint = entry.sgt_mint,
+        revealed = entry.revealed,
+        p_bps = entry.p_bps,
+        scored = entry.scored,
+        missing = entry.scored_as_missing,
+        score_bps = entry.score_bps,
+    );
+    let dir = format!(
+        "{}/../../tests/fixtures/generated",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    std::fs::create_dir_all(&dir).expect("mkdir");
+    std::fs::write(format!("{dir}/entry-layout.json"), json).expect("write fixture");
+    assert!(entry.revealed && entry.scored && !entry.scored_as_missing);
+    assert_eq!(entry.p_bps, 6_500);
+}
