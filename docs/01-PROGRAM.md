@@ -103,6 +103,8 @@ Blockiert nur `commit`.
 ## 4. Client-Muster (keine eigene Instruktion)
 Tägliche Transaktion des Spielers = `[reveal(R−1), score_entry(R−1) falls Resolved, commit(R)]`. Jede Instruktion bleibt einzeln aufrufbar (fehlender Salt, annullierte Vorrunde, Pause). `set_reference` und `resolve` inklusive Oracle-Posting sind **nicht** Teil dieser Transaktion — sie kosten mehrere Freigaben und laufen standardmäßig über den Cron; in der App optional als eigener Knopf.
 
+**Compute-Budget explizit setzen**, nicht auf den Standard verlassen: gemessen `commit` 27 859 CU + `reveal` 15 023 CU ≈ 43 000 CU für die tägliche Transaktion (LiteSVM, ohne `score_entry`; mit `score_entry` ≈ 55 000). Client setzt `ComputeBudgetInstruction::set_compute_unit_limit` auf den gemessenen Wert + 20 % und dazu den Priority-Fee-Preis (02 §Transaktions-Landing).
+
 Reihenfolge im Client, festgezogen:
 1. Salt erzeugen, Commitment rechnen, Reveal-Datensatz `{round, p_bps, salt, commitment, status: pending}` verschlüsselt persistieren.
 2. Wallet-Anfrage (MWA `signAndSendTransactions`).

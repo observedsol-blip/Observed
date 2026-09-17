@@ -34,12 +34,17 @@ Teilweise — und genau hier ist der Haken:
 Der Proxy ist also so oder so nötig, sobald die App das Posten anbieten soll. Und wenn ohnehin ein Host läuft, kostet der Cron darauf fast nichts.
 
 ## Empfehlung
+0. **Vor dem Anlegen prüft der Owner die erzeugte Datei** (`docs/generated/CALENDAR-season1.md`, 64 Zeilen mit Datum, Feed und Offset-Regel). Die Datei zeigt **keine Schwelle in Dollar** — es gibt keine: Sie entsteht erst um 12:00 UTC aus dem Referenzpreis (Regel `Referenz × (1 + offset/10 000)`). Geprüft werden also Datum, Feed und Offset. Anlegen tut der Owner, nicht Claude.
+
 1. **Alle 64 Runden der Saison vorab anlegen**, am Starttag, in einem Rutsch. `create_round` prüft nur die Reihenfolge der `round_id`, nicht ob die Vorrunde fertig ist — 64 Runden sind also am Tag 0 anlegbar. Kosten: **64 × 0,00248 SOL ≈ 0,16 SOL** Miete (einmalig, bleibt gebunden). Damit fällt der gefährlichste Ausfall (kein Commit möglich) für die gesamte Saison weg, auch wenn Server, Laptop und Owner im November offline sind.
 2. **Cron trotzdem betreiben**, 12:05 und 00:05 UTC, plus `score_entry` nach `reveal_close`. Er ist dann nur noch für die *Auflösung* zuständig, nicht mehr für die Existenz des Spiels.
 3. **Nachhol-Lauf statt Alarmkette:** Der Cron prüft bei jedem Lauf die letzten 48 Stunden und holt fehlende `set_reference`/`resolve` nach. Ein verpasster Slot heilt sich damit beim nächsten Lauf von selbst.
 4. **Alert erst, wenn eine Runde jünger als T+24 h noch offen ist** — das ist der einzige Moment, in dem Handeln nötig ist.
 5. **App-Knopf „Post the reading" optional**, liest die Daten über den Proxy. Kein Muss, aber er macht die Behauptung „permissionless" überprüfbar und rettet einen Tag, an dem der Cron hängt.
 6. **Kein Multisig für den Hackathon** (Owner-Entscheidung): Upgrade-Autorität bleibt ein einzelner, offline liegender Schlüssel. Das gehört so in SECURITY.md, ehrlich benannt, statt Multisig zu behaupten.
+
+## Eine Runde zurückziehen oder neu formulieren
+Der **Fragetext steht nicht on-chain und nicht im Hash** — er wird im Client aus Feed und Offset erzeugt; eine reine Wortlaut-Änderung braucht also gar keinen Chain-Eingriff. Muss dagegen die **Regel** einer bereits angelegten Runde weg (falscher Feed, falscher Offset), lässt sie sich nicht ersetzen: Die Runde läuft in NO_RESOLVE (nach `resolve_deadline` `cancel_round` aufrufen, niemand wird gescored), und die korrigierte Regel kann erst in der nächsten Saison mit neuer Merkle-Wurzel erscheinen.
 
 ## Kosten des Job-Schlüssels (Hot Wallet, noch nicht anlegen)
 - Oracle-Posting: 2 × 21 409 Lamports pro Runde ≈ **0,0000428 SOL/Tag** (Spike 1, inkl. Priority Fee und Schließen der Konten).

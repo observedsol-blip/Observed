@@ -12,6 +12,8 @@ import {
   type SkSurface,
 } from '@shopify/react-native-skia';
 
+import { makeCardSurface, ShareCardError } from './src/skia-card';
+
 const W = 1200;
 const H = 675;
 const PAPER = '#F0F1EC';
@@ -40,16 +42,10 @@ function curve(): number[] {
   return pts;
 }
 
+// Surface creation lives in src/skia-card.ts: MakeOffscreen is never called (it SIGSEGVs without
+// a GL context, see RULE 2 there), and a missing surface is a handled ShareCardError.
 function makeSurface(): { surface: SkSurface; api: string } {
-  // NOTE: Skia.Surface.MakeOffscreen() is GPU-backed. Called from the JS thread on an
-  // emulator with no live GL context it does not return null - it SIGSEGVs the process.
-  // The CPU raster surface is the correct factory for offscreen PNG export, so try it first.
-  let s = Skia.Surface.Make(W, H);
-  if (s) return { surface: s, api: 'Skia.Surface.Make (CPU raster)' };
-  L('WARN: Skia.Surface.Make returned null, trying GPU MakeOffscreen');
-  s = Skia.Surface.MakeOffscreen(W, H);
-  if (s) return { surface: s, api: 'Skia.Surface.MakeOffscreen (GPU)' };
-  throw new Error('No Skia surface factory produced a surface');
+  return { surface: makeCardSurface(W, H), api: 'Skia.Surface.Make (CPU raster)' };
 }
 
 function draw(variant: 'bundled' | 'system', head: SkFont, mono: SkFont, small: SkFont, big: SkFont, mid: SkFont) {
