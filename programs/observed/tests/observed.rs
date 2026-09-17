@@ -1,0 +1,665 @@
+//! Tests against docs/01-PROGRAM.md §5b/§6: every instruction has a happy path and at least
+//! one rejection. Real mainnet SGT fixtures, real mainnet constants, controllable clock.
+mod common;
+use {
+    common::*,
+    observed::{RoundStatus, MISSING_SCORE_BPS},
+    pyth_solana_receiver_sdk::price_update::VerificationLevel,
+    solana_signer::Signer,
+};
+
+const SALT: [u8; 32] = [7u8; 32];
+/// reference 150.00000000 with offset +1 % → threshold 151.50000000
+const THRESHOLD: i64 = 15_150_000_000;
+
+// ---------------------------------------------------------------- happy path
+
+#[test]
+fn full_round_yes_reveal_and_score() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+
+    let c = commitment(&env, 0, 4_000, SALT);
+    let cu_commit = sendx!(env, &player, [ix_commit(&env, 0, c)]).expect("commit");
+
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    let cu_ref = sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    let round = read_round(&env, 0);
+    assert_eq!(round.status, RoundStatus::Referenced as u8);
+    assert_eq!(
+        round.threshold_mantissa, THRESHOLD,
+        "threshold = ref × (1 + offset)"
+    );
+
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000); // 152.00 > 151.50 → Yes
+    let cu_res = sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    assert_eq!(read_round(&env, 0).outcome, observed::Outcome::Yes as u8);
+
+    let cu_rev = sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]).expect("reveal");
+    let round = read_round(&env, 0);
+    assert_eq!(round.reveal_count, 1);
+    assert_eq!(round.histogram[8], 1, "p=40% lands in bucket 8");
+
+    let cu_score = sendx!(env, &payer, [ix_score(&env, 0)]).expect("score_entry");
+    let entry = read_entry(&env, 0).expect("entry");
+    // k=8, y=20 → 25·(8−20)² = 3600 → Brier 0.360
+    assert_eq!(entry.score_bps, 3_600);
+    assert!(entry.scored && !entry.scored_as_missing);
+    let p = read_player(&env);
+    assert_eq!(
+        (
+            p.commits,
+            p.reveals,
+            p.scored_rounds,
+            p.score_sum,
+            p.missing_scored
+        ),
+        (1, 1, 1, 3_600, 0)
+    );
+
+    println!("CU commit={cu_commit} set_reference={cu_ref} resolve={cu_res} reveal={cu_rev} score_entry={cu_score}");
+}
+
+#[test]
+fn equality_resolves_no() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 5_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, THRESHOLD); // exactly the threshold
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    assert_eq!(
+        read_round(&env, 0).outcome,
+        observed::Outcome::No as u8,
+        "equality is No"
+    );
+}
+
+#[test]
+fn exponent_mismatch_is_scaled_not_truncated() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    // same price as the threshold but with exponent −6: 151.500000 → must resolve No, not Yes
+    let data = price_update(
+        env.feed_id,
+        151_500_000,
+        1_000,
+        -6,
+        OUTCOME_TIME,
+        OUTCOME_TIME - 1,
+        VerificationLevel::Full,
+    );
+    let out = put_price_update(&mut env, data);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    assert_eq!(read_round(&env, 0).outcome, observed::Outcome::No as u8);
+}
+
+// ---------------------------------------------------------------- NO_RESOLVE
+
+/// A round without valid evidence must leave every commit untouched: no score, no penalty.
+#[test]
+fn no_resolve_leaves_commits_unscored() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+
+    // nobody posts a reference; the reveal window passes, then the deadline
+    set_time(&mut env.svm, RESOLVE_DEADLINE + 1);
+    let cu = sendx!(env, &payer, [ix_cancel(0)]).expect("cancel_round");
+    assert_eq!(read_round(&env, 0).status, RoundStatus::Cancelled as u8);
+    assert_eq!(read_round(&env, 0).outcome, observed::Outcome::Unset as u8);
+
+    expect_err(sendx!(env, &payer, [ix_score(&env, 0)]), "RoundNotResolved");
+    let p = read_player(&env);
+    assert_eq!(
+        (p.scored_rounds, p.score_sum, p.missing_scored),
+        (0, 0, 0),
+        "nobody is scored in NO_RESOLVE"
+    );
+    assert_eq!(
+        (p.commits, p.reveals),
+        (1, 0),
+        "the commit stays visible as a fact"
+    );
+
+    // rent can still be reclaimed
+    sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry");
+    assert!(read_entry(&env, 0).is_none());
+    println!("CU cancel_round={cu}");
+}
+
+#[test]
+fn cancel_before_deadline_fails_and_resolved_round_cannot_be_cancelled() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, RESOLVE_DEADLINE - 1);
+    expect_err(sendx!(env, &payer, [ix_cancel(0)]), "TooEarly");
+
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    set_time(&mut env.svm, RESOLVE_DEADLINE + 1);
+    expect_err(sendx!(env, &payer, [ix_cancel(0)]), "AlreadyResolved");
+}
+
+// ---------------------------------------------------------------- reveal
+
+#[test]
+fn reveal_after_window_fails_and_counts_as_missing() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+
+    set_time(&mut env.svm, REVEAL_CLOSE); // exactly at the close: already too late
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]),
+        "OutsideRevealWindow",
+    );
+
+    let cu = sendx!(env, &payer, [ix_score(&env, 0)]).expect("score missing");
+    let entry = read_entry(&env, 0).expect("entry");
+    assert_eq!(entry.score_bps, MISSING_SCORE_BPS);
+    assert!(entry.scored_as_missing);
+    let p = read_player(&env);
+    assert_eq!(
+        (p.scored_rounds, p.score_sum, p.missing_scored, p.reveals),
+        (1, 2_500, 1, 0)
+    );
+    println!("CU score_entry(missing)={cu}");
+}
+
+#[test]
+fn reveal_before_outcome_time_fails() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, OUTCOME_TIME - 1);
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]),
+        "OutsideRevealWindow",
+    );
+}
+
+#[test]
+fn reveal_with_wrong_salt_or_wrong_number_fails() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 4_000, [8u8; 32])]),
+        "CommitmentMismatch",
+    );
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 4_500, SALT)]),
+        "CommitmentMismatch",
+    );
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 4_100, SALT)]),
+        "InvalidProbability",
+    );
+    sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]).expect("correct reveal still works");
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]),
+        "AlreadyRevealed",
+    );
+}
+
+#[test]
+fn reveal_by_someone_else_fails() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let mut ix = ix_reveal(&env, 0, 4_000, SALT);
+    ix.accounts[0].pubkey = payer.pubkey(); // beneficiary slot
+    expect_err(sendx!(env, &payer, [ix]), "WrongBeneficiary");
+}
+
+// ---------------------------------------------------------------- commit
+
+#[test]
+fn second_commit_for_same_round_fails() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("first");
+    expect_err(
+        sendx!(
+            env,
+            &player,
+            [ix_commit(&env, 0, commitment(&env, 0, 6_000, SALT))]
+        ),
+        "already in use",
+    );
+    assert_eq!(read_round(&env, 0).commit_count, 1);
+}
+
+#[test]
+fn commit_outside_window_or_paused_fails() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let authority = env.authority.insecure_clone();
+
+    set_time(&mut env.svm, COMMIT_CLOSE); // window is [open, close)
+    expect_err(
+        sendx!(env, &player, [ix_commit(&env, 0, [1u8; 32])]),
+        "OutsideCommitWindow",
+    );
+
+    set_time(&mut env.svm, DAY0 + 60);
+    sendx!(env, &authority, [ix_pause(&env, true)]).expect("pause");
+    expect_err(
+        sendx!(env, &player, [ix_commit(&env, 0, [1u8; 32])]),
+        "Paused",
+    );
+    sendx!(env, &authority, [ix_pause(&env, false)]).expect("unpause");
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit after unpause");
+}
+
+#[test]
+fn pause_by_wrong_authority_fails() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let mut ix = ix_pause(&env, true);
+    ix.accounts[0].pubkey = payer.pubkey();
+    expect_err(sendx!(env, &payer, [ix]), "WrongAuthority");
+}
+
+// ---------------------------------------------------------------- set_reference
+
+#[test]
+fn set_reference_twice_fails() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let a = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, a)]).expect("first");
+    let b = reference_update(&mut env);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, b)]),
+        "RoundNotOpen",
+    );
+}
+
+#[test]
+fn set_reference_rejects_early_late_and_bad_updates() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+
+    // before commit close
+    set_time(&mut env.svm, COMMIT_CLOSE - 1);
+    let early = reference_update(&mut env);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, early)]),
+        "TooEarly",
+    );
+
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    // not the first update after 12:00 (prev_publish_time >= t)
+    let d = price_update(
+        env.feed_id,
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE + 10,
+        COMMIT_CLOSE,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+        "NotFirstAfter",
+    );
+
+    // more than 60 s late
+    let d = price_update(
+        env.feed_id,
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE + 61,
+        COMMIT_CLOSE - 1,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+        "OutsideOracleWindow",
+    );
+
+    // confidence wider than 50 bps (0.6 % of price)
+    let d = price_update(
+        env.feed_id,
+        15_000_000_000,
+        90_000_000,
+        -8,
+        COMMIT_CLOSE,
+        COMMIT_CLOSE - 1,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+        "ConfidenceTooWide",
+    );
+
+    // partially verified
+    let d = price_update(
+        env.feed_id,
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE,
+        COMMIT_CLOSE - 1,
+        VerificationLevel::Partial { num_signatures: 5 },
+    );
+    let k = put_price_update(&mut env, d);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+        "NotFullyVerified",
+    );
+
+    // wrong feed
+    let d = price_update(
+        [9u8; 32],
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE,
+        COMMIT_CLOSE - 1,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+        "WrongFeed",
+    );
+
+    // a valid one still works afterwards (a rejected update does not poison the round)
+    let ok = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, ok)]).expect("valid reference");
+}
+
+#[test]
+fn price_update_owned_by_someone_else_is_rejected() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let data = price_update(
+        env.feed_id,
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE,
+        COMMIT_CLOSE - 1,
+        VerificationLevel::Full,
+    );
+    let key = anchor_lang::prelude::Pubkey::new_unique();
+    put(
+        &mut env.svm,
+        key,
+        anchor_lang::prelude::Pubkey::new_unique(),
+        10_000_000,
+        data,
+    );
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, key)]),
+        "AccountOwnedByWrongProgram",
+    );
+}
+
+// ---------------------------------------------------------------- resolve
+
+#[test]
+fn resolve_without_reference_fails() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    expect_err(
+        sendx!(env, &payer, [ix_resolve(&env, 0, out)]),
+        "NoReference",
+    );
+}
+
+#[test]
+fn resolve_twice_and_out_of_window_fails() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let late = price_update(
+        env.feed_id,
+        15_200_000_000,
+        100_000,
+        -8,
+        OUTCOME_TIME + 61,
+        OUTCOME_TIME - 1,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, late);
+    expect_err(
+        sendx!(env, &payer, [ix_resolve(&env, 0, k)]),
+        "OutsideOracleWindow",
+    );
+
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    let again = outcome_update(&mut env, 15_900_000_000);
+    expect_err(
+        sendx!(env, &payer, [ix_resolve(&env, 0, again)]),
+        "NoReference",
+    );
+
+    set_time(&mut env.svm, RESOLVE_DEADLINE + 1);
+    let out2 = outcome_update(&mut env, 15_200_000_000);
+    expect_err(
+        sendx!(env, &payer, [ix_resolve(&env, 0, out2)]),
+        "NoReference",
+    );
+}
+
+// ---------------------------------------------------------------- score / close
+
+#[test]
+fn score_entry_is_idempotent_and_respects_the_window() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+
+    // not revealed and window still open → must not be scored as missing yet
+    expect_err(
+        sendx!(env, &payer, [ix_score(&env, 0)]),
+        "RevealWindowStillOpen",
+    );
+    // closing before scoring is impossible
+    expect_err(sendx!(env, &player, [ix_close_entry(&env, 0)]), "TooEarly");
+
+    sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]).expect("reveal");
+    sendx!(env, &payer, [ix_score(&env, 0)]).expect("score");
+    expect_err(sendx!(env, &payer, [ix_score(&env, 0)]), "AlreadyScored");
+
+    set_time(&mut env.svm, REVEAL_CLOSE + 1);
+    let cu = sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry");
+    println!("CU close_entry={cu}");
+}
+
+#[test]
+fn unscored_entry_cannot_be_closed_in_a_resolved_round() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    set_time(&mut env.svm, REVEAL_CLOSE + 1);
+    // the missing penalty must not be escapable by closing the entry first
+    expect_err(
+        sendx!(env, &player, [ix_close_entry(&env, 0)]),
+        "EntryNotClosable",
+    );
+    sendx!(env, &payer, [ix_score(&env, 0)]).expect("score missing");
+    sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close after scoring");
+}
+
+// ---------------------------------------------------------------- calendar
+
+#[test]
+fn round_without_valid_proof_is_impossible() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let payer_pk = payer.pubkey();
+    let mut terms = env.terms;
+    terms.offset_bps = 200; // not the calendar's rule
+    let proof = env.proof.clone();
+    expect_err(
+        sendx!(
+            env,
+            &payer,
+            [ix_create_round(&payer_pk, 1, terms, proof.clone())]
+        ),
+        "BadMerkleProof",
+    );
+    // right terms, wrong proof length
+    expect_err(
+        sendx!(
+            env,
+            &payer,
+            [ix_create_round(
+                &payer_pk,
+                1,
+                env.terms,
+                proof[..5].to_vec()
+            )]
+        ),
+        "BadProofLength",
+    );
+    // right terms, but a round id that is not next
+    expect_err(
+        sendx!(
+            env,
+            &payer,
+            [ix_create_round(&payer_pk, 7, env.terms, proof)]
+        ),
+        "WrongRoundId",
+    );
+}
+
+#[test]
+fn calendar_bounds_and_second_publish_are_enforced() {
+    let mut env = setup();
+    let authority = env.authority.insecure_clone();
+    let auth_pk = authority.pubkey();
+    let (root, _) = calendar(&[1u8; 32], 0);
+    expect_err(
+        sendx!(env, &authority, [ix_publish_calendar(&auth_pk, root, 0)]),
+        "SeasonNotFinished",
+    );
+    // season is running (round 0 exists, 63 leaves left) → no second calendar
+    expect_err(
+        sendx!(env, &authority, [ix_publish_calendar(&auth_pk, root, 64)]),
+        "SeasonNotFinished",
+    );
+}
+
+#[test]
+fn create_round_rejects_bad_windows() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let payer_pk = payer.pubkey();
+    let mut terms = env.terms;
+    terms.commit_close = terms.commit_open - 1;
+    let th = terms.hash(SEASON, 1);
+    let (_, proof) = calendar(&th, 1);
+    expect_err(
+        sendx!(env, &payer, [ix_create_round(&payer_pk, 1, terms, proof)]),
+        "BadWindows",
+    );
+}

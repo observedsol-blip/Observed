@@ -8,3 +8,8 @@ keys/
 .env.*
 test-ledger/
 .spec-unlock
+.anchor
+target
+**/*.rs.bk
+test-ledger
+.surfpool
