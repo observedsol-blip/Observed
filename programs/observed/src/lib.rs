@@ -19,6 +19,21 @@ pub const SGT_GROUP: Pubkey = pubkey!("GT22s89nU4iWFkNXj1Bw6uYhJJWDRPpShHt4Bk8f9
 /// Mint authority of every SGT.
 pub const SGT_MINT_AUTHORITY: Pubkey = pubkey!("GT2zuHVaZQYZSyQMgJPLzvkmyztfyXg2NJunqFp4p3A4");
 
+/// Only this key may create the Config. Without it `initialize` is a race on deploy day:
+/// whoever calls it first owns calendar and pause authority for that game_id.
+/// Built without the `mainnet` feature this is the devnet/test key; the verifiable mainnet build
+/// uses `--features mainnet` (see the deploy checklist), which refuses to compile until the
+/// offline key is set here.
+#[cfg(not(feature = "mainnet"))]
+pub const DEPLOY_AUTHORITY: Pubkey = pubkey!("AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9");
+#[cfg(feature = "mainnet")]
+compile_error!(
+    "mainnet build: set DEPLOY_AUTHORITY below to the offline key's pubkey, then delete this \
+     compile_error!. Until then a mainnet artefact cannot be produced by accident."
+);
+#[cfg(feature = "mainnet")]
+pub const DEPLOY_AUTHORITY: Pubkey = pubkey!("11111111111111111111111111111111");
+
 pub const COMMIT_DOMAIN: &[u8] = b"observed/commit/v1";
 pub const TERMS_DOMAIN: &[u8] = b"observed/terms/v2";
 pub const LEAF_TAG: u8 = 0x00;
@@ -32,8 +47,10 @@ pub const REVEAL_WINDOW_SECS: i64 = 12 * 60 * 60;
 pub const RESOLVE_WINDOW_SECS: i64 = 24 * 60 * 60;
 pub const BUCKETS: usize = 21;
 pub const BUCKET_STEP: u16 = 500;
-/// Brier score of a flat 50 % answer, in score_bps; also what a missing reveal costs.
-pub const MISSING_SCORE_BPS: u16 = 2_500;
+/// What a missing reveal costs: the worst score any revealed answer can get (1.000).
+/// Anything lower would make silence profitable — the reveal window opens after the outcome is
+/// public, so hiding is always an informed choice (review 18.09.2026, Spec §6).
+pub const MISSING_SCORE_BPS: u16 = 10_000;
 
 #[program]
 pub mod observed {
@@ -324,7 +341,9 @@ pub mod observed {
         Ok(())
     }
 
-    /// Permissionless and idempotent. Missing reveals cost 0.250 once the window is closed.
+    /// Permissionless and idempotent. A missing reveal costs a full miss once the window is
+    /// closed. A cancelled round (NO_RESOLVE) is never scored — nobody may carry a full miss for
+    /// a round that had no outcome; the round status check below is what enforces it.
     pub fn score_entry(ctx: Context<ScoreEntry>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let round = &ctx.accounts.round;
@@ -684,7 +703,7 @@ pub struct Player {
 #[derive(Accounts)]
 #[instruction(game_id: u64)]
 pub struct Initialize<'info> {
-    #[account(mut)]
+    #[account(mut, address = DEPLOY_AUTHORITY @ ObservedError::WrongAuthority)]
     pub payer: Signer<'info>,
     #[account(
         init,

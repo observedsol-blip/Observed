@@ -15,12 +15,12 @@ state and nothing else.
 - All numbers come from `docs/03-SCREEN-MAP.md` §Beispielzahlen:
   round 42 · 17 SEP today, reading of round 41 · 16 SEP, reference $150.00 →
   threshold $151.50, outcome **No** at $149.82, you 40 %, crowd 64,
-  63 revealed of 71, Brier 0.160, Record 0.229,
+  63 revealed of 71, Brier 0.160, Record 0.313,
   **9 commits · 8 reveals · 1 missing · 9 scored**,
   calibration "Unlocks after 21 revealed rounds · you're at 8".
 - The nine past rounds in `pastRounds` are consistent with that record: the eight
   revealed Brier scores sum to 1.8125, the missing round counts as 0.250, and
-  2.0625 / 9 = 0.229.
+  2.8125 / 9 = 0.313 (missing = 1.000 since 18.09.2026).
 - Explorer links and transaction signatures are inert text.
 
 ## What is intentionally missing
@@ -255,7 +255,7 @@ All UI strings are verbatim from `docs/03-SCREEN-MAP.md`. The words *closer*,
 *streak*, *win*, *lose*, *approve transaction* and *reference natural
 transaction* appear nowhere. Times are always given as UTC **and** local.
 The missing-round penalty is worded as 03 words it in English — "missing counts
-as 50%" and "1 missing (scored as 50%)"; the German "0,250" form from the spec
+a full miss" and "1 missing (counts as a full miss)"; the German "1,000" form from the spec
 prose is not UI copy and is not in the app.
 
 ## Layout

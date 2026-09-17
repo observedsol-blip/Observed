@@ -30,13 +30,13 @@ Kicker: „READING · 16 SEP“ (nie „Yesterday / 16 Sep“). Reihenfolge von 
 4. „You gave Yes a 40% chance.“ (Beispiel: 40 % Ja, Ausgang Nein → Brier (0,40 − 0)² = 0,160; die Menge lag mit 64 daneben.)
 5. Maßstab wird Verteilung: dieselben 21 Positionen, Menge in Graphit, dein Bucket in Blau, Mean als Linie. „63 revealed“.
 6. Fakten-Zeile: „Crowd 64 · You 40“ (kein „closer“).
-7. Protokollzeile: „Brier 0.160 · Record 0.229 · 9 scored · 1 missing (scored as 50%)“ (Brier = score_bps / 10 000; Record immer inklusive Missing; „scored“ zählt aufgedeckte **und** Missing-Runden; kein Pfeil).
+7. Protokollzeile: „Brier 0.160 · Record 0.313 · 9 scored · 1 missing (counts as a full miss)“ (Brier = score_bps / 10 000; Record immer inklusive Missing; „scored“ zählt aufgedeckte **und** Missing-Runden; kein Pfeil).
 8. „One round added. No verdict on your skill.“
 9. Evidence-Referenz klein: Feed, Referenz (12:00) und Ergebnis (00:00) mit Zeitstempeln, Poster („This phone posted the oracle reading.“ wenn zutreffend), Explorer-Links.
 Zustände: **Resolved** (oben; ab ≈ 00:05 mit Teilmenge „63 of 71 revealed · closes 12:00 UTC“, ab 12:00 final) · **NO_RESOLVE** (Programmstatus `Cancelled`: „No valid reading in the window. Nobody scored.“; das Evidenz-Fenster nennt, welches Update fehlte: „Reference 12:00–12:01 UTC · missing“ bzw. „Outcome 00:00–00:01 UTC · missing“ — beide Fenster 60 s) · **Sample** (Banner).
 
 ## 4. Record
-- Kumulativer Brier groß (inklusive Missing, so beschriftet); darunter die drei ehrlichen Zahlen: **Commits · Reveals · Missing** (Beispiel „9 · 8 · 1“) mit Fußnote „missing counts as 50%“.
+- Kumulativer Brier groß (inklusive Missing, so beschriftet); darunter die drei ehrlichen Zahlen: **Commits · Reveals · Missing** (Beispiel „9 · 8 · 1“) mit Fußnote „missing counts as a full miss“.
 - Baselines: „Always 50%: 0.250 · Crowd: 0.211“.
 - Kalibrierungskurve: gesperrt bis 21 aufgedeckte Runden — Text „Unlocks after 21 revealed rounds · you're at 8“, kein leeres Chart. (Missing zählt im Record, nicht in der Kurve.)
 - Liste vergangener Runden: Datum, Frage, dein P(Yes), Ausgang, Brier, Status (scored / missing / no resolve). Missing wird im Client abgeleitet: Commits − Reveals − offene; „open“ ist ein eigener Status, nie Missing vor Fensterschluss.
@@ -75,4 +75,4 @@ Aktualisierung: bei App-Öffnen, per Push (Mitternacht, Mittag) und alle 30 Min 
 Technik (02): Android-Widgets sind RemoteViews — keine eigenen Schriftarten. Serif entweder als System-Serif (Noto Serif) oder Hero-Zeile als gerenderte Bitmap; Entscheidung nach Sichtprüfung auf dem Seeker.
 
 ## Beispielzahlen (überall identisch)
-Runde 41 · 16 SEP · Regel SOL/USD +1 % · Frage vor 12:00 „Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“ · Referenz 12:00 $150.00 → Schwelle $151.50 · Ausgang **No** — Hero „It did not happen.“ (SOL $149.82 at 00:00) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.229 · 9 commits · 8 reveals · 1 missing · 9 scored (8 aufgedeckt + 1 missing als 0,250) · Kalibrierung „you're at 8“.
+Runde 41 · 16 SEP · Regel SOL/USD +1 % · Frage vor 12:00 „Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“ · Referenz 12:00 $150.00 → Schwelle $151.50 · Ausgang **No** — Hero „It did not happen.“ (SOL $149.82 at 00:00) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.313 · 9 commits · 8 reveals · 1 missing · 9 scored (8 aufgedeckt + 1 missing als 1,000) · Kalibrierung „you're at 8“.

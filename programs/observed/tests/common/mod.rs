@@ -468,6 +468,7 @@ pub fn setup_day(day0: i64) -> Env {
     put(&mut svm, mint_key, t22, mint_lamports, mint_data);
     put(&mut svm, token_key, t22, token_lamports, token_data);
 
+    // seed [1;32] → AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9 = DEPLOY_AUTHORITY (non-mainnet build)
     let payer = Keypair::new_from_array([1u8; 32]);
     let authority = Keypair::new_from_array([2u8; 32]);
     for k in [&payer, &authority, &player] {

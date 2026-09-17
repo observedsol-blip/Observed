@@ -107,7 +107,7 @@ export const result = {
   revealedPartial: '63 of 71 revealed · closes 12:00 UTC',
   revealedFinal: '63 revealed',
   facts: 'Crowd 64 · You 40',
-  protocol: 'Brier 0.160 · Record 0.229 · 9 scored · 1 missing (scored as 50%)',
+  protocol: 'Brier 0.160 · Record 0.313 · 9 scored · 1 missing (counts as a full miss)',
   closing: 'One round added. No verdict on your skill.',
   yourProbability: 40,
   crowdMean: 64,
@@ -155,7 +155,7 @@ const DAILY_QUESTION = 'Will SOL be more than 1% above its 12:00 UTC price at 00
 /**
  * Nine commits, eight reveals, one missing → nine scored.
  * The eight Brier scores sum to 1.8125; with the missing round at 0.250 the
- * cumulative record is 2.0625 / 9 = 0.229.
+ * cumulative record is 2.8125 / 9 = 0.313 (the missing round counts as a full miss, 1.000).
  */
 export const pastRounds: PastRound[] = [
   { round: 41, date: '16 SEP', question: DAILY_QUESTION, probability: 40, outcome: 'No', brier: '0.160', status: 'scored' },
@@ -170,14 +170,14 @@ export const pastRounds: PastRound[] = [
 ];
 
 export const record = {
-  brier: '0.229',
+  brier: '0.313',
   brierLabel: 'Cumulative Brier · includes missing',
   commits: 9,
   reveals: 8,
   missing: 1,
   countsLabel: 'Commits · Reveals · Missing',
   countsValue: '9 · 8 · 1',
-  countsFootnote: 'missing counts as 50%',
+  countsFootnote: 'missing counts as a full miss',
   baselines: 'Always 50%: 0.250 · Crowd: 0.211',
   calibrationLocked: "Unlocks after 21 revealed rounds · you're at 8",
   sampleToggle: 'Show sample record (36 rounds)',

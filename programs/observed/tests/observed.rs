@@ -200,7 +200,7 @@ fn reveal_after_window_fails_and_counts_as_missing() {
     let p = read_player(&env);
     assert_eq!(
         (p.scored_rounds, p.score_sum, p.missing_scored, p.reveals),
-        (1, 2_500, 1, 0)
+        (1, 10_000, 1, 0)
     );
     println!("CU score_entry(missing)={cu}");
 }
@@ -833,5 +833,139 @@ fn rounds_can_be_created_in_advance() {
     expect_err(
         sendx!(env, &player, [ix_commit(&env, 1, c)]),
         "OutsideCommitWindow",
+    );
+}
+
+// ---------------------------------------------------------------- incentives
+
+/// The property the product depends on: staying silent is never CHEAPER than revealing.
+/// Note the `<=`, not `<`: for p = 0 % or 100 % on the wrong side both are 10 000, so silence
+/// gains nothing — that is intended. Anything below 10 000 would make hiding a lost confident
+/// call strictly profitable (review 18.09.2026).
+#[test]
+fn hiding_is_never_better_than_revealing() {
+    for k in 0..=20u16 {
+        let p_bps = k * 500;
+        for yes in [true, false] {
+            let revealed = observed::brier_score_bps(p_bps, yes).expect("score");
+            assert!(
+                revealed <= MISSING_SCORE_BPS,
+                "p={p_bps} yes={yes}: revealing costs {revealed}, hiding only {MISSING_SCORE_BPS}"
+            );
+        }
+    }
+    // and the worst revealed case is exactly the missing penalty
+    assert_eq!(
+        observed::brier_score_bps(0, true).expect("score"),
+        MISSING_SCORE_BPS
+    );
+    assert_eq!(
+        observed::brier_score_bps(10_000, false).expect("score"),
+        MISSING_SCORE_BPS
+    );
+}
+
+/// NO_RESOLVE means nobody is scored — not even as missing. Nobody may carry a full miss for a
+/// round that never had an outcome (owner decision 18.09.2026).
+#[test]
+fn cancelled_round_scores_nobody() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 10_000, SALT))]
+    )
+    .expect("commit");
+
+    set_time(&mut env.svm, RESOLVE_DEADLINE + 1);
+    sendx!(env, &payer, [ix_cancel(0)]).expect("cancel_round");
+    expect_err(sendx!(env, &payer, [ix_score(&env, 0)]), "RoundNotResolved");
+
+    let p = read_player(&env);
+    assert_eq!(
+        (p.scored_rounds, p.score_sum, p.missing_scored),
+        (0, 0, 0),
+        "a cancelled round must not add a score, and not a missing either"
+    );
+    let entry = read_entry(&env, 0).expect("entry");
+    assert!(!entry.scored && !entry.scored_as_missing && entry.score_bps == 0);
+
+    // rent still comes back, without a scoring precondition
+    sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry on cancelled round");
+    assert!(read_entry(&env, 0).is_none());
+}
+
+/// initialize is bound to one key, so deploy day is not a race for the config.
+/// Uses a game_id the harness has not used, so the failure is the authority check and not
+/// "account already in use".
+#[test]
+fn initialize_by_a_stranger_fails() {
+    use anchor_lang::{
+        prelude::Pubkey, solana_program::system_program, InstructionData, ToAccountMetas,
+    };
+    let mut env = setup();
+    let stranger = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&stranger.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+
+    let game_id: u64 = 999;
+    let config =
+        Pubkey::find_program_address(&[b"config", &game_id.to_le_bytes()], &observed::id()).0;
+    let ix = anchor_lang::solana_program::instruction::Instruction::new_with_bytes(
+        observed::id(),
+        &observed::instruction::Initialize {
+            game_id,
+            calendar_authority: stranger.pubkey(),
+            pause_authority: stranger.pubkey(),
+        }
+        .data(),
+        observed::accounts::Initialize {
+            payer: stranger.pubkey(),
+            config,
+            system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    );
+    expect_err(sendx!(env, &stranger, [ix]), "WrongAuthority");
+
+    // the deploy authority itself may do it
+    let payer = env.payer.insecure_clone();
+    let ok = anchor_lang::solana_program::instruction::Instruction::new_with_bytes(
+        observed::id(),
+        &observed::instruction::Initialize {
+            game_id,
+            calendar_authority: payer.pubkey(),
+            pause_authority: payer.pubkey(),
+        }
+        .data(),
+        observed::accounts::Initialize {
+            payer: payer.pubkey(),
+            config,
+            system_program: system_program::ID,
+        }
+        .to_account_metas(None),
+    );
+    sendx!(env, &payer, [ok]).expect("deploy authority may initialize");
+}
+
+/// A mainnet artefact must never carry the devnet key. Only compiled with --features mainnet.
+#[cfg(feature = "mainnet")]
+#[test]
+fn mainnet_build_does_not_use_the_devnet_authority() {
+    let devnet: anchor_lang::prelude::Pubkey = "AKnL4NNf3DGWZJS6cPknBuEGnVsV4A4m5tgebLHaRSZ9"
+        .parse()
+        .expect("pubkey");
+    assert_ne!(
+        observed::DEPLOY_AUTHORITY,
+        devnet,
+        "mainnet build still points at the devnet key"
+    );
+    assert_ne!(
+        observed::DEPLOY_AUTHORITY,
+        anchor_lang::prelude::Pubkey::default(),
+        "DEPLOY_AUTHORITY is still the placeholder"
     );
 }

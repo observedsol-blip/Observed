@@ -31,8 +31,8 @@ Größen mit `#[derive(InitSpace)]` berechnen; nie schätzen.
 
 ## 3. Instruktionen
 
-### `initialize(game_id, calendar_authority, pause_authority)`
-Legt `Config` an. Autoritäten werden in Settings der App und im Repo veröffentlicht.
+### `initialize(game_id, calendar_authority, pause_authority)` — nur `DEPLOY_AUTHORITY`
+Legt `Config` an. Der Payer muss der Konstanten `DEPLOY_AUTHORITY` entsprechen, sonst wäre der Deploy-Tag ein Rennen: Wer zuerst `initialize` ruft, besäße Kalender- und Pause-Autorität dieser `game_id`. Ohne Cargo-Feature steht dort der Devnet-Testschlüssel; der Mainnet-Build läuft **nur** mit `--features mainnet`, und der schlägt fehl, solange der Offline-Schlüssel nicht eingetragen ist. Autoritäten werden in Settings der App und im Repo veröffentlicht.
 
 ### `publish_calendar(season, calendar_root, leaf_count)` — nur `calendar_authority`
 - Zulässig nur wenn `calendar_root == [0;32]` (erste Saison) **oder** `next_round_id > max_round_id` (vorherige Saison vollständig). `1 ≤ leaf_count ≤ 64`, sonst Fehler (kein Unterlauf bei `leaf_count − 1`). Setzt `season`, `calendar_root`, `first_round_id = next_round_id`, `max_round_id = first_round_id + leaf_count − 1` (checked).
@@ -73,7 +73,7 @@ Kein Klartext, kein `p_bps` in dieser Instruktion. Die Zuordnung Wallet ↔ Ger�
 - Constraints: `entry.round == round.key()`, `player.sgt_mint == entry.sgt_mint`, `round` an `config` gebunden.
 - `round.status == Resolved`, `!entry.scored`, und entweder `entry.revealed` **oder** `now ≥ reveal_close` (Missing-Fall).
 - Aufgedeckt: `k = p_bps/500`, `y = outcome==Yes`, `score_bps = 25·(k−20y)²` in i32 rechnen.
-- Missing (nicht aufgedeckt, Fenster zu): `score_bps = 2 500`, `entry.scored_as_missing = true`, `Player.missing_scored += 1`.
+- Missing (nicht aufgedeckt, Fenster zu): `score_bps = 10 000` (voller Fehlschlag, = `MISSING_SCORE_BPS`), `entry.scored_as_missing = true`, `Player.missing_scored += 1`. Niedriger darf der Wert nicht sein: Das Reveal-Fenster öffnet **nach** dem Ausgang, Schweigen ist also immer eine informierte Entscheidung (Review 18.09.2026).
 - `Player.score_sum += score_bps`, `scored_rounds += 1`, `entry.scored = true`.
 - Wer es aufruft: der Spieler selbst beim nächsten Commit (Client-Muster), sonst der Cron nach `reveal_close` für alle offenen Einträge der Runde (bounded: einer pro Aufruf, Cron iteriert).
 - Kann vom Client direkt nach `reveal` in dieselbe Tx gelegt werden, wenn `Resolved` bereits gilt.
@@ -86,10 +86,10 @@ Accounts: `round`, `price_update: Account<PriceUpdateV2>` (Anchor prüft Owner =
 - Kopiert Evidenzwerte, setzt `Resolved`, `resolver`. Zweiter Aufruf → Fehler `AlreadyResolved` (kein zweiter Effekt).
 
 ### `cancel_round(round)` — permissionless
-- `now ≥ resolve_deadline`, `status ≠ Resolved` → `Cancelled` (UI: NO_RESOLVE). Einträge bleiben, kein Score. Ein Nicht-Reveal zählt trotzdem als Missing (Reveal-Fenster war 12 h vor dem Cancel zu; Absenz ist Absenz).
+- `now ≥ resolve_deadline`, `status ≠ Resolved` → `Cancelled` (UI: NO_RESOLVE). Einträge bleiben, **niemand wird gescored — auch nicht als Missing**: Ein voller Fehlschlag für eine Runde ohne Ausgang wäre ungerecht, und ausnutzbar ist es nicht, weil im Reveal-Fenster (bis 12:00) niemand wissen kann, ob die Runde nach 36 h storniert wird. Erzwungen durch `score_entry`, das `Resolved` verlangt.
 
 ### `close_entry(round)` — Signer = `entry.rent_refund_to`
-- Erst nach `now ≥ reveal_close` **und** (`Resolved && entry.scored` oder `Cancelled`). Bei `Resolved` reicht „nicht aufgedeckt“ **nicht** — sonst ließe sich der Eintrag vor dem Missing-Scoring schließen und die 0,250-Strafe umgehen. Wer schließen will, ruft vorher selbst das permissionless `score_entry` (Missing-Fall) auf; der Client tut das automatisch in derselben Transaktion. Anchor `close = rent_refund_to`.
+- Erst nach `now ≥ reveal_close` **und** (`Resolved && entry.scored` oder `Cancelled`). Bei `Resolved` reicht „nicht aufgedeckt“ **nicht** — sonst ließe sich der Eintrag vor dem Missing-Scoring schließen und die volle Missing-Strafe umgehen. Wer schließen will, ruft vorher selbst das permissionless `score_entry` (Missing-Fall) auf; der Client tut das automatisch in derselben Transaktion. Anchor `close = rent_refund_to`.
 
 ### `pause(flag)` — nur `pause_authority`
 Blockiert nur `commit`.
@@ -131,7 +131,7 @@ Reihenfolge im Client, festgezogen:
 | Angreifer / Versuch | Abwehr (Zeile im Design) |
 |---|---|
 | Spieler antwortet spät mit Mehrwissen | Commit-Schluss 12 h vor T; Clock-Sysvar (§3 commit) |
-| Spieler deckt nur Treffer auf | Missing wird als 2 500 (= 50 %) gescored, Anzeige immer inklusive Missing (§3 score_entry, Spec §6); Verschweigen ist nie besser als ehrliche Unsicherheit |
+| Spieler deckt nur Treffer auf | Missing kostet 10 000 = den schlechtesten aufdeckbaren Wert (§3 score_entry); damit ist Schweigen **nie billiger** als Aufdecken (Test `hiding_is_never_better_than_revealing`, `<=` gilt, bei 0 %/100 % auf der falschen Seite mit Gleichstand) |
 | Spieler rät Commitment anderer (21 Werte) | 32-Byte-Salt, Domäne, Runde, Mint, Begünstigter im Hash (Spec §4) |
 | Replay eines Commitments in anderer Runde/Gerät | round_pubkey + sgt_mint im Hash; Entry-PDA pro Runde und Mint |
 | Mehrfachstimme durch SGT-Migration | Entry- und Player-PDA über die **Mint**, nicht die Wallet; Mint bleibt bei Migration gleich (Solana-Mobile-Doku, Spike 2); Altkonto mit 0 scheitert an `amount == 1` |
@@ -165,7 +165,7 @@ Nicht abgedeckt, bewusst: Kollusion mehrerer Geräte, Automatisierung der Antwor
 Eine Instruktion ist fertig, wenn ihre Positivfälle **und** alle sie betreffenden Zeilen aus §5b/§6 als Anchor-Tests grün sind, `cargo clippy -- -D warnings` leer ist, und der Reviewer-Subagent keine Lücke gegen dieses Dokument meldet.
 
 ## 6. Tests (Pflicht vor Mainnet)
-Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps ohne Schlüssel), damit jeder die Tests ohne Seeker ausführen kann. Fixtures: echte SGT (Mint und Gruppe als Mainnet-Snapshot; Token-Konto `frozen` mit Test-Owner — muss **angenommen** werden; altes Nullkonto nach Migration, falsche Wallet, falsches Programm, Fake-Mint mit kopierten Pointern ohne Gruppenmitgliedschaft, Fake-`TokenGroupMember` mit falscher Gruppe, falsche Mint-Authority, supply ≠ 1, decimals ≠ 0, `member.mint ≠ mint`, zweiter Entry mit derselben Mint); Pyth (für Referenz und Ergebnis getrennt): falscher Feed, `Partial`-Verifikation, fremder Owner, Update mit `prev_publish_time ≥ T`, Update außerhalb 60 s, Konfidenz zu groß, Preis ≤ 0, abweichender Exponent, `resolve` ohne Referenz (muss scheitern), Schwellenberechnung mit negativem Offset und Überlauf; `set_reference`: vor `commit_close` (muss scheitern), nicht erstes Update nach 12:00, Konfidenz > `max_conf_bps`, zweiter Aufruf, kein gültiges Update bis `resolve_deadline` → nur `cancel_round` möglich; Reveal: falscher Salt, falsches p, doppelt, außerhalb des Fensters, falscher Signer, Entry anderer Runde; Score: Entry/Player-Mismatch, Missing vor `reveal_close` (muss scheitern), Missing nach `reveal_close` (= 2 500); Kalender: Runde ohne Beweis, falscher Index, vertauschte Geschwister, `round_id > max_round_id`, zweites `publish_calendar` vor Saisonende, `leaf_count = 0` und `leaf_count = 65` (müssen scheitern), `publish_calendar` als erste Saison mit `calendar_root == 0`; Close: vor `reveal_close`; bei `Resolved` ohne `scored` (muss scheitern); Zeit: alle Fenstergrenzen ±1 s; Overflow-Fälle.
+Fixtures liegen als Account-Snapshots im Repo (`tests/fixtures/*.json`, Dumps ohne Schlüssel), damit jeder die Tests ohne Seeker ausführen kann. Fixtures: echte SGT (Mint und Gruppe als Mainnet-Snapshot; Token-Konto `frozen` mit Test-Owner — muss **angenommen** werden; altes Nullkonto nach Migration, falsche Wallet, falsches Programm, Fake-Mint mit kopierten Pointern ohne Gruppenmitgliedschaft, Fake-`TokenGroupMember` mit falscher Gruppe, falsche Mint-Authority, supply ≠ 1, decimals ≠ 0, `member.mint ≠ mint`, zweiter Entry mit derselben Mint); Pyth (für Referenz und Ergebnis getrennt): falscher Feed, `Partial`-Verifikation, fremder Owner, Update mit `prev_publish_time ≥ T`, Update außerhalb 60 s, Konfidenz zu groß, Preis ≤ 0, abweichender Exponent, `resolve` ohne Referenz (muss scheitern), Schwellenberechnung mit negativem Offset und Überlauf; `set_reference`: vor `commit_close` (muss scheitern), nicht erstes Update nach 12:00, Konfidenz > `max_conf_bps`, zweiter Aufruf, kein gültiges Update bis `resolve_deadline` → nur `cancel_round` möglich; Reveal: falscher Salt, falsches p, doppelt, außerhalb des Fensters, falscher Signer, Entry anderer Runde; Score: Entry/Player-Mismatch, Missing vor `reveal_close` (muss scheitern), Missing nach `reveal_close` (= 10 000), `score_entry` auf `Cancelled` (muss scheitern, `missing_scored` unverändert), `initialize` durch fremden Payer (muss scheitern); Kalender: Runde ohne Beweis, falscher Index, vertauschte Geschwister, `round_id > max_round_id`, zweites `publish_calendar` vor Saisonende, `leaf_count = 0` und `leaf_count = 65` (müssen scheitern), `publish_calendar` als erste Saison mit `calendar_root == 0`; Close: vor `reveal_close`; bei `Resolved` ohne `scored` (muss scheitern); Zeit: alle Fenstergrenzen ±1 s; Overflow-Fälle.
 
 ## 7. Spikes (Tag 1, in dieser Reihenfolge)
 1. **Pyth:** mehrere Stunden altes Update via `@pythnetwork/pyth-solana-receiver` (`addPostPriceUpdates`, Full) posten, Minimalinstruktion konsumiert es; Tx-Zahl, Bytes, `unitsConsumed`, Fees, Rent notieren — für zwei Postings pro Tag (Referenz 12:00, Ergebnis 00:00), also die Tageskosten des Cron; zusätzlich: wie viele Wallet-Freigaben kostet ein Spieler, der selbst postet? Alle Ablehnfälle aus §6 prüfen.
