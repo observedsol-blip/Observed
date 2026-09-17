@@ -1,0 +1,141 @@
+{
+  "label": "sol-outcome-0917",
+  "feed": "SOL",
+  "feedId": "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+  "t": 1789603200,
+  "tIso": "2026-09-17T00:00:00.000Z",
+  "mode": "full",
+  "closeUpdateAccounts": false,
+  "hermes": {
+    "publish_time": 1789603200,
+    "prev_publish_time": 1789603199,
+    "price": "9857775490",
+    "conf": "1822971",
+    "expo": -8,
+    "updateDataBytes": 631
+  },
+  "transactions": [
+    {
+      "index": 0,
+      "signature": "2fkYffdXCgqt26mA2NGwsHiGBuX6pZ79Ufp11rfCdoUN7HbCdU4QsHkLk1ogdB5P7uRVamS3WmHLDWgPH7A9c5sA",
+      "bytes": 770,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10606,
+      "computeUnits": 84592,
+      "err": null,
+      "spikeLog": []
+    },
+    {
+      "index": 1,
+      "signature": "LKThtkg7HyixkvkEorCbHWxmYoRdv5NyE2Po2PquHBPnfDoYBvXTm3GU4dEfn5cy2236Rp9hRqUV2ZQtoCwHFwU",
+      "bytes": 875,
+      "signatures": 2,
+      "instructions": 3,
+      "feeLamports": 10403,
+      "computeUnits": 34023,
+      "err": null,
+      "spikeLog": [
+        "Program log: ok: price=9857775490 expo=-8 conf=1822971 conf_bps=1 publish_time=1789603200 prev_publish_time=1789603199 t=1789603200"
+      ]
+    }
+  ],
+  "txCount": 2,
+  "totalFeeLamports": 21009,
+  "balanceDeltaLamports": 3719249,
+  "netRentLockedLamports": 3698240,
+  "priceUpdateAccount": "5PWm21YNA7uJHjRwS1fpEkSCQ5J5yABAjb3kdodZV5q8",
+  "priceUpdateAccountExists": true,
+  "priceUpdateAccountLamports": 1330960,
+  "priceUpdateAccountBytes": 134,
+  "probes": {
+    "valid": {
+      "ok": true,
+      "err": null,
+      "unitsConsumed": 3403,
+      "log": [
+        "Program log: ok: price=9857775490 expo=-8 conf=1822971 conf_bps=1 publish_time=1789603200 prev_publish_time=1789603199 t=1789603200"
+      ]
+    },
+    "wrong_feed": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6001
+          }
+        ]
+      },
+      "unitsConsumed": 2556,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:28. Error Code: WrongFeed. Error Number: 6001. Error Message: feed id does not match.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1771"
+      ]
+    },
+    "t_after_publish (BeforeT)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6003
+          }
+        ]
+      },
+      "unitsConsumed": 2559,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:30. Error Code: BeforeT. Error Number: 6003. Error Message: publish_time < t.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1773"
+      ]
+    },
+    "t_equals_prev (NotFirstAfter)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6002
+          }
+        ]
+      },
+      "unitsConsumed": 2708,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:29. Error Code: NotFirstAfter. Error Number: 6002. Error Message: prev_publish_time >= t: not the first update after t.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1772"
+      ]
+    },
+    "max_conf_0 (ConfidenceTooWide)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6006
+          }
+        ]
+      },
+      "unitsConsumed": 2876,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:41. Error Code: ConfidenceTooWide. Error Number: 6006. Error Message: confidence interval too wide.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1776"
+      ]
+    },
+    "foreign_owner (payer as update)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 3007
+          }
+        ]
+      },
+      "unitsConsumed": 2685,
+      "log": [
+        "Program log: AnchorError caused by account: price_update. Error Code: AccountOwnedByWrongProgram. Error Number: 3007. Error Message: The given account is owned by a different program than expected.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0xbbf"
+      ]
+    }
+  }
+}

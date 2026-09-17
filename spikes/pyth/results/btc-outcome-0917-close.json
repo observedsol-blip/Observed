@@ -1,0 +1,52 @@
+{
+  "label": "btc-outcome-0917-close",
+  "feed": "BTC",
+  "feedId": "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43",
+  "t": 1789603200,
+  "tIso": "2026-09-17T00:00:00.000Z",
+  "mode": "full",
+  "closeUpdateAccounts": true,
+  "hermes": {
+    "publish_time": 1789603200,
+    "prev_publish_time": 1789603199,
+    "price": "7615130890911",
+    "conf": "4517781135",
+    "expo": -8,
+    "updateDataBytes": 631
+  },
+  "transactions": [
+    {
+      "index": 0,
+      "signature": "3bEyam6T8TMNrbVKyGU49AZVT3sMFgpnPSmUbUj4NzUxShD5F2gurMED67Y8SL6Skt2Z58RquRdtcVpxbsGeRkA8",
+      "bytes": 770,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10606,
+      "computeUnits": 84592,
+      "err": null,
+      "spikeLog": []
+    },
+    {
+      "index": 1,
+      "signature": "2c95AwdAUdkYZpbjRNv9pmNuKLt93XNuYiakPnSXMUa6aM98bpqXyTm1hVmQ5LJyULZdSScPPzYSbyonKJ7ZcbX1",
+      "bytes": 933,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10803,
+      "computeUnits": 39213,
+      "err": null,
+      "spikeLog": [
+        "Program log: ok: price=7615130890911 expo=-8 conf=4517781135 conf_bps=5 publish_time=1789603200 prev_publish_time=1789603199 t=1789603200"
+      ]
+    }
+  ],
+  "txCount": 2,
+  "totalFeeLamports": 21409,
+  "balanceDeltaLamports": 21409,
+  "netRentLockedLamports": 0,
+  "priceUpdateAccount": "5hwDA6eAYo2dVJH5u9HjfDQ2LiVQEJzZrPN4GaaXguLY",
+  "priceUpdateAccountExists": false,
+  "priceUpdateAccountLamports": null,
+  "priceUpdateAccountBytes": null,
+  "probes": {}
+}

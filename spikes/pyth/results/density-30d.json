@@ -1,0 +1,1837 @@
+{
+  "summary": {
+    "throttledResponses": 0,
+    "SOL": {
+      "samples": 60,
+      "http200": 60,
+      "inWindow": 60,
+      "maxLagSecs": 0,
+      "medianConfBps": 1,
+      "maxConfBps": 2,
+      "firstDate": "2026-08-18T12:00:00.000Z",
+      "nonOk": []
+    },
+    "BTC": {
+      "samples": 60,
+      "http200": 60,
+      "inWindow": 60,
+      "maxLagSecs": 0,
+      "medianConfBps": 1,
+      "maxConfBps": 6,
+      "firstDate": "2026-08-18T12:00:00.000Z",
+      "nonOk": []
+    },
+    "ETH": {
+      "samples": 60,
+      "http200": 60,
+      "inWindow": 60,
+      "maxLagSecs": 0,
+      "medianConfBps": 1,
+      "maxConfBps": 8,
+      "firstDate": "2026-08-18T12:00:00.000Z",
+      "nonOk": []
+    }
+  },
+  "rows": [
+    {
+      "feed": "SOL",
+      "t": 1787054400,
+      "tIso": "2026-08-18T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787054400,
+      "tIso": "2026-08-18T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1787054400,
+      "tIso": "2026-08-18T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1787097600,
+      "tIso": "2026-08-19T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787097600,
+      "tIso": "2026-08-19T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1787097600,
+      "tIso": "2026-08-19T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787140800,
+      "tIso": "2026-08-19T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787140800,
+      "tIso": "2026-08-19T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1787140800,
+      "tIso": "2026-08-19T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1787184000,
+      "tIso": "2026-08-20T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787184000,
+      "tIso": "2026-08-20T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787184000,
+      "tIso": "2026-08-20T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1787227200,
+      "tIso": "2026-08-20T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787227200,
+      "tIso": "2026-08-20T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1787227200,
+      "tIso": "2026-08-20T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787270400,
+      "tIso": "2026-08-21T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787270400,
+      "tIso": "2026-08-21T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787270400,
+      "tIso": "2026-08-21T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787313600,
+      "tIso": "2026-08-21T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787313600,
+      "tIso": "2026-08-21T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787313600,
+      "tIso": "2026-08-21T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787356800,
+      "tIso": "2026-08-22T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787356800,
+      "tIso": "2026-08-22T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787356800,
+      "tIso": "2026-08-22T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787400000,
+      "tIso": "2026-08-22T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787400000,
+      "tIso": "2026-08-22T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787400000,
+      "tIso": "2026-08-22T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787443200,
+      "tIso": "2026-08-23T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787443200,
+      "tIso": "2026-08-23T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1787443200,
+      "tIso": "2026-08-23T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787486400,
+      "tIso": "2026-08-23T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787486400,
+      "tIso": "2026-08-23T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1787486400,
+      "tIso": "2026-08-23T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787529600,
+      "tIso": "2026-08-24T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787529600,
+      "tIso": "2026-08-24T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787529600,
+      "tIso": "2026-08-24T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787572800,
+      "tIso": "2026-08-24T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787572800,
+      "tIso": "2026-08-24T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787572800,
+      "tIso": "2026-08-24T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787616000,
+      "tIso": "2026-08-25T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787616000,
+      "tIso": "2026-08-25T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1787616000,
+      "tIso": "2026-08-25T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787659200,
+      "tIso": "2026-08-25T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787659200,
+      "tIso": "2026-08-25T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1787659200,
+      "tIso": "2026-08-25T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787702400,
+      "tIso": "2026-08-26T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787702400,
+      "tIso": "2026-08-26T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787702400,
+      "tIso": "2026-08-26T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787745600,
+      "tIso": "2026-08-26T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787745600,
+      "tIso": "2026-08-26T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787745600,
+      "tIso": "2026-08-26T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1787788800,
+      "tIso": "2026-08-27T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787788800,
+      "tIso": "2026-08-27T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787788800,
+      "tIso": "2026-08-27T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787832000,
+      "tIso": "2026-08-27T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787832000,
+      "tIso": "2026-08-27T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1787832000,
+      "tIso": "2026-08-27T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787875200,
+      "tIso": "2026-08-28T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787875200,
+      "tIso": "2026-08-28T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787875200,
+      "tIso": "2026-08-28T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787918400,
+      "tIso": "2026-08-28T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1787918400,
+      "tIso": "2026-08-28T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1787918400,
+      "tIso": "2026-08-28T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1787961600,
+      "tIso": "2026-08-29T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1787961600,
+      "tIso": "2026-08-29T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1787961600,
+      "tIso": "2026-08-29T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788004800,
+      "tIso": "2026-08-29T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788004800,
+      "tIso": "2026-08-29T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1788004800,
+      "tIso": "2026-08-29T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788048000,
+      "tIso": "2026-08-30T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788048000,
+      "tIso": "2026-08-30T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1788048000,
+      "tIso": "2026-08-30T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788091200,
+      "tIso": "2026-08-30T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788091200,
+      "tIso": "2026-08-30T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788091200,
+      "tIso": "2026-08-30T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788134400,
+      "tIso": "2026-08-31T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "BTC",
+      "t": 1788134400,
+      "tIso": "2026-08-31T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788134400,
+      "tIso": "2026-08-31T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788177600,
+      "tIso": "2026-08-31T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788177600,
+      "tIso": "2026-08-31T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788177600,
+      "tIso": "2026-08-31T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788220800,
+      "tIso": "2026-09-01T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788220800,
+      "tIso": "2026-09-01T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788220800,
+      "tIso": "2026-09-01T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788264000,
+      "tIso": "2026-09-01T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788264000,
+      "tIso": "2026-09-01T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788264000,
+      "tIso": "2026-09-01T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1788307200,
+      "tIso": "2026-09-02T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788307200,
+      "tIso": "2026-09-02T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788307200,
+      "tIso": "2026-09-02T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1788350400,
+      "tIso": "2026-09-02T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "BTC",
+      "t": 1788350400,
+      "tIso": "2026-09-02T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 3
+    },
+    {
+      "feed": "ETH",
+      "t": 1788350400,
+      "tIso": "2026-09-02T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 4
+    },
+    {
+      "feed": "SOL",
+      "t": 1788393600,
+      "tIso": "2026-09-03T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788393600,
+      "tIso": "2026-09-03T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788393600,
+      "tIso": "2026-09-03T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 3
+    },
+    {
+      "feed": "SOL",
+      "t": 1788436800,
+      "tIso": "2026-09-03T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788436800,
+      "tIso": "2026-09-03T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 3
+    },
+    {
+      "feed": "ETH",
+      "t": 1788436800,
+      "tIso": "2026-09-03T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 4
+    },
+    {
+      "feed": "SOL",
+      "t": 1788480000,
+      "tIso": "2026-09-04T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788480000,
+      "tIso": "2026-09-04T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788480000,
+      "tIso": "2026-09-04T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788523200,
+      "tIso": "2026-09-04T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788523200,
+      "tIso": "2026-09-04T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1788523200,
+      "tIso": "2026-09-04T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788566400,
+      "tIso": "2026-09-05T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788566400,
+      "tIso": "2026-09-05T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1788566400,
+      "tIso": "2026-09-05T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788609600,
+      "tIso": "2026-09-05T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788609600,
+      "tIso": "2026-09-05T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788609600,
+      "tIso": "2026-09-05T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788652800,
+      "tIso": "2026-09-06T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788652800,
+      "tIso": "2026-09-06T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788652800,
+      "tIso": "2026-09-06T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788696000,
+      "tIso": "2026-09-06T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788696000,
+      "tIso": "2026-09-06T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1788696000,
+      "tIso": "2026-09-06T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788739200,
+      "tIso": "2026-09-07T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788739200,
+      "tIso": "2026-09-07T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788739200,
+      "tIso": "2026-09-07T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788782400,
+      "tIso": "2026-09-07T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788782400,
+      "tIso": "2026-09-07T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1788782400,
+      "tIso": "2026-09-07T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788825600,
+      "tIso": "2026-09-08T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788825600,
+      "tIso": "2026-09-08T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788825600,
+      "tIso": "2026-09-08T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788868800,
+      "tIso": "2026-09-08T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "BTC",
+      "t": 1788868800,
+      "tIso": "2026-09-08T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1788868800,
+      "tIso": "2026-09-08T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1788912000,
+      "tIso": "2026-09-09T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788912000,
+      "tIso": "2026-09-09T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "ETH",
+      "t": 1788912000,
+      "tIso": "2026-09-09T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 0
+    },
+    {
+      "feed": "SOL",
+      "t": 1788955200,
+      "tIso": "2026-09-09T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1788955200,
+      "tIso": "2026-09-09T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1788955200,
+      "tIso": "2026-09-09T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1788998400,
+      "tIso": "2026-09-10T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "BTC",
+      "t": 1788998400,
+      "tIso": "2026-09-10T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1788998400,
+      "tIso": "2026-09-10T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789041600,
+      "tIso": "2026-09-10T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789041600,
+      "tIso": "2026-09-10T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1789041600,
+      "tIso": "2026-09-10T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789084800,
+      "tIso": "2026-09-11T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789084800,
+      "tIso": "2026-09-11T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1789084800,
+      "tIso": "2026-09-11T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789128000,
+      "tIso": "2026-09-11T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789128000,
+      "tIso": "2026-09-11T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1789128000,
+      "tIso": "2026-09-11T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789171200,
+      "tIso": "2026-09-12T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789171200,
+      "tIso": "2026-09-12T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1789171200,
+      "tIso": "2026-09-12T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789214400,
+      "tIso": "2026-09-12T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789214400,
+      "tIso": "2026-09-12T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1789214400,
+      "tIso": "2026-09-12T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1789257600,
+      "tIso": "2026-09-13T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789257600,
+      "tIso": "2026-09-13T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1789257600,
+      "tIso": "2026-09-13T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789300800,
+      "tIso": "2026-09-13T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789300800,
+      "tIso": "2026-09-13T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1789300800,
+      "tIso": "2026-09-13T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1789344000,
+      "tIso": "2026-09-14T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789344000,
+      "tIso": "2026-09-14T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1789344000,
+      "tIso": "2026-09-14T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 3
+    },
+    {
+      "feed": "SOL",
+      "t": 1789387200,
+      "tIso": "2026-09-14T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789387200,
+      "tIso": "2026-09-14T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1789387200,
+      "tIso": "2026-09-14T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1789430400,
+      "tIso": "2026-09-15T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789430400,
+      "tIso": "2026-09-15T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "ETH",
+      "t": 1789430400,
+      "tIso": "2026-09-15T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "SOL",
+      "t": 1789473600,
+      "tIso": "2026-09-15T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789473600,
+      "tIso": "2026-09-15T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "ETH",
+      "t": 1789473600,
+      "tIso": "2026-09-15T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "SOL",
+      "t": 1789516800,
+      "tIso": "2026-09-16T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 2
+    },
+    {
+      "feed": "BTC",
+      "t": 1789516800,
+      "tIso": "2026-09-16T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 5
+    },
+    {
+      "feed": "ETH",
+      "t": 1789516800,
+      "tIso": "2026-09-16T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 5
+    },
+    {
+      "feed": "SOL",
+      "t": 1789560000,
+      "tIso": "2026-09-16T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789560000,
+      "tIso": "2026-09-16T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 6
+    },
+    {
+      "feed": "ETH",
+      "t": 1789560000,
+      "tIso": "2026-09-16T12:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 8
+    },
+    {
+      "feed": "SOL",
+      "t": 1789603200,
+      "tIso": "2026-09-17T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 1
+    },
+    {
+      "feed": "BTC",
+      "t": 1789603200,
+      "tIso": "2026-09-17T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 5
+    },
+    {
+      "feed": "ETH",
+      "t": 1789603200,
+      "tIso": "2026-09-17T00:00:00.000Z",
+      "http": 200,
+      "lagSecs": 0,
+      "prevBeforeT": true,
+      "inWindow": true,
+      "confBps": 4
+    }
+  ]
+}

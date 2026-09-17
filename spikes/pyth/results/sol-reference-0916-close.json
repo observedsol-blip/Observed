@@ -1,0 +1,52 @@
+{
+  "label": "sol-reference-0916-close",
+  "feed": "SOL",
+  "feedId": "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+  "t": 1789560000,
+  "tIso": "2026-09-16T12:00:00.000Z",
+  "mode": "full",
+  "closeUpdateAccounts": true,
+  "hermes": {
+    "publish_time": 1789560000,
+    "prev_publish_time": 1789559999,
+    "price": "9793979720",
+    "conf": "1458480",
+    "expo": -8,
+    "updateDataBytes": 631
+  },
+  "transactions": [
+    {
+      "index": 0,
+      "signature": "1bSGVFxCNmyG5DznR4a3BYi1834a96pggKVQvaGfaFNCVEJCExjgwGVGY2ZkrzQ1a6uM4j7s3qf7pn94VYeEuiw",
+      "bytes": 770,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10606,
+      "computeUnits": 84592,
+      "err": null,
+      "spikeLog": []
+    },
+    {
+      "index": 1,
+      "signature": "42BL5K3fiZGKEMUCYRtGXZnX6Wm4T3ycPCpFQcHNmMJXoTW6pP6Wavjz3oP8jdiwvfCsPQ9pPz4vrd9JpsakQTsi",
+      "bytes": 933,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10803,
+      "computeUnits": 37678,
+      "err": null,
+      "spikeLog": [
+        "Program log: ok: price=9793979720 expo=-8 conf=1458480 conf_bps=1 publish_time=1789560000 prev_publish_time=1789559999 t=1789560000"
+      ]
+    }
+  ],
+  "txCount": 2,
+  "totalFeeLamports": 21409,
+  "balanceDeltaLamports": 21409,
+  "netRentLockedLamports": 0,
+  "priceUpdateAccount": "GfbUDi8ofc8JEaNDV413zCPjANeGDanqvFJgmjhWJMnB",
+  "priceUpdateAccountExists": false,
+  "priceUpdateAccountLamports": null,
+  "priceUpdateAccountBytes": null,
+  "probes": {}
+}

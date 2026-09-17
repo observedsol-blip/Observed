@@ -1,0 +1,136 @@
+{
+  "label": "sol-partial-0917",
+  "feed": "SOL",
+  "feedId": "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d",
+  "t": 1789603200,
+  "tIso": "2026-09-17T00:00:00.000Z",
+  "mode": "partial",
+  "closeUpdateAccounts": false,
+  "hermes": {
+    "publish_time": 1789603200,
+    "prev_publish_time": 1789603199,
+    "price": "9857775490",
+    "conf": "1822971",
+    "expo": -8,
+    "updateDataBytes": 631
+  },
+  "transactions": [
+    {
+      "index": 0,
+      "signature": "9WFJvctmsukH1vdvVDs5ZGhnqG71TrJD45bJ1vxcxDfdNgaMXM4bNXPBiL4x32zKDi9PjndpkT9tiwpndRSLkTE",
+      "bytes": 1085,
+      "signatures": 2,
+      "instructions": 2,
+      "feeLamports": 10203,
+      "computeUnits": 116026,
+      "err": null,
+      "spikeLog": []
+    }
+  ],
+  "txCount": 1,
+  "totalFeeLamports": 10203,
+  "balanceDeltaLamports": 1341163,
+  "netRentLockedLamports": 1330960,
+  "priceUpdateAccount": "GequnyLcuP7SEG7e99JwpGwQ8us9qrhz1TZhvWhTmg3m",
+  "priceUpdateAccountExists": true,
+  "priceUpdateAccountLamports": 1330960,
+  "priceUpdateAccountBytes": 134,
+  "probes": {
+    "valid": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6000
+          }
+        ]
+      },
+      "unitsConsumed": 2676,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:22. Error Code: NotFullyVerified. Error Number: 6000. Error Message: price update is not fully verified.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1770"
+      ]
+    },
+    "wrong_feed": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6000
+          }
+        ]
+      },
+      "unitsConsumed": 2676,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:22. Error Code: NotFullyVerified. Error Number: 6000. Error Message: price update is not fully verified.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1770"
+      ]
+    },
+    "t_after_publish (BeforeT)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6000
+          }
+        ]
+      },
+      "unitsConsumed": 2676,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:22. Error Code: NotFullyVerified. Error Number: 6000. Error Message: price update is not fully verified.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1770"
+      ]
+    },
+    "t_equals_prev (NotFirstAfter)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6000
+          }
+        ]
+      },
+      "unitsConsumed": 2676,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:22. Error Code: NotFullyVerified. Error Number: 6000. Error Message: price update is not fully verified.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1770"
+      ]
+    },
+    "max_conf_0 (ConfidenceTooWide)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 6000
+          }
+        ]
+      },
+      "unitsConsumed": 2676,
+      "log": [
+        "Program log: AnchorError thrown in programs/pyth_spike/src/lib.rs:22. Error Code: NotFullyVerified. Error Number: 6000. Error Message: price update is not fully verified.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0x1770"
+      ]
+    },
+    "foreign_owner (payer as update)": {
+      "ok": false,
+      "err": {
+        "InstructionError": [
+          0,
+          {
+            "Custom": 3007
+          }
+        ]
+      },
+      "unitsConsumed": 2685,
+      "log": [
+        "Program log: AnchorError caused by account: price_update. Error Code: AccountOwnedByWrongProgram. Error Number: 3007. Error Message: The given account is owned by a different program than expected.",
+        "Program CvygcyyJavsRaVGGMg4trsWFTADVhcwrJsYuSboHzsEw failed: custom program error: 0xbbf"
+      ]
+    }
+  }
+}

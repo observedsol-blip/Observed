@@ -1,0 +1,52 @@
+{
+  "label": "eth-outcome-0917-close",
+  "feed": "ETH",
+  "feedId": "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace",
+  "t": 1789603200,
+  "tIso": "2026-09-17T00:00:00.000Z",
+  "mode": "full",
+  "closeUpdateAccounts": true,
+  "hermes": {
+    "publish_time": 1789603200,
+    "prev_publish_time": 1789603199,
+    "price": "241655231237",
+    "conf": "99345715",
+    "expo": -8,
+    "updateDataBytes": 631
+  },
+  "transactions": [
+    {
+      "index": 0,
+      "signature": "2ufjYBzAPWEoH8H8BwHbCaF77k4s5f4YN8mHzf6Vc7d3SuTTaFFUfqMNW37Gugk9NMnq4QPZwqfKvDiP6nbNAVs9",
+      "bytes": 770,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10606,
+      "computeUnits": 84592,
+      "err": null,
+      "spikeLog": []
+    },
+    {
+      "index": 1,
+      "signature": "59jSQRMiB5Q4W4Paa8NsW2BkFYfpu6kkzg3rXoc31WMHaZU9UJZcmichhuNmKsZdzTwADcGikFrwzhbeKMRFL7wc",
+      "bytes": 933,
+      "signatures": 2,
+      "instructions": 5,
+      "feeLamports": 10803,
+      "computeUnits": 46685,
+      "err": null,
+      "spikeLog": [
+        "Program log: ok: price=241655231237 expo=-8 conf=99345715 conf_bps=4 publish_time=1789603200 prev_publish_time=1789603199 t=1789603200"
+      ]
+    }
+  ],
+  "txCount": 2,
+  "totalFeeLamports": 21409,
+  "balanceDeltaLamports": 21409,
+  "netRentLockedLamports": 0,
+  "priceUpdateAccount": "6bnBE5w3JKxwvjpTyK4NeHiwwx69fmGYYDdKspyupaAb",
+  "priceUpdateAccountExists": false,
+  "priceUpdateAccountLamports": null,
+  "priceUpdateAccountBytes": null,
+  "probes": {}
+}
