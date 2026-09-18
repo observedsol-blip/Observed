@@ -154,17 +154,53 @@ fn no_resolve_leaves_commits_unscored() {
 fn cancel_before_deadline_fails_and_resolved_round_cannot_be_cancelled() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, RESOLVE_DEADLINE - 1);
+    // the reference window is still open at its last second
+    set_time(&mut env.svm, COMMIT_CLOSE + WINDOW_SECS as i64);
     expect_err(sendx!(env, &payer, [ix_cancel(0)]), "TooEarly");
 
     set_time(&mut env.svm, COMMIT_CLOSE + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    // referenced: the outcome window is still open at its last second
+    set_time(&mut env.svm, OUTCOME_TIME + WINDOW_SECS as i64);
+    expect_err(sendx!(env, &payer, [ix_cancel(0)]), "TooEarly");
+
     set_time(&mut env.svm, OUTCOME_TIME + 5);
     let out = outcome_update(&mut env, 15_200_000_000);
     sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
     set_time(&mut env.svm, RESOLVE_DEADLINE + 1);
     expect_err(sendx!(env, &payer, [ix_cancel(0)]), "AlreadyResolved");
+}
+
+/// NO_RESOLVE shows the same day: once a reading can no longer arrive, anyone may cancel.
+#[test]
+fn missed_reading_can_be_cancelled_as_soon_as_its_window_closes() {
+    // no reference in [T, T+W]
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + WINDOW_SECS as i64 + 1);
+    let late = reference_update(&mut env);
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, late)]),
+        "OutsideSubmissionWindow",
+    );
+    sendx!(env, &payer, [ix_cancel(0)]).expect("cancel after the reference window");
+    assert_eq!(read_round(&env, 0).status, RoundStatus::Cancelled as u8);
+
+    // reference taken, but no outcome in its window
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + WINDOW_SECS as i64 + 1);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    expect_err(
+        sendx!(env, &payer, [ix_resolve(&env, 0, out)]),
+        "OutsideSubmissionWindow",
+    );
+    sendx!(env, &payer, [ix_cancel(0)]).expect("cancel after the outcome window");
+    assert_eq!(read_round(&env, 0).status, RoundStatus::Cancelled as u8);
 }
 
 // ---------------------------------------------------------------- reveal
@@ -358,36 +394,36 @@ fn set_reference_rejects_early_late_and_bad_updates() {
     );
 
     set_time(&mut env.svm, COMMIT_CLOSE + 5);
-    // not the first update after 12:00 (prev_publish_time >= t)
+    // older than A at the moment of submission (publish 61 s before now)
     let d = price_update(
         env.feed_id,
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE + 10,
-        COMMIT_CLOSE,
+        COMMIT_CLOSE + 5 - MAX_AGE_SECS as i64 - 1,
+        COMMIT_CLOSE - 100,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
     expect_err(
         sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
-        "NotFirstAfter",
+        "StaleReading",
     );
 
-    // more than 60 s late
+    // a valid-looking update in another account of the same feed
     let d = price_update(
         env.feed_id,
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE + 61,
+        COMMIT_CLOSE,
         COMMIT_CLOSE - 1,
         VerificationLevel::Full,
     );
-    let k = put_price_update(&mut env, d);
+    let other = put_price_update_at(&mut env, anchor_lang::prelude::Pubkey::new_unique(), d);
     expect_err(
-        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
-        "OutsideOracleWindow",
+        sendx!(env, &payer, [ix_set_reference(&env, 0, other)]),
+        "WrongPriceAccount",
     );
 
     // confidence wider than 50 bps (0.6 % of price)
@@ -457,18 +493,229 @@ fn price_update_owned_by_someone_else_is_rejected() {
         COMMIT_CLOSE - 1,
         VerificationLevel::Full,
     );
-    let key = anchor_lang::prelude::Pubkey::new_unique();
-    put(
-        &mut env.svm,
-        key,
+    // right address, but written by some other program
+    let key = env.price_account;
+    for owner in [
         anchor_lang::prelude::Pubkey::new_unique(),
-        10_000_000,
-        data,
+        // the pre-upgrade receiver: its accounts retire with Pythnet and are refused
+        PYTH_RECEIVER_OLD.parse().expect("old receiver"),
+    ] {
+        put(&mut env.svm, key, owner, 10_000_000, data.clone());
+        expect_err(
+            sendx!(env, &payer, [ix_set_reference(&env, 0, key)]),
+            "AccountOwnedByWrongProgram",
+        );
+    }
+}
+
+// ---------------------------------------------------------------- rule O1
+
+/// The first valid submission fixes the reading; a later, more convenient value of the same
+/// account cannot replace it. What was chosen, when and by whom stays in the round.
+#[test]
+fn first_valid_submission_wins_and_is_recorded() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let other = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&other.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+
+    set_time(&mut env.svm, COMMIT_CLOSE + 7);
+    let upd = reference_update(&mut env); // 150.00, published at COMMIT_CLOSE
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("first submission");
+    let slot = env.svm.get_sysvar::<solana_clock::Clock>().slot;
+    let r = read_round(&env, 0).reference;
+    assert_eq!(
+        (
+            r.price,
+            r.publish_time,
+            r.posted_slot,
+            r.submitted_at,
+            r.submitted_slot,
+            r.submitter
+        ),
+        (
+            15_000_000_000,
+            COMMIT_CLOSE,
+            POSTED_SLOT,
+            COMMIT_CLOSE + 7,
+            slot,
+            payer.pubkey()
+        ),
+        "value, its publish time, its update tx slot, and the moment of choice are all stored"
     );
+
+    // the sponsor moves on, someone else would prefer the new value
+    set_time(&mut env.svm, COMMIT_CLOSE + 20);
+    let d = price_update(
+        env.feed_id,
+        14_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE + 19,
+        COMMIT_CLOSE + 18,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
+    let ix = ix_set_reference(&env, 0, k);
+    let ix = anchor_lang::solana_program::instruction::Instruction {
+        accounts: ix
+            .accounts
+            .into_iter()
+            .map(|mut m| {
+                if m.pubkey == payer.pubkey() {
+                    m.pubkey = other.pubkey();
+                }
+                m
+            })
+            .collect(),
+        ..ix
+    };
+    expect_err(sendx!(env, &other, [ix]), "RoundNotOpen");
+    assert_eq!(
+        read_round(&env, 0).reference.price,
+        15_000_000_000,
+        "unchanged"
+    );
+}
+
+/// A value from before T is admissible if it is not older than A at submission; one second
+/// older is not. That is the rule as decided, not "first update after T".
+#[test]
+fn reading_age_is_measured_at_submission() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, COMMIT_CLOSE + 10);
+    let d = price_update(
+        env.feed_id,
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE + 10 - MAX_AGE_SECS as i64 - 1,
+        COMMIT_CLOSE - 200,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
     expect_err(
-        sendx!(env, &payer, [ix_set_reference(&env, 0, key)]),
-        "AccountOwnedByWrongProgram",
+        sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+        "StaleReading",
     );
+    let d = price_update(
+        env.feed_id,
+        15_000_000_000,
+        100_000,
+        -8,
+        COMMIT_CLOSE + 10 - MAX_AGE_SECS as i64,
+        COMMIT_CLOSE - 200,
+        VerificationLevel::Full,
+    );
+    let k = put_price_update(&mut env, d);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, k)]).expect("exactly A old is still valid");
+    assert_eq!(
+        read_round(&env, 0).reference.publish_time,
+        COMMIT_CLOSE + 10 - MAX_AGE_SECS as i64
+    );
+}
+
+// ---------------------------------------------------------------- question kind MOVE
+
+/// "More than x % above or below": strict both ways, equality is No, exact (no rounding).
+#[test]
+fn move_question_counts_both_directions_and_equality_is_no() {
+    // reference 150.00000000, x = 2 % → Yes above 153.00, below 147.00
+    let cases: [(i64, bool, &str); 6] = [
+        (15_300_000_001, true, "just above +2 %"),
+        (15_300_000_000, false, "exactly +2 % is No"),
+        (15_000_000_000, false, "unchanged"),
+        (14_700_000_000, false, "exactly −2 % is No"),
+        (14_699_999_999, true, "just below −2 %"),
+        (13_000_000_000, true, "far below"),
+    ];
+    for (price, yes, why) in cases {
+        let mut env = setup_with(DAY0, observed::KIND_MOVE, 200);
+        let payer = env.payer.insecure_clone();
+        set_time(&mut env.svm, COMMIT_CLOSE + 5);
+        let upd = reference_update(&mut env);
+        sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+        let round = read_round(&env, 0);
+        assert_eq!(
+            (round.threshold_mantissa, round.threshold_low_mantissa),
+            (15_300_000_000, 14_700_000_000),
+            "display thresholds"
+        );
+        set_time(&mut env.svm, OUTCOME_TIME + 5);
+        let out = outcome_update(&mut env, price);
+        sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+        let want = if yes {
+            observed::Outcome::Yes
+        } else {
+            observed::Outcome::No
+        } as u8;
+        assert_eq!(read_round(&env, 0).outcome, want, "{why}");
+    }
+}
+
+/// Account sizes others depend on: the resolver filters Entry by `dataSize: 184`, and Round's
+/// size sets the season's rent. A change here must be a decision, not an accident.
+#[test]
+fn account_sizes_are_pinned() {
+    use anchor_lang::Space;
+    assert_eq!(
+        8 + observed::Entry::INIT_SPACE,
+        184,
+        "Entry (resolver dataSize filter)"
+    );
+    assert_eq!(
+        8 + observed::Round::INIT_SPACE,
+        472,
+        "Round (terms v3, two readings, reserve)"
+    );
+    assert_eq!(observed::Reading::INIT_SPACE, 84, "one reading");
+}
+
+type TermsEdit = Box<dyn Fn(&mut observed::RoundTerms)>;
+
+/// create_round refuses terms the program does not understand, even with a valid proof.
+#[test]
+fn create_round_refuses_unknown_or_unsafe_terms() {
+    // validate() runs before the Merkle check, so each case fails on its own rule
+    let cases: Vec<(TermsEdit, &str)> = vec![
+        (Box::new(|t| t.version = 2), "BadTermsVersion"),
+        (Box::new(|t| t.source_kind = 0), "UnsupportedSource"),
+        (Box::new(|t| t.kind = 7), "UnknownKind"),
+        (
+            Box::new(|t| {
+                t.kind = observed::KIND_MOVE;
+                t.offset_bps = 0
+            }),
+            "BadOffset",
+        ),
+        (
+            Box::new(|t| {
+                t.kind = observed::KIND_MOVE;
+                t.offset_bps = -100
+            }),
+            "BadOffset",
+        ),
+        (Box::new(|t| t.window_secs = 0), "BadWindowParams"),
+        (Box::new(|t| t.max_age_secs = 3_601), "BadWindowParams"),
+        (
+            Box::new(|t| t.outcome_time = t.commit_close + 60),
+            "BadWindows",
+        ),
+    ];
+    for (edit, needle) in cases {
+        let mut env = setup();
+        let payer = env.payer.insecure_clone();
+        let payer_pk = payer.pubkey();
+        let mut terms = terms_of(env.day0, 1, env.feed_id);
+        edit(&mut terms);
+        let th = terms.hash(SEASON, 1);
+        let (_, proof) = calendar(&th, 1);
+        let res = sendx!(env, &payer, [ix_create_round(&payer_pk, 1, terms, proof)]);
+        expect_err(res, needle);
+    }
 }
 
 // ---------------------------------------------------------------- resolve
@@ -494,19 +741,19 @@ fn resolve_twice_and_out_of_window_fails() {
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
 
     set_time(&mut env.svm, OUTCOME_TIME + 5);
-    let late = price_update(
+    let stale = price_update(
         env.feed_id,
         15_200_000_000,
         100_000,
         -8,
-        OUTCOME_TIME + 61,
-        OUTCOME_TIME - 1,
+        OUTCOME_TIME + 5 - MAX_AGE_SECS as i64 - 1,
+        OUTCOME_TIME - 100,
         VerificationLevel::Full,
     );
-    let k = put_price_update(&mut env, late);
+    let k = put_price_update(&mut env, stale);
     expect_err(
         sendx!(env, &payer, [ix_resolve(&env, 0, k)]),
-        "OutsideOracleWindow",
+        "StaleReading",
     );
 
     let out = outcome_update(&mut env, 15_200_000_000);
@@ -666,51 +913,53 @@ fn create_round_rejects_bad_windows() {
 
 // ---------------------------------------------------------------- real mainnet evidence
 
-/// The real, fully verified SOL/USD update from Spike 1 (mainnet bytes, posted on devnet):
-/// publish_time 2026-09-17 00:00:00 UTC, prev 23:59:59, price 98.57775490, conf 0.01822971.
+/// The real sponsored SOL/USD account of the upgraded stack, captured from mainnet on
+/// 19.09.2026 (tests/fixtures/pyth/real-sol-sponsored.json): owner rec2HH…, Full,
+/// price 113.53832042, publish_time 1_789_769_926, posted_slot 448_216_116.
 #[test]
-fn real_mainnet_price_update_is_accepted() {
-    const REAL_PUBLISH: i64 = 1_789_603_200;
-    let mut env = setup_day(REAL_PUBLISH - 24 * 3600); // outcome_time == that update's publish_time
+fn real_sponsored_account_is_accepted() {
+    const REAL_PUBLISH: i64 = 1_789_769_926;
+    // commit_close three seconds after that publish time; submit two seconds later (age 5 s)
+    let mut env = setup_day(REAL_PUBLISH + 3 - 12 * 3600);
     let payer = env.payer.insecure_clone();
-
-    set_time(&mut env.svm, REAL_PUBLISH - 12 * 3600 + 5);
-    let data = price_update(
-        env.feed_id,
-        9_857_775_490,
-        1_822_971,
-        -8,
-        REAL_PUBLISH - 12 * 3600,
-        REAL_PUBLISH - 12 * 3600 - 1,
-        VerificationLevel::Full,
-    );
-    let r = put_price_update(&mut env, data);
-    sendx!(env, &payer, [ix_set_reference(&env, 0, r)]).expect("set_reference");
-
     set_time(&mut env.svm, REAL_PUBLISH + 5);
-    let real = put_fixture_account(&mut env, "pyth/real-sol-outcome");
-    sendx!(env, &payer, [ix_resolve(&env, 0, real)]).expect("resolve with the real update");
-    let round = read_round(&env, 0);
+    let real = put_fixture_account(&mut env, "pyth/real-sol-sponsored");
     assert_eq!(
-        round.evidence_price, 9_857_775_490,
-        "price decoded from real bytes"
+        real, env.price_account,
+        "the fixture is the PDA [0u16, feed_id] under the upgraded push oracle"
     );
-    assert_eq!(round.evidence_publish_time, REAL_PUBLISH);
-    assert_eq!(round.evidence_prev_publish_time, REAL_PUBLISH - 1);
-    // 98.577… vs threshold 99.563… (98.577 × 1.01) → No
-    assert_eq!(round.outcome, observed::Outcome::No as u8);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, real)]).expect("set_reference with real bytes");
+    let r = read_round(&env, 0).reference;
+    assert_eq!(
+        (r.price, r.expo, r.publish_time, r.posted_slot),
+        (11_353_832_042, -8, REAL_PUBLISH, 448_216_116)
+    );
 }
 
-/// The real partially verified account from Spike 1 must be refused.
+/// Real pre-upgrade bytes (Spike 1, owner rec5E…) are refused by owner, even at the right
+/// address. The real partially verified bytes are refused by level.
 #[test]
-fn real_partially_verified_update_is_refused() {
+fn real_pre_upgrade_and_partial_updates_are_refused() {
     const REAL_PUBLISH: i64 = 1_789_603_200;
-    let mut env = setup_day(REAL_PUBLISH - 24 * 3600);
+    let mut env = setup_day(REAL_PUBLISH - 12 * 3600 - 3);
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, REAL_PUBLISH - 12 * 3600 + 5);
-    let partial = put_fixture_account(&mut env, "pyth/real-sol-partial");
+    set_time(&mut env.svm, REAL_PUBLISH + 2);
+    let key = env.price_account;
+
+    put_fixture_account_at(&mut env, "pyth/real-sol-outcome", key, None);
     expect_err(
-        sendx!(env, &payer, [ix_set_reference(&env, 0, partial)]),
+        sendx!(env, &payer, [ix_set_reference(&env, 0, key)]),
+        "AccountOwnedByWrongProgram",
+    );
+
+    put_fixture_account_at(
+        &mut env,
+        "pyth/real-sol-partial",
+        key,
+        Some(pyth_solana_receiver_sdk::ID),
+    );
+    expect_err(
+        sendx!(env, &payer, [ix_set_reference(&env, 0, key)]),
         "NotFullyVerified",
     );
 }
@@ -732,16 +981,69 @@ fn calendar_fixture_matches_program() {
     let rounds = v["rounds"].as_array().expect("rounds");
     assert_eq!(rounds.len(), 64, "season 1 has 64 leaves");
 
+    let terms_from = |r: &serde_json::Value| observed::RoundTerms {
+        version: r["version"].as_u64().expect("version") as u8,
+        kind: r["kind"].as_u64().expect("kind") as u8,
+        source_kind: r["sourceKind"].as_u64().expect("sourceKind") as u8,
+        feed_id: hex_to_32(r["feedId"].as_str().expect("feedId")),
+        price_account: r["priceAccount"]
+            .as_str()
+            .expect("priceAccount")
+            .parse()
+            .expect("b58"),
+        offset_bps: r["offsetBps"].as_i64().expect("offsetBps") as i32,
+        max_conf_bps: r["maxConfBps"].as_u64().expect("maxConfBps") as u16,
+        window_secs: r["windowSecs"].as_u64().expect("windowSecs") as u16,
+        max_age_secs: r["maxAgeSecs"].as_u64().expect("maxAgeSecs") as u16,
+        commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
+        commit_close: r["commitClose"].as_i64().expect("commitClose"),
+        outcome_time: r["outcomeTime"].as_i64().expect("outcomeTime"),
+    };
+    let btc = hex_to_32("e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43");
+
     for r in rounds {
         let round_id = r["roundId"].as_u64().expect("roundId") as u32;
-        let terms = observed::RoundTerms {
-            feed_id: hex_to_32(r["feedId"].as_str().expect("feedId")),
-            offset_bps: r["offsetBps"].as_i64().expect("offsetBps") as i32,
-            max_conf_bps: r["maxConfBps"].as_u64().expect("maxConfBps") as u16,
-            commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
-            commit_close: r["commitClose"].as_i64().expect("commitClose"),
-            outcome_time: r["outcomeTime"].as_i64().expect("outcomeTime"),
-        };
+        let terms = terms_from(r);
+        terms
+            .validate()
+            .expect("create_round would accept these terms");
+        // season-1 rules (DECISIONS 18./19.09.2026)
+        assert_eq!(terms.kind, observed::KIND_MOVE, "season 1 asks only 'move'");
+        assert_eq!(
+            (terms.window_secs, terms.max_age_secs),
+            (60, 60),
+            "W = A = 60 s"
+        );
+        assert!(
+            terms.offset_bps >= 100,
+            "threshold ≥ 1.0 % (4 × measurement spread)"
+        );
+        assert_eq!(
+            terms.price_account,
+            feed_account(&terms.feed_id),
+            "sponsored account"
+        );
+        assert_eq!(
+            terms.commit_open.rem_euclid(86_400),
+            16 * 3600,
+            "window opens 16:00 UTC"
+        );
+        assert_eq!(
+            terms.commit_close - terms.commit_open,
+            12 * 3600,
+            "closes 04:00 UTC"
+        );
+        assert_eq!(
+            terms.outcome_time - terms.commit_close,
+            12 * 3600,
+            "outcome 16:00 UTC"
+        );
+        // 1970-01-01 was a Thursday: (days + 4) % 7 gives 0 = Sunday … 6 = Saturday
+        let dow = (terms.outcome_time.div_euclid(86_400) + 4).rem_euclid(7);
+        assert!(
+            !(terms.feed_id == btc && (dow == 0 || dow == 6)),
+            "no BTC round is measured on a weekend (round {round_id})"
+        );
         let hash = terms.hash(season, round_id);
         assert_eq!(
             hash,
@@ -759,20 +1061,12 @@ fn calendar_fixture_matches_program() {
             observed::verify_leaf(&hash, round_id, &proof, &root),
             "proof does not verify for round {round_id}"
         );
-        // windows must satisfy what create_round enforces
-        assert!(terms.commit_open < terms.commit_close && terms.commit_close < terms.outcome_time);
         assert_eq!(terms.max_conf_bps, 50);
     }
 
     // a tampered rule must not verify under the published root
-    let mut tampered = observed::RoundTerms {
-        feed_id: hex_to_32(rounds[0]["feedId"].as_str().expect("feedId")),
-        offset_bps: 999,
-        max_conf_bps: 50,
-        commit_open: rounds[0]["commitOpen"].as_i64().expect("o"),
-        commit_close: rounds[0]["commitClose"].as_i64().expect("c"),
-        outcome_time: rounds[0]["outcomeTime"].as_i64().expect("t"),
-    };
+    let mut tampered = terms_from(&rounds[0]);
+    tampered.offset_bps = 999;
     let proof: Vec<[u8; 32]> = rounds[0]["proof"]
         .as_array()
         .expect("proof")

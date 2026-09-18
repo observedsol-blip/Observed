@@ -24,11 +24,13 @@ custom-panic = []
 anchor-lang = { version = "1.2.0", features = ["init-if-needed"] }
 anchor-spl = "1.2.0"
 spl-token-group-interface = "=0.7.2"
-pyth-solana-receiver-sdk = "2.0.0"
+# `pro-compatible`: owner check against the upgraded receiver rec2HH… (Pyth Core upgrade
+# 26.08.2026). The pre-upgrade accounts (rec5E…) are the ones retired with Pythnet.
+pyth-solana-receiver-sdk = { version = "2.0.0", features = ["pro-compatible"] }
 solana-sha256-hasher = "3"
 
 [dev-dependencies]
-pyth-solana-receiver-sdk = "2.0.0"
+pyth-solana-receiver-sdk = { version = "2.0.0", features = ["pro-compatible"] }
 pythnet-sdk = "3"
 litesvm = "0.16.0"
 solana-message = "4"

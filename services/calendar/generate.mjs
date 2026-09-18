@@ -1,15 +1,16 @@
 #!/usr/bin/env node
 // Deterministic calendar generator for one season. Writes files for review; touches no chain.
 //
-//   node services/calendar/generate.mjs --season 1 --start 2026-09-25 --leaves 64
+//   node services/calendar/generate.mjs --season 1 --start 2026-09-24 --leaves 64
 //
 // Output (both overwritten, never appended):
 //   tests/fixtures/calendar/season<N>.json   rules, terms_hash, merkle root and per-round proofs
 //   docs/generated/CALENDAR-season<N>.md     the table to paste into CALENDAR.md
 //
 // The same input always produces the same root. Verify with:
-//   node services/calendar/generate.mjs --season 1 --start 2026-09-25 --leaves 64 --check <root>
-// and with the Rust test `calendar_fixture_matches_program` (the program recomputes every hash).
+//   node services/calendar/generate.mjs --season 1 --start 2026-09-24 --leaves 64 --check <root>
+// and with the Rust test `calendar_fixture_matches_program` (the program recomputes every hash
+// and checks every season-1 rule, including that each price account is the sponsored PDA).
 import { createHash } from "node:crypto";
 import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -17,16 +18,27 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
-// ---- frozen generation rules (CALENDAR.md) ---------------------------------
-const FEEDS = [
-  { name: "SOL/USD", id: "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d" },
-  { name: "BTC/USD", id: "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43" },
-  { name: "ETH/USD", id: "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace" },
-];
-/** rotating offsets in basis points; + = "more than x% above", − = "more than x% below" */
-const OFFSETS_BPS = [100, -100, 150, -150, 50, -50, 200, -200];
+// ---- frozen generation rules (DECISIONS-2026-09-18, HANDOFF 19.09.2026) ------
+// Sponsored accounts in the upgraded Pyth stack: PDA [0u16 LE, feed_id] under the push oracle
+// pyt2F414BA6dPttK6RddPZUdHfapoBN24GL5wbrPCou (docs/sponsored-feeds.md). The Rust test derives
+// the PDA itself and compares.
+const FEEDS = {
+  SOL: { name: "SOL/USD", id: "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d", account: "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE" },
+  BTC: { name: "BTC/USD", id: "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43", account: "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5" },
+  ETH: { name: "ETH/USD", id: "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", account: "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH" },
+};
+/** "move more than x %, either way", measured 04:00 → 16:00 UTC on the outcome day.
+ *  Calibrated on the last 30 days to ~45–50 % Yes (docs/spikes/baserate.md, HANDOFF 19.09.);
+ *  never below 1.0 % = 4 × the measurement spread. BTC does not run on weekends. */
+const WEEKDAY = [["SOL", 170], ["BTC", 130], ["ETH", 120]];
+const WEEKEND = [["SOL", 110], ["ETH", 100]];
+const VERSION = 3;
+const KIND_MOVE = 1;
+const SOURCE_PRICE_ACCOUNT = 1;
 const MAX_CONF_BPS = 50;
-const TERMS_DOMAIN = Buffer.from("observed/terms/v2", "utf8");
+const WINDOW_SECS = 60; // W
+const MAX_AGE_SECS = 60; // A
+const TERMS_DOMAIN = Buffer.from("observed/terms/v3", "utf8");
 const LEAF_TAG = 0x00;
 const NODE_TAG = 0x01;
 const DEPTH = 6;
@@ -38,19 +50,32 @@ const u16 = (n) => { const b = Buffer.alloc(2); b.writeUInt16LE(n); return b; };
 const u32 = (n) => { const b = Buffer.alloc(4); b.writeUInt32LE(n); return b; };
 const i32 = (n) => { const b = Buffer.alloc(4); b.writeInt32LE(n); return b; };
 const i64 = (n) => { const b = Buffer.alloc(8); b.writeBigInt64LE(BigInt(n)); return b; };
+const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+function base58(s) {
+  let n = 0n;
+  for (const c of s) { const v = B58.indexOf(c); if (v < 0) throw new Error(`base58: ${s}`); n = n * 58n + BigInt(v); }
+  const hex = n.toString(16).padStart(64, "0");
+  const out = Buffer.from(hex, "hex");
+  if (out.length !== 32) throw new Error(`not a 32-byte key: ${s}`);
+  return out;
+}
 
-/** Byte layout from docs/01-PROGRAM.md §3 create_round (terms_hash v2). */
-function termsHash({ season, roundId, feedId, offsetBps, maxConfBps, commitOpen, commitClose, outcomeTime }) {
+/** Byte layout of RoundTerms::hash (programs/observed/src/lib.rs, terms_hash v3). */
+function termsHash(t) {
   return sha256(
     TERMS_DOMAIN,
-    u16(season),
-    u32(roundId),
-    Buffer.from(feedId, "hex"),
-    i32(offsetBps),
-    u16(maxConfBps),
-    i64(commitOpen),
-    i64(commitClose),
-    i64(outcomeTime),
+    u16(t.season),
+    u32(t.roundId),
+    Buffer.from([t.version, t.kind, t.sourceKind]),
+    Buffer.from(t.feedId, "hex"),
+    base58(t.priceAccount),
+    i32(t.offsetBps),
+    u16(t.maxConfBps),
+    u16(t.windowSecs),
+    u16(t.maxAgeSecs),
+    i64(t.commitOpen),
+    i64(t.commitClose),
+    i64(t.outcomeTime),
   );
 }
 
@@ -80,7 +105,7 @@ const arg = (name, fallback) => {
   return i === -1 ? fallback : process.argv[i + 1];
 };
 const season = Number(arg("season", 1));
-const startDay = arg("start", "2026-09-25"); // first commit day, 00:00 UTC
+const startDay = arg("start", "2026-09-24"); // day of the first commit window, which opens 16:00 UTC
 const leafCount = Number(arg("leaves", LEAVES));
 const firstRoundId = Number(arg("first-round", 0));
 const expectRoot = arg("check", null);
@@ -89,36 +114,44 @@ if (!/^\d{4}-\d{2}-\d{2}$/.test(startDay)) throw new Error("--start must be YYYY
 if (leafCount < 1 || leafCount > LEAVES) throw new Error("--leaves must be 1..64");
 
 // ---- build -----------------------------------------------------------------
-const startTs = Date.parse(`${startDay}T00:00:00Z`) / 1000;
+const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const startTs = Date.parse(`${startDay}T16:00:00Z`) / 1000;
 const rounds = [];
+let weekdayN = 0;
+let weekendN = 0;
 for (let i = 0; i < leafCount; i++) {
   const roundId = firstRoundId + i;
-  const commitOpen = startTs + i * 86_400;
-  const commitClose = commitOpen + 12 * 3600;
-  const outcomeTime = commitOpen + 24 * 3600;
-  const feed = FEEDS[i % FEEDS.length];
-  const offsetBps = OFFSETS_BPS[i % OFFSETS_BPS.length];
+  const commitOpen = startTs + i * 86_400; // 16:00 UTC
+  const commitClose = commitOpen + 12 * 3600; // 04:00 UTC next day = reference
+  const outcomeTime = commitClose + 12 * 3600; // 16:00 UTC that day = outcome
+  const measured = new Date(commitClose * 1000); // the day the move is measured on
+  const weekend = measured.getUTCDay() === 0 || measured.getUTCDay() === 6;
+  const [key, offsetBps] = weekend ? WEEKEND[weekendN++ % WEEKEND.length] : WEEKDAY[weekdayN++ % WEEKDAY.length];
+  const feed = FEEDS[key];
   const terms = {
     season,
     roundId,
+    version: VERSION,
+    kind: KIND_MOVE,
+    sourceKind: SOURCE_PRICE_ACCOUNT,
     feedId: feed.id,
+    priceAccount: feed.account,
     offsetBps,
     maxConfBps: MAX_CONF_BPS,
+    windowSecs: WINDOW_SECS,
+    maxAgeSecs: MAX_AGE_SECS,
     commitOpen,
     commitClose,
     outcomeTime,
   };
-  const hash = termsHash(terms);
   rounds.push({
     ...terms,
     feed: feed.name,
-    date: new Date(commitOpen * 1000).toISOString().slice(0, 10),
-    // the client builds the sentence; it is deliberately not part of the hash
-    question:
-      offsetBps > 0
-        ? `Will ${feed.name.split("/")[0]} be more than ${offsetBps / 100}% above its 12:00 UTC price at 00:00 UTC?`
-        : `Will ${feed.name.split("/")[0]} be more than ${Math.abs(offsetBps) / 100}% below its 12:00 UTC price at 00:00 UTC?`,
-    termsHash: hash.toString("hex"),
+    measuredDay: `${DAYS[measured.getUTCDay()]} ${measured.toISOString().slice(0, 10)}`,
+    // Informational only; the client builds the sentence from docs/03-SCREEN-MAP.md.
+    // "more than" is strict in the program: exactly x % is No.
+    question: `Will ${key} move more than ${offsetBps / 100}% up or down between 04:00 and 16:00 UTC on ${measured.toISOString().slice(0, 10)}?`,
+    termsHash: termsHash(terms).toString("hex"),
   });
 }
 
@@ -143,9 +176,17 @@ const out = {
   startDay,
   leafCount,
   firstRoundId,
-  maxConfBps: MAX_CONF_BPS,
-  feeds: FEEDS.map((f) => f.name),
-  offsetsBps: OFFSETS_BPS,
+  rules: {
+    version: VERSION,
+    kind: "move (KIND_MOVE = 1): |outcome/reference − 1| > x, strict",
+    source: "sponsored Pyth account, upgraded stack (SOURCE_PRICE_ACCOUNT = 1)",
+    windowSecs: WINDOW_SECS,
+    maxAgeSecs: MAX_AGE_SECS,
+    maxConfBps: MAX_CONF_BPS,
+    weekday: WEEKDAY.map(([k, x]) => `${k} ${x / 100}%`),
+    weekend: WEEKEND.map(([k, x]) => `${k} ${x / 100}%`),
+    times: "commit 16:00–04:00 UTC, reference 04:00, outcome 16:00, reveal 16:00–04:00 next day",
+  },
   merkleRoot: root,
   emptyLeaf: emptyLeaf.toString("hex"),
   lastOutcomeUtc: new Date(rounds[rounds.length - 1].outcomeTime * 1000).toISOString(),
@@ -160,21 +201,23 @@ const md = [
   `# Calendar season ${season} — generated, review before publishing`,
   "",
   `Generator: \`node services/calendar/generate.mjs --season ${season} --start ${startDay} --leaves ${leafCount}\``,
-  `Rules: feeds ${FEEDS.map((f) => f.name).join(", ")} rotating; offsets ${OFFSETS_BPS.join(", ")} bps rotating; max_conf_bps ${MAX_CONF_BPS}; commit 00:00–12:00 UTC, outcome 24:00 UTC.`,
+  `Rules: terms v${VERSION}; question kind "move", strict; source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}.`,
+  `Mon–Fri rotate ${WEEKDAY.map(([k, x]) => `${k} ${x / 100} %`).join(", ")}; Sat/Sun rotate ${WEEKEND.map(([k, x]) => `${k} ${x / 100} %`).join(", ")} (no BTC on weekends).`,
+  "Times (UTC): commit 16:00–04:00, reference 04:00, outcome 16:00, reveal 16:00–04:00 the next day.",
   `Unused leaves: sha256(0x00 || [0;32]) = ${out.emptyLeaf}`,
   "",
   `**Merkle root (= Config.calendar_root):** \`${root}\``,
   `**Last outcome:** ${out.lastOutcomeUtc}`,
   "",
-  "| round | date (UTC) | feed | offset_bps | max_conf_bps | terms_hash |",
+  "| round | measured on (UTC) | feed | more than ± | price account | terms_hash |",
   "|---|---|---|---|---|---|",
-  ...rounds.map((r) => `| ${r.roundId} | ${r.date} | ${r.feed} | ${r.offsetBps >= 0 ? "+" : ""}${r.offsetBps} | ${r.maxConfBps} | \`${r.termsHash}\` |`),
+  ...rounds.map((r) => `| ${r.roundId} | ${r.measuredDay} | ${r.feed} | ${r.offsetBps / 100} % | \`${r.priceAccount}\` | \`${r.termsHash}\` |`),
   "",
 ].join("\n");
 const mdPath = join(ROOT, `docs/generated/CALENDAR-season${season}.md`);
 writeFileSync(mdPath, md);
 
-console.log(`season ${season}: ${leafCount} rounds, ${startDay} → ${out.lastOutcomeUtc.slice(0, 10)}`);
+console.log(`season ${season}: ${leafCount} rounds, first window ${startDay} 16:00 UTC → last outcome ${out.lastOutcomeUtc}`);
 console.log(`merkle root: ${root}`);
 console.log(`wrote ${jsonPath}`);
 console.log(`wrote ${mdPath}`);

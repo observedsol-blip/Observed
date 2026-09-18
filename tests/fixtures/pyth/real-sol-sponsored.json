@@ -1,0 +1,17 @@
+{
+  "note": "Real mainnet account, captured 2026-09-19 from the upgraded Pyth stack (push oracle pyt2F4…, receiver rec2HH…), shard 0, SOL/USD. Read-only snapshot for tests; nothing was sent.",
+  "capturedAtSlot": 448216133,
+  "pubkey": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
+  "owner": "rec2HHDDnjLfj4kE7VyEtFA1HPGQLK33259532cRyHp",
+  "lamports": 1823520,
+  "data_base64": "IvEjY51+9M1bsRWwDdII6qyfKmvtWLaGyH3c9S5trfFYcCJDMhaezQHvDYtv2izrpB2hXUCV0do5Kg0vjtDGx7wPTPrIwoC1bWq6vaQCAAAAlhQhAAAAAAD4////xritagAAAADFuK1qAAAAABRTxaMCAAAACg4WAAAAAAA0PLcaAAAAAAA=",
+  "decoded": {
+    "level": "Full",
+    "price": "11353832042",
+    "conf": "2167958",
+    "expo": -8,
+    "publish_time": 1789769926,
+    "prev_publish_time": 1789769925,
+    "posted_slot": 448216116
+  }
+}

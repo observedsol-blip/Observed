@@ -22,8 +22,16 @@ use {
 };
 
 pub const TOKEN_2022: &str = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
-pub const PYTH_RECEIVER: &str = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ";
+/// Pre-upgrade receiver. Accounts it owns must be refused by the `pro-compatible` build.
+pub const PYTH_RECEIVER_OLD: &str = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ";
+/// Upgraded push oracle: sponsored feed accounts are PDAs [shard_le_u16, feed_id] under it.
+pub const PYTH_PUSH_ORACLE: &str = "pyt2F414BA6dPttK6RddPZUdHfapoBN24GL5wbrPCou";
 pub const GAME_ID: u64 = 1;
+/// W and A of rule O1 (DECISIONS 19.09.2026).
+pub const WINDOW_SECS: u16 = 60;
+pub const MAX_AGE_SECS: u16 = 60;
+/// posted_slot written into every synthetic update, so tests can check it is recorded.
+pub const POSTED_SLOT: u64 = 4_242;
 /// 2026-09-17 00:00:00 UTC — commit window of round 0 opens here.
 pub const DAY0: i64 = 1_789_603_200;
 pub const COMMIT_CLOSE: i64 = DAY0 + 12 * 3600;
@@ -43,6 +51,10 @@ pub struct Env {
     pub sgt_mint: Pubkey,
     pub sgt_token: Pubkey,
     pub feed_id: [u8; 32],
+    /// The sponsored account named in the terms; synthetic updates are written here.
+    pub price_account: Pubkey,
+    pub kind: u8,
+    pub offset_bps: i32,
     pub terms: RoundTerms,
     pub proof: Vec<[u8; 32]>,
     pub day0: i64,
@@ -94,13 +106,36 @@ fn node(l: &[u8; 32], r: &[u8; 32]) -> [u8; 32] {
     Sha256::digest([&[NODE_TAG][..], l, r].concat()).into()
 }
 
-/// Terms of round `round_id` in a season that starts at `day0` (one round per day).
+/// The sponsored feed account of `feed_id` in the upgraded stack (shard 0).
+pub fn feed_account(feed_id: &[u8; 32]) -> Pubkey {
+    let push = Pubkey::from_str(PYTH_PUSH_ORACLE).expect("push oracle id");
+    Pubkey::find_program_address(&[&0u16.to_le_bytes(), feed_id], &push).0
+}
+
+/// Terms of round `round_id` in a season that starts at `day0` (one round per day),
+/// kind ABOVE with +1 % — the geometry most tests use.
 pub fn terms_of(day0: i64, round_id: u32, feed_id: [u8; 32]) -> RoundTerms {
+    terms_rule(day0, round_id, feed_id, observed::KIND_ABOVE, OFFSET_BPS)
+}
+
+pub fn terms_rule(
+    day0: i64,
+    round_id: u32,
+    feed_id: [u8; 32],
+    kind: u8,
+    offset_bps: i32,
+) -> RoundTerms {
     let open = day0 + round_id as i64 * 86_400;
     RoundTerms {
+        version: observed::TERMS_VERSION,
+        kind,
+        source_kind: observed::SOURCE_PRICE_ACCOUNT,
         feed_id,
-        offset_bps: OFFSET_BPS,
+        price_account: feed_account(&feed_id),
+        offset_bps,
         max_conf_bps: MAX_CONF_BPS,
+        window_secs: WINDOW_SECS,
+        max_age_secs: MAX_AGE_SECS,
         commit_open: open,
         commit_close: open + 12 * 3600,
         outcome_time: open + 24 * 3600,
@@ -109,8 +144,17 @@ pub fn terms_of(day0: i64, round_id: u32, feed_id: [u8; 32]) -> RoundTerms {
 
 /// A full season: 64 leaves, one per round, with a proof for each.
 pub fn season_tree(day0: i64, feed_id: [u8; 32]) -> ([u8; 32], Vec<Vec<[u8; 32]>>) {
+    season_tree_rule(day0, feed_id, observed::KIND_ABOVE, OFFSET_BPS)
+}
+
+pub fn season_tree_rule(
+    day0: i64,
+    feed_id: [u8; 32],
+    kind: u8,
+    offset_bps: i32,
+) -> ([u8; 32], Vec<Vec<[u8; 32]>>) {
     let leaves: Vec<[u8; 32]> = (0..CALENDAR_LEAVES)
-        .map(|i| leaf(&terms_of(day0, i, feed_id).hash(SEASON, i)))
+        .map(|i| leaf(&terms_rule(day0, i, feed_id, kind, offset_bps).hash(SEASON, i)))
         .collect();
     let mut levels = vec![leaves];
     while levels[levels.len() - 1].len() > 1 {
@@ -172,17 +216,28 @@ pub fn price_update(
             ema_price: price,
             ema_conf: conf,
         },
-        posted_slot: 1,
+        posted_slot: POSTED_SLOT,
     };
     let mut data = PriceUpdateV2::DISCRIMINATOR.to_vec();
     acc.serialize(&mut data).expect("serialize");
     data
 }
 
+/// Write `data` into the round's named account, owned by the upgraded receiver — like the
+/// sponsor overwriting the one account again and again.
 pub fn put_price_update(env: &mut Env, data: Vec<u8>) -> Pubkey {
-    let key = Pubkey::new_unique();
-    let owner = Pubkey::from_str(PYTH_RECEIVER).expect("receiver id");
-    put(&mut env.svm, key, owner, 10_000_000, data);
+    let key = env.price_account;
+    put_price_update_at(env, key, data)
+}
+
+pub fn put_price_update_at(env: &mut Env, key: Pubkey, data: Vec<u8>) -> Pubkey {
+    put(
+        &mut env.svm,
+        key,
+        pyth_solana_receiver_sdk::ID,
+        10_000_000,
+        data,
+    );
     key
 }
 
@@ -452,6 +507,11 @@ pub fn setup() -> Env {
 
 /// Same, but the round's windows are built around `day0` (commit open at day0, outcome +24 h).
 pub fn setup_day(day0: i64) -> Env {
+    setup_with(day0, observed::KIND_ABOVE, OFFSET_BPS)
+}
+
+/// A season whose every round has question kind `kind` and offset `offset_bps`.
+pub fn setup_with(day0: i64, kind: u8, offset_bps: i32) -> Env {
     let mut svm = LiteSVM::new();
     let so = include_bytes!(concat!(
         env!("CARGO_TARGET_TMPDIR"),
@@ -477,8 +537,8 @@ pub fn setup_day(day0: i64) -> Env {
 
     let feed_id: [u8; 32] =
         hex_to_32("ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d");
-    let terms = terms_of(day0, 0, feed_id);
-    let (root, proofs) = season_tree(day0, feed_id);
+    let terms = terms_rule(day0, 0, feed_id, kind, offset_bps);
+    let (root, proofs) = season_tree_rule(day0, feed_id, kind, offset_bps);
     let proof = proofs[0].clone();
 
     let mut env = Env {
@@ -490,6 +550,9 @@ pub fn setup_day(day0: i64) -> Env {
         sgt_mint: mint_key,
         sgt_token: token_key,
         feed_id,
+        price_account: feed_account(&feed_id),
+        kind,
+        offset_bps,
         terms,
         proof: proof.clone(),
         day0,
@@ -565,4 +628,16 @@ pub fn put_fixture_account(env: &mut Env, name: &str) -> Pubkey {
     let (key, owner, lamports, data) = fixture(name);
     put(&mut env.svm, key, owner, lamports, data);
     key
+}
+
+/// Put a fixture's bytes at another address, optionally with another owner.
+pub fn put_fixture_account_at(env: &mut Env, name: &str, key: Pubkey, owner: Option<Pubkey>) {
+    let (_, fixture_owner, lamports, data) = fixture(name);
+    put(
+        &mut env.svm,
+        key,
+        owner.unwrap_or(fixture_owner),
+        lamports,
+        data,
+    );
 }

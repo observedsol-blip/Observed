@@ -35,14 +35,24 @@ compile_error!(
 pub const DEPLOY_AUTHORITY: Pubkey = pubkey!("11111111111111111111111111111111");
 
 pub const COMMIT_DOMAIN: &[u8] = b"observed/commit/v1";
-pub const TERMS_DOMAIN: &[u8] = b"observed/terms/v2";
+pub const TERMS_DOMAIN: &[u8] = b"observed/terms/v3";
+/// Layout version of `RoundTerms`; a calendar leaf with any other version is refused.
+pub const TERMS_VERSION: u8 = 3;
+/// Evidence source 1: the price account named in the round terms, read as it stands at the
+/// moment of the first valid submission (DECISIONS-2026-09-18, rule O1). Other sources get
+/// other numbers; the program refuses what it does not know.
+pub const SOURCE_PRICE_ACCOUNT: u8 = 1;
+/// Question kinds. ABOVE: outcome > reference × (1 + offset). MOVE: outcome is more than
+/// `offset` away from the reference in either direction. Both strict: equality is No.
+pub const KIND_ABOVE: u8 = 0;
+pub const KIND_MOVE: u8 = 1;
+/// Upper bound for the submission window W and the maximum age A.
+pub const MAX_WINDOW_SECS: u16 = 3_600;
 pub const LEAF_TAG: u8 = 0x00;
 pub const NODE_TAG: u8 = 0x01;
 /// One season is a fixed 64-leaf tree (depth 6), docs/01-PROGRAM.md §3.
 pub const CALENDAR_DEPTH: usize = 6;
 pub const CALENDAR_LEAVES: u32 = 64;
-/// Accepted oracle window after the reference (12:00) and the outcome (24:00).
-pub const ORACLE_WINDOW_SECS: i64 = 60;
 pub const REVEAL_WINDOW_SECS: i64 = 12 * 60 * 60;
 pub const RESOLVE_WINDOW_SECS: i64 = 24 * 60 * 60;
 pub const BUCKETS: usize = 21;
@@ -123,11 +133,7 @@ pub mod observed {
         require!(c.calendar_root != [0u8; 32], ObservedError::NoCalendar);
         require!(round_id == c.next_round_id, ObservedError::WrongRoundId);
         require!(round_id <= c.max_round_id, ObservedError::SeasonExhausted);
-        require!(
-            terms.commit_open < terms.commit_close && terms.commit_close < terms.outcome_time,
-            ObservedError::BadWindows
-        );
-        require!(terms.max_conf_bps > 0, ObservedError::BadConfidenceBound);
+        terms.validate()?;
 
         let terms_hash = terms.hash(c.season, round_id);
         let index = round_id
@@ -145,9 +151,15 @@ pub mod observed {
         let r = &mut ctx.accounts.round;
         r.round_id = round_id;
         r.terms_hash = terms_hash;
+        r.version = terms.version;
+        r.kind = terms.kind;
+        r.source_kind = terms.source_kind;
         r.feed_id = terms.feed_id;
+        r.price_account = terms.price_account;
         r.offset_bps = terms.offset_bps;
         r.max_conf_bps = terms.max_conf_bps;
+        r.window_secs = terms.window_secs;
+        r.max_age_secs = terms.max_age_secs;
         r.commit_open = terms.commit_open;
         r.commit_close = terms.commit_close;
         r.outcome_time = terms.outcome_time;
@@ -259,84 +271,67 @@ pub mod observed {
         Ok(())
     }
 
-    /// Permissionless: the first valid Pyth update after commit close (12:00 UTC) fixes the
-    /// reference price, and with it the threshold. Nobody knows it while sealing.
+    /// Permissionless. The first valid submission in [commit_close, commit_close + W] fixes the
+    /// reference: whatever the named price account holds at that moment, at most A seconds old.
+    /// The choice of moment is not prevented, it is recorded — slot, time, submitter and the
+    /// update's own posted slot stay in the round for anyone to check against the ledger.
     pub fn set_reference(ctx: Context<SetReference>) -> Result<()> {
-        let now = Clock::get()?.unix_timestamp;
+        let clock = Clock::get()?;
         let round = &mut ctx.accounts.round;
         require!(
             round.status == RoundStatus::Open as u8,
             ObservedError::RoundNotOpen
         );
-        require!(now >= round.commit_close, ObservedError::TooEarly);
-        require!(now < round.resolve_deadline, ObservedError::TooLate);
-
-        let m = accept_update(
+        let reading = accept_reading(
             &ctx.accounts.price_update,
-            &round.feed_id,
+            round,
             round.commit_close,
-            round.max_conf_bps,
+            &clock,
+            ctx.accounts.referencer.key(),
         )?;
 
-        // threshold = ref_price * (10_000 + offset_bps) / 10_000, same exponent, truncated to zero
-        let factor = 10_000i128
-            .checked_add(round.offset_bps as i128)
-            .ok_or(ObservedError::MathOverflow)?;
-        require!(factor > 0, ObservedError::BadOffset);
-        let threshold = (m.price as i128)
-            .checked_mul(factor)
-            .ok_or(ObservedError::MathOverflow)?
-            .checked_div(10_000)
-            .ok_or(ObservedError::MathOverflow)?;
-        round.threshold_mantissa =
-            i64::try_from(threshold).map_err(|_| ObservedError::MathOverflow)?;
-
-        round.ref_price = m.price;
-        round.ref_expo = m.exponent;
-        round.ref_conf = m.conf;
-        round.ref_publish_time = m.publish_time;
-        round.ref_prev_publish_time = m.prev_publish_time;
-        round.referencer = ctx.accounts.referencer.key();
+        // Display only: the outcome is decided by exact cross-multiplication in `resolve`.
+        // upper = ref × (10 000 + offset) / 10 000, lower = ref × (10 000 − offset) / 10 000
+        let upper = scaled_threshold(reading.price, round.offset_bps)?;
+        round.threshold_mantissa = upper;
+        round.threshold_low_mantissa = if round.kind == KIND_MOVE {
+            scaled_threshold(
+                reading.price,
+                round
+                    .offset_bps
+                    .checked_neg()
+                    .ok_or(ObservedError::MathOverflow)?,
+            )?
+        } else {
+            0
+        };
+        round.reference = reading;
         round.status = RoundStatus::Referenced as u8;
         Ok(())
     }
 
-    /// Permissionless: the first valid Pyth update after the outcome time (24:00 UTC) decides.
-    /// Equality resolves No.
+    /// Permissionless. Same rule as the reference, at the outcome time. Equality resolves No.
     pub fn resolve(ctx: Context<Resolve>) -> Result<()> {
-        let now = Clock::get()?.unix_timestamp;
+        let clock = Clock::get()?;
         let round = &mut ctx.accounts.round;
         require!(
             round.status == RoundStatus::Referenced as u8,
             ObservedError::NoReference
         );
-        require!(now >= round.outcome_time, ObservedError::TooEarly);
-        require!(now < round.resolve_deadline, ObservedError::TooLate);
-
-        let m = accept_update(
+        let reading = accept_reading(
             &ctx.accounts.price_update,
-            &round.feed_id,
+            round,
             round.outcome_time,
-            round.max_conf_bps,
+            &clock,
+            ctx.accounts.resolver.key(),
         )?;
-
-        let (price, threshold) = normalize(
-            m.price,
-            m.exponent,
-            round.threshold_mantissa,
-            round.ref_expo,
-        )?;
-        round.outcome = if price > threshold {
+        let yes = decide(round, &reading)?;
+        round.outcome = if yes {
             Outcome::Yes as u8
         } else {
             Outcome::No as u8
         };
-        round.evidence_price = m.price;
-        round.evidence_conf = m.conf;
-        round.evidence_expo = m.exponent;
-        round.evidence_publish_time = m.publish_time;
-        round.evidence_prev_publish_time = m.prev_publish_time;
-        round.resolver = ctx.accounts.resolver.key();
+        round.evidence = reading;
         round.status = RoundStatus::Resolved as u8;
         Ok(())
     }
@@ -382,11 +377,12 @@ pub mod observed {
         Ok(())
     }
 
-    /// Permissionless: no valid evidence in time → NO_RESOLVE. Nobody is scored.
+    /// Permissionless: no valid reading in its window → NO_RESOLVE. Nobody is scored.
+    /// Possible as soon as a missing reading can no longer arrive (window closed), not only
+    /// at the deadline, so the round shows its state the same day.
     pub fn cancel_round(ctx: Context<CancelRound>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let round = &mut ctx.accounts.round;
-        require!(now >= round.resolve_deadline, ObservedError::TooEarly);
         require!(
             round.status != RoundStatus::Resolved as u8,
             ObservedError::AlreadyResolved
@@ -394,6 +390,23 @@ pub mod observed {
         require!(
             round.status != RoundStatus::Cancelled as u8,
             ObservedError::AlreadyCancelled
+        );
+        let w = i64::from(round.window_secs);
+        let reference_missed = round.status == RoundStatus::Open as u8
+            && now
+                > round
+                    .commit_close
+                    .checked_add(w)
+                    .ok_or(ObservedError::MathOverflow)?;
+        let outcome_missed = round.status == RoundStatus::Referenced as u8
+            && now
+                > round
+                    .outcome_time
+                    .checked_add(w)
+                    .ok_or(ObservedError::MathOverflow)?;
+        require!(
+            reference_missed || outcome_missed || now >= round.resolve_deadline,
+            ObservedError::TooEarly
         );
         round.status = RoundStatus::Cancelled as u8;
         Ok(())
@@ -487,25 +500,34 @@ pub fn brier_score_bps(p_bps: u16, yes: bool) -> Result<u16> {
     u16::try_from(score).map_err(|_| ObservedError::MathOverflow.into())
 }
 
-/// The accepted price message for time `t`: the first update at or after `t`, fully verified.
-fn accept_update(
+/// Rule O1 (DECISIONS-2026-09-18/19): a submission at `now` is valid for timestamp `t` if
+/// `t ≤ now ≤ t + W`, the account is the one named in the terms (checked by the account
+/// constraint), the update is fully verified, carries the round's feed, is at most A seconds
+/// old at `now`, has a positive price and a confidence within the bound. The first valid
+/// submission wins because it changes the round status; every later one fails on status.
+fn accept_reading(
     update: &Account<PriceUpdateV2>,
-    feed_id: &[u8; 32],
+    round: &Round,
     t: i64,
-    max_conf_bps: u16,
-) -> Result<AcceptedUpdate> {
+    clock: &Clock,
+    submitter: Pubkey,
+) -> Result<Reading> {
+    let now = clock.unix_timestamp;
+    require!(now >= t, ObservedError::TooEarly);
+    let last = t
+        .checked_add(i64::from(round.window_secs))
+        .ok_or(ObservedError::MathOverflow)?;
+    require!(now <= last, ObservedError::OutsideSubmissionWindow);
     require!(
         update.verification_level == VerificationLevel::Full,
         ObservedError::NotFullyVerified
     );
     let m = &update.price_message;
-    require!(&m.feed_id == feed_id, ObservedError::WrongFeed);
-    require!(m.prev_publish_time < t, ObservedError::NotFirstAfter);
-    require!(t <= m.publish_time, ObservedError::BeforeWindow);
-    let latest = t
-        .checked_add(ORACLE_WINDOW_SECS)
+    require!(m.feed_id == round.feed_id, ObservedError::WrongFeed);
+    let oldest = now
+        .checked_sub(i64::from(round.max_age_secs))
         .ok_or(ObservedError::MathOverflow)?;
-    require!(m.publish_time <= latest, ObservedError::OutsideOracleWindow);
+    require!(m.publish_time >= oldest, ObservedError::StaleReading);
     require!(m.price > 0, ObservedError::NonPositivePrice);
 
     let price = u128::try_from(m.price).map_err(|_| ObservedError::MathOverflow)?;
@@ -515,24 +537,65 @@ fn accept_update(
         .checked_div(price)
         .ok_or(ObservedError::MathOverflow)?;
     require!(
-        conf_bps <= u128::from(max_conf_bps),
+        conf_bps <= u128::from(round.max_conf_bps),
         ObservedError::ConfidenceTooWide
     );
-    Ok(AcceptedUpdate {
+    Ok(Reading {
         price: m.price,
         conf: m.conf,
-        exponent: m.exponent,
+        expo: m.exponent,
         publish_time: m.publish_time,
-        prev_publish_time: m.prev_publish_time,
+        posted_slot: update.posted_slot,
+        submitted_slot: clock.slot,
+        submitted_at: now,
+        submitter,
     })
 }
 
-pub struct AcceptedUpdate {
-    pub price: i64,
-    pub conf: u64,
-    pub exponent: i32,
-    pub publish_time: i64,
-    pub prev_publish_time: i64,
+/// Exact decision, no rounding: both prices on the smaller exponent, then
+/// ABOVE: out · 10 000 > ref · (10 000 + x); MOVE: out · 10 000 > ref · (10 000 + x) or
+/// out · 10 000 < ref · (10 000 − x). Strict both ways, so equality is No.
+fn decide(round: &Round, outcome: &Reading) -> Result<bool> {
+    let (out, reference) = normalize(
+        outcome.price,
+        outcome.expo,
+        round.reference.price,
+        round.reference.expo,
+    )?;
+    let lhs = out.checked_mul(10_000).ok_or(ObservedError::MathOverflow)?;
+    let x = i128::from(round.offset_bps);
+    let up = reference
+        .checked_mul(
+            10_000i128
+                .checked_add(x)
+                .ok_or(ObservedError::MathOverflow)?,
+        )
+        .ok_or(ObservedError::MathOverflow)?;
+    if round.kind == KIND_ABOVE {
+        return Ok(lhs > up);
+    }
+    let down = reference
+        .checked_mul(
+            10_000i128
+                .checked_sub(x)
+                .ok_or(ObservedError::MathOverflow)?,
+        )
+        .ok_or(ObservedError::MathOverflow)?;
+    Ok(lhs > up || lhs < down)
+}
+
+/// ref × (10 000 + offset) / 10 000 in the reference's exponent, truncated toward zero.
+fn scaled_threshold(price: i64, offset_bps: i32) -> Result<i64> {
+    let factor = 10_000i128
+        .checked_add(i128::from(offset_bps))
+        .ok_or(ObservedError::MathOverflow)?;
+    require!(factor > 0, ObservedError::BadOffset);
+    let t = i128::from(price)
+        .checked_mul(factor)
+        .ok_or(ObservedError::MathOverflow)?
+        .checked_div(10_000)
+        .ok_or(ObservedError::MathOverflow)?;
+    i64::try_from(t).map_err(|_| ObservedError::MathOverflow.into())
 }
 
 /// Bring two mantissas to the smaller (more precise) exponent, checked. Never truncates.
@@ -575,31 +638,93 @@ pub fn verify_leaf(terms_hash: &[u8; 32], index: u32, proof: &[[u8; 32]], root: 
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
 pub struct RoundTerms {
+    pub version: u8,
+    pub kind: u8,
+    pub source_kind: u8,
     pub feed_id: [u8; 32],
+    /// The one account a reading may come from (for Pyth: the sponsored feed account).
+    pub price_account: Pubkey,
     pub offset_bps: i32,
     pub max_conf_bps: u16,
+    /// W: submissions are valid in [t, t + window_secs].
+    pub window_secs: u16,
+    /// A: the reading may be at most this old at the moment of submission.
+    pub max_age_secs: u16,
     pub commit_open: i64,
     pub commit_close: i64,
     pub outcome_time: i64,
 }
 
 impl RoundTerms {
-    /// Canonical `terms_hash` (docs/01-PROGRAM.md §3 create_round), v2: rule only, no threshold,
-    /// no question text.
+    /// Canonical `terms_hash` (docs/01-PROGRAM.md §3 create_round), v3: rule only, no threshold,
+    /// no question text. Every field is in it, so nothing about a round is decided later.
     pub fn hash(&self, season: u16, round_id: u32) -> [u8; 32] {
         hashv(&[
             TERMS_DOMAIN,
             &season.to_le_bytes(),
             &round_id.to_le_bytes(),
+            &[self.version, self.kind, self.source_kind],
             &self.feed_id,
+            self.price_account.as_ref(),
             &self.offset_bps.to_le_bytes(),
             &self.max_conf_bps.to_le_bytes(),
+            &self.window_secs.to_le_bytes(),
+            &self.max_age_secs.to_le_bytes(),
             &self.commit_open.to_le_bytes(),
             &self.commit_close.to_le_bytes(),
             &self.outcome_time.to_le_bytes(),
         ])
         .to_bytes()
     }
+
+    /// What `create_round` enforces beyond the Merkle proof.
+    pub fn validate(&self) -> Result<()> {
+        require!(
+            self.version == TERMS_VERSION,
+            ObservedError::BadTermsVersion
+        );
+        require!(
+            self.source_kind == SOURCE_PRICE_ACCOUNT,
+            ObservedError::UnsupportedSource
+        );
+        match self.kind {
+            KIND_ABOVE => require!(self.offset_bps > -10_000, ObservedError::BadOffset),
+            KIND_MOVE => require!(
+                self.offset_bps > 0 && self.offset_bps < 10_000,
+                ObservedError::BadOffset
+            ),
+            _ => return err!(ObservedError::UnknownKind),
+        }
+        require!(self.max_conf_bps > 0, ObservedError::BadConfidenceBound);
+        require!(
+            (1..=MAX_WINDOW_SECS).contains(&self.window_secs)
+                && (1..=MAX_WINDOW_SECS).contains(&self.max_age_secs),
+            ObservedError::BadWindowParams
+        );
+        let reference_window_end = self
+            .commit_close
+            .checked_add(i64::from(self.window_secs))
+            .ok_or(ObservedError::MathOverflow)?;
+        require!(
+            self.commit_open < self.commit_close && reference_window_end < self.outcome_time,
+            ObservedError::BadWindows
+        );
+        Ok(())
+    }
+}
+
+/// One accepted reading, kept for anyone to check against the ledger: `posted_slot` names the
+/// update transaction, `submitted_slot`/`submitted_at` the moment it was chosen.
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Default, InitSpace)]
+pub struct Reading {
+    pub price: i64,
+    pub conf: u64,
+    pub expo: i32,
+    pub publish_time: i64,
+    pub posted_slot: u64,
+    pub submitted_slot: u64,
+    pub submitted_at: i64,
+    pub submitter: Pubkey,
 }
 
 #[repr(u8)]
@@ -639,9 +764,15 @@ pub struct Config {
 pub struct Round {
     pub round_id: u32,
     pub terms_hash: [u8; 32],
+    pub version: u8,
+    pub kind: u8,
+    pub source_kind: u8,
     pub feed_id: [u8; 32],
+    pub price_account: Pubkey,
     pub offset_bps: i32,
     pub max_conf_bps: u16,
+    pub window_secs: u16,
+    pub max_age_secs: u16,
     pub commit_open: i64,
     pub commit_close: i64,
     pub outcome_time: i64,
@@ -649,22 +780,17 @@ pub struct Round {
     pub resolve_deadline: i64,
     pub status: u8,
     pub outcome: u8,
-    pub ref_price: i64,
-    pub ref_expo: i32,
-    pub ref_conf: u64,
-    pub ref_publish_time: i64,
-    pub ref_prev_publish_time: i64,
+    pub reference: Reading,
+    pub evidence: Reading,
+    /// Display only (reference exponent, truncated): ref × (1 + offset).
     pub threshold_mantissa: i64,
-    pub referencer: Pubkey,
-    pub evidence_price: i64,
-    pub evidence_conf: u64,
-    pub evidence_expo: i32,
-    pub evidence_publish_time: i64,
-    pub evidence_prev_publish_time: i64,
-    pub resolver: Pubkey,
+    /// Display only, MOVE rounds: ref × (1 − offset). 0 otherwise.
+    pub threshold_low_mantissa: i64,
     pub commit_count: u32,
     pub reveal_count: u32,
     pub histogram: [u32; BUCKETS],
+    /// Room for later fields without breaking old rounds (Zielbild: proof interface).
+    pub reserved: [u8; 32],
     pub bump: u8,
 }
 
@@ -840,7 +966,9 @@ pub struct SetReference<'info> {
         bump = round.bump,
     )]
     pub round: Account<'info, Round>,
-    /// Owner (Pyth receiver) and discriminator are checked by `Account`.
+    /// Owner (Pyth receiver, `pro-compatible` build) and discriminator are checked by
+    /// `Account`; the address is fixed by the round terms.
+    #[account(address = round.price_account @ ObservedError::WrongPriceAccount)]
     pub price_update: Account<'info, PriceUpdateV2>,
 }
 
@@ -858,6 +986,7 @@ pub struct Resolve<'info> {
         bump = round.bump,
     )]
     pub round: Account<'info, Round>,
+    #[account(address = round.price_account @ ObservedError::WrongPriceAccount)]
     pub price_update: Account<'info, PriceUpdateV2>,
 }
 
@@ -983,8 +1112,8 @@ pub enum ObservedError {
     CommitmentMismatch,
     #[msg("too early")]
     TooEarly,
-    #[msg("too late")]
-    TooLate,
+    #[msg("submission window for this reading is closed")]
+    OutsideSubmissionWindow,
     #[msg("round has no reference yet")]
     NoReference,
     #[msg("round is already resolved")]
@@ -1003,12 +1132,18 @@ pub enum ObservedError {
     NotFullyVerified,
     #[msg("feed id does not match")]
     WrongFeed,
-    #[msg("not the first update after the timestamp")]
-    NotFirstAfter,
-    #[msg("publish_time is before the window")]
-    BeforeWindow,
-    #[msg("publish_time is more than 60 s after the timestamp")]
-    OutsideOracleWindow,
+    #[msg("reading is older than the round's maximum age")]
+    StaleReading,
+    #[msg("price account is not the one named in the round terms")]
+    WrongPriceAccount,
+    #[msg("terms version is not supported")]
+    BadTermsVersion,
+    #[msg("evidence source is not supported")]
+    UnsupportedSource,
+    #[msg("unknown question kind")]
+    UnknownKind,
+    #[msg("window and maximum age must be 1..=3600 s")]
+    BadWindowParams,
     #[msg("price must be > 0")]
     NonPositivePrice,
     #[msg("confidence interval too wide")]
