@@ -1033,3 +1033,107 @@ fn entry_layout_fixture() {
     assert!(entry.revealed && entry.scored && !entry.scored_as_missing);
     assert_eq!(entry.p_bps, 6_500);
 }
+
+// ---------------------------------------------------------------- foreign devices (judge path)
+// The app will run on Seekers whose state we do not know. These are the program-side facts the
+// client has to be built around; the client-side handling is specified in
+// docs/judge-path-acceptance.md.
+
+/// Moves the SGT to another wallet the way Solana Mobile does it: same mint, token account now
+/// owned by the new wallet (the old account keeps 0, modelled here by re-owning the one account).
+fn migrate_sgt(env: &mut Env, new_owner: &anchor_lang::prelude::Pubkey) {
+    let mut acc = env
+        .svm
+        .get_account(&env.sgt_token)
+        .expect("sgt token account");
+    acc.data[32..64].copy_from_slice(new_owner.as_ref());
+    env.svm
+        .set_account(env.sgt_token, acc)
+        .expect("set_account");
+}
+
+/// Sealed with wallet A, SGT migrates to wallet B before the reveal: the answer still belongs to
+/// A (Spec §4, "The answer belongs to the wallet that sealed it"). B cannot reveal it, A can,
+/// without holding the token any more. The client must therefore reveal with the wallet stored
+/// in the seal record, not with whatever account the wallet app offers today.
+#[test]
+fn migration_between_seal_and_reveal() {
+    let mut env = setup();
+    let wallet_a = env.player.insecure_clone();
+    sendx!(
+        env,
+        &wallet_a,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("seal with A");
+
+    let wallet_b = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&wallet_b.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+    migrate_sgt(&mut env, &wallet_b.pubkey());
+
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let mut by_b = ix_reveal(&env, 0, 4_000, SALT);
+    by_b.accounts[0].pubkey = wallet_b.pubkey();
+    expect_err(sendx!(env, &wallet_b, [by_b]), "WrongBeneficiary");
+
+    sendx!(env, &wallet_a, [ix_reveal(&env, 0, 4_000, SALT)]).expect("A reveals without the token");
+    assert!(read_entry(&env, 0).expect("entry").revealed);
+}
+
+/// After a migration the same device keeps its history: the next seal by the new wallet lands
+/// on the same Player account (keyed by mint), and a second seal for a round already sealed by
+/// the old wallet is refused.
+#[test]
+fn migrated_device_keeps_one_history_and_one_entry_per_round() {
+    let mut env = setup();
+    let wallet_a = env.player.insecure_clone();
+    sendx!(
+        env,
+        &wallet_a,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("seal with A");
+
+    let wallet_b = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&wallet_b.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+    migrate_sgt(&mut env, &wallet_b.pubkey());
+
+    let mut again = ix_commit(&env, 0, [9u8; 32]);
+    again.accounts[0].pubkey = wallet_b.pubkey();
+    expect_err(sendx!(env, &wallet_b, [again]), "already in use");
+
+    // next round: B seals, and it is still the same Player record
+    let payer = env.payer.insecure_clone();
+    let payer_pk = payer.pubkey();
+    let terms1 = terms_of(env.day0, 1, env.feed_id);
+    let proof1 = env.proofs[1].clone();
+    sendx!(env, &payer, [ix_create_round(&payer_pk, 1, terms1, proof1)]).expect("create round 1");
+    set_time(&mut env.svm, env.day0 + 86_400 + 60);
+    let mut seal_b = ix_commit(&env, 1, [7u8; 32]);
+    seal_b.accounts[0].pubkey = wallet_b.pubkey();
+    sendx!(env, &wallet_b, [seal_b]).expect("B seals round 1");
+    assert_eq!(
+        read_player(&env).commits,
+        2,
+        "one device, one history across wallets"
+    );
+}
+
+/// A wallet that does not hold the SGT cannot seal, whichever token account it points at:
+/// its own account does not exist, and the real SGT account is owned by someone else.
+/// The client must detect this BEFORE the wallet prompt and say which wallet holds the token.
+#[test]
+fn wallet_without_the_sgt_cannot_seal() {
+    let mut env = setup();
+    let other = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&other.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+    let mut ix = ix_commit(&env, 0, [1u8; 32]);
+    ix.accounts[0].pubkey = other.pubkey();
+    expect_err(sendx!(env, &other, [ix]), "ConstraintTokenOwner");
+}
