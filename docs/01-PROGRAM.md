@@ -21,7 +21,9 @@ Leitet sich aus `00-SPEC.md` ab. Alles, was hier steht, ist Umsetzung der Spec; 
 
 **Config**: `version u8`, `calendar_authority Pubkey`, `pause_authority Pubkey`, `paused bool`, `next_round_id u32`, `season u16`, `calendar_root [u8;32]`, `first_round_id u32`, `max_round_id u32`, `bump`. (Upgrade-Autorität ist keine Config-Größe; sie ist die Programm-Autorität und wird als solche angezeigt.)
 
-**Round**: `round_id u32`, `terms_hash [u8;32]` (Hash der maschinenlesbaren Bedingungen), `feed_id [u8;32]`, `offset_bps i32` (Schwelle = Referenz × (1 + offset/10 000); kann negativ sein), `max_conf_bps u16`, `commit_open i64`, `commit_close i64`, `outcome_time i64` (T), `reveal_close i64`, `resolve_deadline i64` (T+86 400), `status u8` {Open, Closed, Referenced, Resolved, Cancelled}, `outcome u8` {Unset, Yes, No}, `ref_price i64`, `ref_expo i32`, `ref_conf u64`, `ref_publish_time i64`, `ref_prev_publish_time i64`, `threshold_mantissa i64` (berechnet, gleicher Exponent wie ref), `referencer Pubkey`, `evidence_price i64`, `evidence_conf u64`, `evidence_publish_time i64`, `evidence_prev_publish_time i64`, `resolver Pubkey`, `commit_count u32`, `reveal_count u32`, `histogram [u32;21]`, `bump`. Kein Fragetext on-chain — der Client erzeugt ihn aus Regel und Zahlen.
+**Round** (472 B inkl. Diskriminator, im Test `account_sizes_are_pinned` festgenagelt): `round_id u32`, `terms_hash [u8;32]`, `version u8`, `kind u8` {0 ABOVE, 1 MOVE}, `source_kind u8` {1 = Preiskonto}, `feed_id [u8;32]`, `price_account Pubkey` (das eine Konto, aus dem gelesen werden darf), `offset_bps i32`, `max_conf_bps u16`, `window_secs u16` (W), `max_age_secs u16` (A), `commit_open i64`, `commit_close i64`, `outcome_time i64` (T), `reveal_close i64`, `resolve_deadline i64` (T+86 400), `status u8` {Open, Closed, Referenced, Resolved, Cancelled}, `outcome u8` {Unset, Yes, No}, `reference Reading`, `evidence Reading`, `threshold_mantissa i64` und `threshold_low_mantissa i64` (nur Anzeige; entschieden wird exakt, siehe `resolve`), `commit_count u32`, `reveal_count u32`, `histogram [u32;21]`, `reserved [u8;32]`, `bump`. Kein Fragetext on-chain — der Client erzeugt ihn aus Regel und Zahlen.
+
+**Reading** (84 B, generisch statt Pyth-Namen): `price i64`, `conf u64`, `expo i32`, `publish_time i64`, `posted_slot u64` (Slot der Update-Transaktion — verknüpft den Wert mit genau einer Transaktion im Ledger), `submitted_slot u64`, `submitted_at i64` (Clock-Zeit der Einreichung), `submitter Pubkey`. Damit ist die Auswahl nicht verhindert, aber dauerhaft sichtbar: Aus dem Ledger lässt sich die Menge der zulässigen Werte rekonstruieren und neben den gewählten legen (HANDOFF 19.09.).
 
 **Entry**: `round Pubkey`, `sgt_mint Pubkey`, `beneficiary Pubkey`, `rent_refund_to Pubkey`, `commitment [u8;32]`, `committed_at i64`, `revealed bool`, `p_bps u16`, `scored bool`, `scored_as_missing bool`, `score_bps u16`, `bump`.
 
@@ -38,17 +40,17 @@ Legt `Config` an. Der Payer muss der Konstanten `DEPLOY_AUTHORITY` entsprechen, 
 - Zulässig nur wenn `calendar_root == [0;32]` (erste Saison) **oder** `next_round_id > max_round_id` (vorherige Saison vollständig). `1 ≤ leaf_count ≤ 64`, sonst Fehler (kein Unterlauf bei `leaf_count − 1`). Setzt `season`, `calendar_root`, `first_round_id = next_round_id`, `max_round_id = first_round_id + leaf_count − 1` (checked).
 
 ### `create_round(round_id, terms, merkle_proof)` — **permissionless** (jeder darf aufrufen, Payer zahlt die Round-Miete)
-- Prüft `round_id == next_round_id ≤ max_round_id`, `commit_open < commit_close < outcome_time`, `reveal_close = outcome_time + 12 h`, `resolve_deadline = outcome_time + 24 h`.
-- **`terms_hash` kanonisch**, Byte für Byte: `sha256("observed/terms/v2" ‖ season_u16_le ‖ round_id_u32_le ‖ feed_id[32] ‖ offset_bps_i32_le ‖ max_conf_bps_u16_le ‖ commit_open_i64_le ‖ commit_close_i64_le ‖ outcome_time_i64_le)` — ohne Schwelle und ohne Text.
+- Prüft `round_id == next_round_id ≤ max_round_id`, dann `RoundTerms::validate`: `version == 3`, `source_kind == 1`, `kind` ∈ {ABOVE, MOVE} (ABOVE: `offset_bps > −10 000`; MOVE: `0 < offset_bps < 10 000`), `max_conf_bps > 0`, `1 ≤ W, A ≤ 3 600`, `commit_open < commit_close` und `commit_close + W < outcome_time`. Setzt `reveal_close = outcome_time + 12 h`, `resolve_deadline = outcome_time + 24 h`.
+- **`terms_hash` kanonisch (v3)**, Byte für Byte: `sha256("observed/terms/v3" ‖ season_u16_le ‖ round_id_u32_le ‖ version_u8 ‖ kind_u8 ‖ source_kind_u8 ‖ feed_id[32] ‖ price_account[32] ‖ offset_bps_i32_le ‖ max_conf_bps_u16_le ‖ window_secs_u16_le ‖ max_age_secs_u16_le ‖ commit_open_i64_le ‖ commit_close_i64_le ‖ outcome_time_i64_le)` — ohne Schwelle und ohne Text. Alles, was die Auswertung bestimmt, steht darin.
 - Verifiziert `terms_hash` als Blatt an Index `round_id − first_round_id` unter `calendar_root`. Merkle mit Domänentrennung gegen Second-Preimage: `leaf = sha256(0x00 ‖ terms_hash)`, `node = sha256(0x01 ‖ left ‖ right)`; ungerade Ebenen werden mit sich selbst gepaart; der Beweis ist `Vec<[u8;32]>` und die Position wird aus den Bits des Index abgeleitet (kein frei wählbares Links/Rechts). Blatt-Tiefe fest: 64 Blätter (Tiefe 6), damit eine Saison die Kohorte **und** den gesamten Bewertungszeitraum bis zur Gewinnerbekanntgabe am 11. November abdeckt; unbenutzte Blätter = `sha256(0x00 ‖ [0;32])`. Gleichheit ist immer Nein — es gibt kein Feld dafür.
 - Speichert Bedingungen. Ohne gültigen Beweis keine Runde — niemand, auch keine Autorität, kann eine Frage nachschieben.
 
 ### `set_reference(round)` — permissionless
-Accounts: `round`, `price_update: Account<PriceUpdateV2>`, `referencer (Signer)`.
-- `round.status == Open`, `now ≥ commit_close`, `now < resolve_deadline`.
-- Update: `feed_id` gleich, `Full`, `prev_publish_time < R ≤ publish_time ≤ R+60` mit R = `commit_close`, `price > 0`, Konfidenzregel (kein Ersatz durch späteres Update).
-- `threshold_mantissa = ref_price × (10 000 + offset_bps) / 10 000` in i128, checked, gleicher Exponent; Rundung zur Null. Kopiert Referenzwerte, setzt `Referenced`, `referencer`. Das Oracle-Konto darf danach in derselben Tx-Folge geschlossen werden (Spike 1: Posten + `set_reference` + Close = 2 Transaktionen, 0 Miete netto).
-- Zweiter Aufruf → Fehler. Ohne gültige Referenz bis `resolve_deadline` → `cancel_round`.
+Accounts: `round`, `price_update: Account<PriceUpdateV2>` mit `address = round.price_account`, `referencer (Signer)`. Owner = Pyth-Receiver des neuen Stacks (`rec2HH…`, SDK-Feature `pro-compatible`); Konten des alten Receivers (`rec5E…`) werden abgelehnt.
+- **Regel O1 (DECISIONS 18./19.09.2026): die erste gültige Einreichung gewinnt.** Mit R = `commit_close` ist eine Einreichung gültig, wenn `R ≤ now ≤ R + W`, das Update `Full` ist, die Feed-ID stimmt, `now − publish_time ≤ A`, `price > 0` und `conf·10 000 / price ≤ max_conf_bps`. Fixiert wird, was in diesem Moment im benannten Konto steht. Ein Wert von kurz vor R ist zulässig, solange er nicht älter als A ist.
+- Speichert die Lesung als `reference: Reading` (inkl. `posted_slot`, Einreichungs-Slot, Clock-Zeit, Einreicher), setzt `Referenced`. Anzeige-Schwellen `threshold_mantissa = ref × (10 000 + x) / 10 000`, bei MOVE zusätzlich `threshold_low_mantissa = ref × (10 000 − x) / 10 000` (Rundung zur Null, nur Anzeige).
+- Zweiter Aufruf → `RoundNotOpen`, der erste Wert bleibt. Nach `R + W` → `OutsideSubmissionWindow`; dann ist `cancel_round` sofort möglich.
+- Nicht verhindert, sondern sichtbar gemacht: Der erste Einreicher bestimmt den Messzeitpunkt innerhalb von W. Gemessene Spanne und Zahl der Tage, an denen das den Ausgang hätte drehen können: HANDOFF 18.09.; Belegtabelle je Runde folgt.
 
 ### `commit(round, commitment, sgt_mint)` — Signer = Spieler
 Accounts: `player_wallet (Signer, payer)`, `sgt_mint`, `sgt_token_account`, `round`, `entry (init)`, `player (init_if_needed)`, `config`, `token_2022_program`, `system_program`.
@@ -79,14 +81,13 @@ Kein Klartext, kein `p_bps` in dieser Instruktion. Die Zuordnung Wallet ↔ Ger�
 - Kann vom Client direkt nach `reveal` in dieselbe Tx gelegt werden, wenn `Resolved` bereits gilt.
 
 ### `resolve(round)` — permissionless
-Accounts: `round`, `price_update: Account<PriceUpdateV2>` (Anchor prüft Owner = Pyth-Receiver-Programm-ID als Konstante und den Diskriminator; nie als `UncheckedAccount`), `resolver (Signer)`. Kein CPI in dieser Instruktion.
-- `round.status == Referenced` (ohne Referenz keine Auflösung), `now ≥ outcome_time`, `now < resolve_deadline`.
-- Update: `price_message.feed_id == round.feed_id`, `verification_level == Full`, `prev_publish_time < T ≤ publish_time ≤ T+60`, `price > 0`, `conf·10 000 / price ≤ max_conf_bps` (u128-Arithmetik; sonst Fehler; kein Ersatz durch späteres Update). `exponent` des Updates wird gegen `ref_expo` normiert; weichen sie ab, wird auf den kleineren Exponenten skaliert (checked) — nie abgeschnitten.
-- Outcome: `price > threshold → Yes`; sonst `No` (Gleichheit = Nein; Mantisse/Exponent normieren, checked math).
-- Kopiert Evidenzwerte, setzt `Resolved`, `resolver`. Zweiter Aufruf → Fehler `AlreadyResolved` (kein zweiter Effekt).
+Accounts: `round`, `price_update: Account<PriceUpdateV2>` mit `address = round.price_account` (Owner und Diskriminator prüft `Account`; nie `UncheckedAccount`), `resolver (Signer)`. Kein CPI.
+- `round.status == Referenced` (ohne Referenz keine Auflösung). Dieselbe Regel O1 wie bei der Referenz, mit T = `outcome_time`: `T ≤ now ≤ T + W`, Alter ≤ A, `Full`, Feed, Preis > 0, Konfidenz.
+- Outcome exakt, ohne Rundung: beide Preise auf den kleineren Exponenten skaliert (checked, nie abgeschnitten), dann ABOVE: `out·10 000 > ref·(10 000 + x)`; MOVE: `out·10 000 > ref·(10 000 + x)` **oder** `out·10 000 < ref·(10 000 − x)`. Beides strikt, Gleichheit = Nein. Wortlaut entsprechend: „more than x % above or below“, nie „at least“.
+- Speichert `evidence: Reading`, setzt `Resolved`. Zweiter Aufruf → `NoReference` (Status ist nicht mehr `Referenced`), kein zweiter Effekt.
 
 ### `cancel_round(round)` — permissionless
-- `now ≥ resolve_deadline`, `status ≠ Resolved` → `Cancelled` (UI: NO_RESOLVE). Einträge bleiben, **niemand wird gescored — auch nicht als Missing**: Ein voller Fehlschlag für eine Runde ohne Ausgang wäre ungerecht, und ausnutzbar ist es nicht, weil im Reveal-Fenster (bis 12:00) niemand wissen kann, ob die Runde nach 36 h storniert wird. Erzwungen durch `score_entry`, das `Resolved` verlangt.
+- Möglich, sobald eine fehlende Lesung nicht mehr kommen kann: `Open` und `now > commit_close + W`, oder `Referenced` und `now > outcome_time + W`, oder spätestens `now ≥ resolve_deadline`. Nicht bei `Resolved`/`Cancelled`. → `Cancelled` (UI: „Nicht ausgewertet — Preisdaten fehlten“). Einträge bleiben, **niemand wird gescored — auch nicht als Missing**. Ausnutzbar ist die frühe Sichtbarkeit nicht: In einer annullierten Runde wird niemand gewertet, in einer aufgelösten kostet Schweigen 1,000; zu wissen, dass eine Runde annulliert ist, ändert keines von beidem. Erzwungen durch `score_entry`, das `Resolved` verlangt.
 
 ### `close_entry(round)` — Signer = `entry.rent_refund_to`
 - Erst nach `now ≥ reveal_close` **und** (`Resolved && entry.scored` oder `Cancelled`). Bei `Resolved` reicht „nicht aufgedeckt“ **nicht** — sonst ließe sich der Eintrag vor dem Missing-Scoring schließen und die volle Missing-Strafe umgehen. Wer schließen will, ruft vorher selbst das permissionless `score_entry` (Missing-Fall) auf; der Client tut das automatisch in derselben Transaktion. Anchor `close = rent_refund_to`.
@@ -124,7 +125,7 @@ Reihenfolge im Client, festgezogen:
 | Pause | nur Commit blockiert |
 | SGT migriert | Entry-PDA über Mint; Reveal über `beneficiary`, kein Tokenbesitz nötig |
 | Nächste Runde fehlt | Reveal-only-Pfad im Client |
-| Oracle-Konto später überschrieben | Evidenz liegt kopiert in `Round` |
+| Oracle-Konto später überschrieben | Lesung liegt kopiert in `Round` (`Reading`), `posted_slot` zeigt auf die Update-Transaktion |
 
 ## 5b. Bedrohungsmodell
 
@@ -138,13 +139,13 @@ Reihenfolge im Client, festgezogen:
 | Solana Mobile friert/verschiebt/schließt SGTs (Freeze-Authority, Permanent Delegate, Close-Authority = `GT2z…`) | außerhalb unserer Kontrolle, benannte Vertrauensannahme; offene Einträge hängen an der Mint, Reveal am Begünstigten und braucht keinen Tokenbesitz |
 | Gefälschte SGT (kopierte Pointer/Authority) | echte `TokenGroupMember`-Extension, Gruppe + Mint-Authority als Konstanten (§3 commit) |
 | Mehrere Geräte pro Person | akzeptiert, offen kommuniziert („ein Gerät, eine Antwort“) |
-| Resolver wählt günstiges Update | eindeutiges erstes Update (`prev_publish_time < T`), Full-Verifikation, Feed-ID, Konfidenzregel ohne Ersatz (§3 resolve) |
-| Resolver liefert fremdes/gefälschtes Oracle-Konto | `Account<PriceUpdateV2>`, Owner = Receiver-Programm, Diskriminator |
-| Zwei Resolver im selben Slot | erster gewinnt, zweiter `AlreadyResolved`; kein doppelter Effekt |
+| Resolver wählt günstiges Update | **Nicht verhindert, sondern sichtbar gemacht (Regel O1):** Der erste gültige Einreicher bestimmt den Messzeitpunkt innerhalb von W = 60 s; zulässig ist jeder Wert im benannten Konto mit Alter ≤ A = 60 s. Gespeichert werden Wert, `posted_slot`, Einreichungs-Slot, Clock-Zeit und Einreicher; die zulässige Menge ist aus dem Ledger rekonstruierbar. Gemessen: Das Ergebnis hätte an 11–30 von 90 Tagen kippen können (HANDOFF 18.09.). Danach unveränderlich (§3 resolve) |
+| Resolver liefert fremdes/gefälschtes Oracle-Konto | `address = round.price_account` aus den Bedingungen, `Account<PriceUpdateV2>`: Owner = Receiver des neuen Stacks, Diskriminator, `Full` |
+| Zwei Resolver im selben Slot | erster gewinnt, zweiter scheitert am Status; kein doppelter Effekt |
 | Resolve und Cancel gleichzeitig | disjunkte Zeitprädikate |
 | Jemand schiebt Frage nach / ändert Regel | Merkle-Wurzel on-chain, index-gebundener Beweis, kanonischer `terms_hash`; `create_round` permissionless, es gibt keine Fragen-Autorität (§3) |
-| Spätes Versiegeln mit Wissen über die Kursbewegung | Referenzpreis = erstes Update **nach** Abgabeschluss; beim Versiegeln kennt ihn niemand (§3 set_reference) |
-| Referenzposter wählt günstiges Update | eindeutiges erstes Update nach R, Full, Feed, Konfidenz ohne Ersatz (§3 set_reference) |
+| Spätes Versiegeln mit Wissen über die Kursbewegung | Referenz wird frühestens bei Abgabeschluss gelesen. Mit A = 60 s kann der gelesene Wert bis zu 60 s **vor** Abgabeschluss veröffentlicht sein; wer in der letzten Minute versiegelt, kennt ihn im ungünstigsten Fall. Der Vorteil ist der Kurs der letzten Minute gegenüber 12 h bis zum Ergebnis — benannt, nicht verhindert (§3 set_reference) |
+| Referenzposter wählt günstiges Update | wie „Resolver wählt günstiges Update“: Auswahl innerhalb von W sichtbar gemacht, nicht verhindert (§3 set_reference) |
 | Kalender-Autorität setzt falsche Regeln | einmal pro Saison, vor der ersten Runde, veröffentlicht in CALENDAR.md; Regeln ohne Zahlen sind vorab prüfbar |
 | Pause-Autorität will Reveals verhindern | `pause` blockiert nur `commit` |
 | Autoritäts-Key gestohlen | Multisig, Hardware, keine Keys im Repo; Upgrade nur mit Ankündigung |

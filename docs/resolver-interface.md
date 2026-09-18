@@ -15,20 +15,24 @@ Der eingereichte Stand ist der Git-Tag **`submission-2026-10-08`** in diesem Rep
 (gesetzt am Tag der Einreichung, siehe docs/05-LAUNCH-PLAN.md).
 
 ## Was der Resolver tut — und was nicht
-Er hat **keine Befugnis im Programm**. Sein Schlüssel zahlt nur Gebühren und wird als
-`referencer`/`resolver` protokolliert. Jede Instruktion, die er aufruft, ist permissionless;
-das Programm prüft die Evidenz, nicht den Absender.
+Er hat **keine Befugnis im Programm**. Sein Schlüssel zahlt nur Gebühren und steht als
+`submitter` in der jeweiligen Lesung. Jede Instruktion, die er aufruft, ist permissionless;
+das Programm prüft die Lesung, nicht den Absender. **Er postet nichts:** Er übergibt nur das
+in der Runde benannte, von Pyth gesponserte Konto (`round.price_account`). Kein Hermes, kein
+Schlüssel, keine Pyth-Kosten.
 
 | Instruktion | Wann fällig | Vorbedingung im Programm |
 |---|---|---|
-| `set_reference(round)` | ab `commit_close`, bis `resolve_deadline` | Round `Open`; Pyth-Update mit `prev_publish_time < commit_close ≤ publish_time ≤ commit_close + 60 s`, Full, Feed, Konfidenz ≤ `max_conf_bps` |
-| `resolve(round)` | ab `outcome_time`, bis `resolve_deadline` | Round `Referenced`; Pyth-Update analog zu `outcome_time` |
-| `cancel_round(round)` | ab `resolve_deadline` | Round nicht `Resolved`/`Cancelled` |
+| `set_reference(round)` | **nur** in [`commit_close`, `commit_close` + W], W = 60 s | Round `Open`; Konto = `round.price_account`, Owner `rec2HH…`, `Full`, Feed, Alter ≤ A = 60 s, Konfidenz ≤ `max_conf_bps` |
+| `resolve(round)` | **nur** in [`outcome_time`, `outcome_time` + W] | Round `Referenced`; dieselbe Regel |
+| `cancel_round(round)` | sobald ein Fenster ohne Lesung abgelaufen ist (spätestens `resolve_deadline`) | Round nicht `Resolved`/`Cancelled` |
 | `score_entry(round, entry)` | aufgedeckt: ab `resolve`; Missing: ab `reveal_close` | Round `Resolved`, Entry nicht gescored |
 
-Die Zeitpunkte stehen in jeder Runde (`commit_open`, `commit_close`, `outcome_time`,
-`reveal_close`, `resolve_deadline`) und kommen aus dem Kalender (CALENDAR.md). Der Resolver
-kennt keine festen Uhrzeiten: Ein Lauf pro Stunde liest den Zustand und erledigt, was fällig ist.
+Die Zeitpunkte stehen in jeder Runde und kommen aus dem Kalender (CALENDAR.md). Weil die
+Lesungen nur 60 s lang möglich sind, reicht der stündliche Lauf dafür **nicht**: Ein zweiter
+Cron (`59 3,15 * * *`) wartet bis `commit_close` bzw. `outcome_time` und sendet dann innerhalb
+von W mit bis zu drei Versuchen. Fällt dieser Lauf aus, ist die Runde NO_RESOLVE; der
+stündliche Lauf erledigt danach `cancel_round` und das Scoring.
 
 **Nicht** Aufgabe des Resolvers: `create_round` (alle Runden der Saison werden zu Beginn vom
 Owner angelegt), `publish_calendar`, `pause`, Programm-Upgrade.
@@ -40,7 +44,8 @@ Resolver nachziehen:
   Mainnet-ID wird beim Deploy eingetragen).
 - Diskriminatoren von `set_reference`, `resolve`, `score_entry`, `cancel_round` und der
   Konten `Round`, `Entry` (aus `target/idl/observed.json`).
-- Byte-Layout von `Round` und `Entry`. Das `Entry`-Layout ist über eine Fixture abgesichert:
+- Byte-Layout von `Round` (472 B seit Terms v3, 41ca39b) und `Entry` (184 B, unverändert).
+  Beide Größen sind im Test `account_sizes_are_pinned` festgenagelt. Das `Entry`-Layout ist über eine Fixture abgesichert:
   Der Rust-Test `entry_layout_fixture` schreibt `tests/fixtures/generated/entry-layout.json`;
   eine Kopie liegt im Resolver unter `test/fixtures/`, und `npm test` prüft jedes Feld dagegen.
   **Nach jeder Änderung an `Entry` die Datei neu erzeugen und in den Resolver kopieren.**
