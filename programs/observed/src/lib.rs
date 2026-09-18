@@ -162,6 +162,7 @@ pub mod observed {
         r.max_age_secs = terms.max_age_secs;
         r.commit_open = terms.commit_open;
         r.commit_close = terms.commit_close;
+        r.reference_time = terms.reference_time;
         r.outcome_time = terms.outcome_time;
         r.reveal_close = terms
             .outcome_time
@@ -271,8 +272,9 @@ pub mod observed {
         Ok(())
     }
 
-    /// Permissionless. The first valid submission in [commit_close, commit_close + W] fixes the
-    /// reference: whatever the named price account holds at that moment, at most A seconds old.
+    /// Permissionless. The first valid submission in [reference_time, reference_time + W] fixes
+    /// the reference: whatever the named price account holds at that moment, at most A old.
+    /// Because reference_time − A > commit_close, nobody who sealed could have seen it.
     /// The choice of moment is not prevented, it is recorded — slot, time, submitter and the
     /// update's own posted slot stay in the round for anyone to check against the ledger.
     pub fn set_reference(ctx: Context<SetReference>) -> Result<()> {
@@ -285,7 +287,7 @@ pub mod observed {
         let reading = accept_reading(
             &ctx.accounts.price_update,
             round,
-            round.commit_close,
+            round.reference_time,
             &clock,
             ctx.accounts.referencer.key(),
         )?;
@@ -395,7 +397,7 @@ pub mod observed {
         let reference_missed = round.status == RoundStatus::Open as u8
             && now
                 > round
-                    .commit_close
+                    .reference_time
                     .checked_add(w)
                     .ok_or(ObservedError::MathOverflow)?;
         let outcome_missed = round.status == RoundStatus::Referenced as u8
@@ -652,6 +654,9 @@ pub struct RoundTerms {
     pub max_age_secs: u16,
     pub commit_open: i64,
     pub commit_close: i64,
+    /// When the reference is read. Must be more than A after `commit_close`, so every
+    /// admissible reference was published after sealing closed (owner decision 19.09.2026).
+    pub reference_time: i64,
     pub outcome_time: i64,
 }
 
@@ -672,6 +677,7 @@ impl RoundTerms {
             &self.max_age_secs.to_le_bytes(),
             &self.commit_open.to_le_bytes(),
             &self.commit_close.to_le_bytes(),
+            &self.reference_time.to_le_bytes(),
             &self.outcome_time.to_le_bytes(),
         ])
         .to_bytes()
@@ -701,8 +707,18 @@ impl RoundTerms {
                 && (1..=MAX_WINDOW_SECS).contains(&self.max_age_secs),
             ObservedError::BadWindowParams
         );
+        // No reference may be visible while sealing is still possible: the oldest admissible
+        // reading (reference_time − A) must lie strictly after commit_close.
+        let oldest_reference = self
+            .reference_time
+            .checked_sub(i64::from(self.max_age_secs))
+            .ok_or(ObservedError::MathOverflow)?;
+        require!(
+            oldest_reference > self.commit_close,
+            ObservedError::ReferenceBeforeSealCloses
+        );
         let reference_window_end = self
-            .commit_close
+            .reference_time
             .checked_add(i64::from(self.window_secs))
             .ok_or(ObservedError::MathOverflow)?;
         require!(
@@ -775,6 +791,7 @@ pub struct Round {
     pub max_age_secs: u16,
     pub commit_open: i64,
     pub commit_close: i64,
+    pub reference_time: i64,
     pub outcome_time: i64,
     pub reveal_close: i64,
     pub resolve_deadline: i64,
@@ -1144,6 +1161,8 @@ pub enum ObservedError {
     UnknownKind,
     #[msg("window and maximum age must be 1..=3600 s")]
     BadWindowParams,
+    #[msg("reference_time − max_age must be after commit_close")]
+    ReferenceBeforeSealCloses,
     #[msg("price must be > 0")]
     NonPositivePrice,
     #[msg("confidence interval too wide")]

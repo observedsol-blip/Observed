@@ -23,7 +23,7 @@ fn full_round_yes_reveal_and_score() {
     let c = commitment(&env, 0, 4_000, SALT);
     let cu_commit = sendx!(env, &player, [ix_commit(&env, 0, c)]).expect("commit");
 
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     let cu_ref = sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     let round = read_round(&env, 0);
@@ -74,7 +74,7 @@ fn equality_resolves_no() {
         [ix_commit(&env, 0, commitment(&env, 0, 5_000, SALT))]
     )
     .expect("commit");
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + 5);
@@ -91,7 +91,7 @@ fn equality_resolves_no() {
 fn exponent_mismatch_is_scaled_not_truncated() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + 5);
@@ -155,10 +155,10 @@ fn cancel_before_deadline_fails_and_resolved_round_cannot_be_cancelled() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
     // the reference window is still open at its last second
-    set_time(&mut env.svm, COMMIT_CLOSE + WINDOW_SECS as i64);
+    set_time(&mut env.svm, REFERENCE_TIME + WINDOW_SECS as i64);
     expect_err(sendx!(env, &payer, [ix_cancel(0)]), "TooEarly");
 
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     // referenced: the outcome window is still open at its last second
@@ -178,7 +178,7 @@ fn missed_reading_can_be_cancelled_as_soon_as_its_window_closes() {
     // no reference in [T, T+W]
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + WINDOW_SECS as i64 + 1);
+    set_time(&mut env.svm, REFERENCE_TIME + WINDOW_SECS as i64 + 1);
     let late = reference_update(&mut env);
     expect_err(
         sendx!(env, &payer, [ix_set_reference(&env, 0, late)]),
@@ -190,7 +190,7 @@ fn missed_reading_can_be_cancelled_as_soon_as_its_window_closes() {
     // reference taken, but no outcome in its window
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + WINDOW_SECS as i64 + 1);
@@ -216,7 +216,7 @@ fn reveal_after_window_fails_and_counts_as_missing() {
         [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
     )
     .expect("commit");
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + 5);
@@ -370,7 +370,7 @@ fn pause_by_wrong_authority_fails() {
 fn set_reference_twice_fails() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let a = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, a)]).expect("first");
     let b = reference_update(&mut env);
@@ -385,23 +385,23 @@ fn set_reference_rejects_early_late_and_bad_updates() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
 
-    // before commit close
-    set_time(&mut env.svm, COMMIT_CLOSE - 1);
+    // before the reference time
+    set_time(&mut env.svm, REFERENCE_TIME - 1);
     let early = reference_update(&mut env);
     expect_err(
         sendx!(env, &payer, [ix_set_reference(&env, 0, early)]),
         "TooEarly",
     );
 
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     // older than A at the moment of submission (publish 61 s before now)
     let d = price_update(
         env.feed_id,
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE + 5 - MAX_AGE_SECS as i64 - 1,
-        COMMIT_CLOSE - 100,
+        REFERENCE_TIME + 5 - MAX_AGE_SECS as i64 - 1,
+        REFERENCE_TIME - 100,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
@@ -416,8 +416,8 @@ fn set_reference_rejects_early_late_and_bad_updates() {
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE,
-        COMMIT_CLOSE - 1,
+        REFERENCE_TIME,
+        REFERENCE_TIME - 1,
         VerificationLevel::Full,
     );
     let other = put_price_update_at(&mut env, anchor_lang::prelude::Pubkey::new_unique(), d);
@@ -432,8 +432,8 @@ fn set_reference_rejects_early_late_and_bad_updates() {
         15_000_000_000,
         90_000_000,
         -8,
-        COMMIT_CLOSE,
-        COMMIT_CLOSE - 1,
+        REFERENCE_TIME,
+        REFERENCE_TIME - 1,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
@@ -448,8 +448,8 @@ fn set_reference_rejects_early_late_and_bad_updates() {
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE,
-        COMMIT_CLOSE - 1,
+        REFERENCE_TIME,
+        REFERENCE_TIME - 1,
         VerificationLevel::Partial { num_signatures: 5 },
     );
     let k = put_price_update(&mut env, d);
@@ -464,8 +464,8 @@ fn set_reference_rejects_early_late_and_bad_updates() {
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE,
-        COMMIT_CLOSE - 1,
+        REFERENCE_TIME,
+        REFERENCE_TIME - 1,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
@@ -483,14 +483,14 @@ fn set_reference_rejects_early_late_and_bad_updates() {
 fn price_update_owned_by_someone_else_is_rejected() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let data = price_update(
         env.feed_id,
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE,
-        COMMIT_CLOSE - 1,
+        REFERENCE_TIME,
+        REFERENCE_TIME - 1,
         VerificationLevel::Full,
     );
     // right address, but written by some other program
@@ -521,8 +521,8 @@ fn first_valid_submission_wins_and_is_recorded() {
         .airdrop(&other.pubkey(), 1_000_000_000)
         .expect("airdrop");
 
-    set_time(&mut env.svm, COMMIT_CLOSE + 7);
-    let upd = reference_update(&mut env); // 150.00, published at COMMIT_CLOSE
+    set_time(&mut env.svm, REFERENCE_TIME + 7);
+    let upd = reference_update(&mut env); // 150.00, published at REFERENCE_TIME
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("first submission");
     let slot = env.svm.get_sysvar::<solana_clock::Clock>().slot;
     let r = read_round(&env, 0).reference;
@@ -537,9 +537,9 @@ fn first_valid_submission_wins_and_is_recorded() {
         ),
         (
             15_000_000_000,
-            COMMIT_CLOSE,
+            REFERENCE_TIME,
             POSTED_SLOT,
-            COMMIT_CLOSE + 7,
+            REFERENCE_TIME + 7,
             slot,
             payer.pubkey()
         ),
@@ -547,14 +547,14 @@ fn first_valid_submission_wins_and_is_recorded() {
     );
 
     // the sponsor moves on, someone else would prefer the new value
-    set_time(&mut env.svm, COMMIT_CLOSE + 20);
+    set_time(&mut env.svm, REFERENCE_TIME + 20);
     let d = price_update(
         env.feed_id,
         14_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE + 19,
-        COMMIT_CLOSE + 18,
+        REFERENCE_TIME + 19,
+        REFERENCE_TIME + 18,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
@@ -586,14 +586,14 @@ fn first_valid_submission_wins_and_is_recorded() {
 fn reading_age_is_measured_at_submission() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + 10);
+    set_time(&mut env.svm, REFERENCE_TIME + 10);
     let d = price_update(
         env.feed_id,
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE + 10 - MAX_AGE_SECS as i64 - 1,
-        COMMIT_CLOSE - 200,
+        REFERENCE_TIME + 10 - MAX_AGE_SECS as i64 - 1,
+        REFERENCE_TIME - 200,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
@@ -606,15 +606,15 @@ fn reading_age_is_measured_at_submission() {
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE + 10 - MAX_AGE_SECS as i64,
-        COMMIT_CLOSE - 200,
+        REFERENCE_TIME + 10 - MAX_AGE_SECS as i64,
+        REFERENCE_TIME - 200,
         VerificationLevel::Full,
     );
     let k = put_price_update(&mut env, d);
     sendx!(env, &payer, [ix_set_reference(&env, 0, k)]).expect("exactly A old is still valid");
     assert_eq!(
         read_round(&env, 0).reference.publish_time,
-        COMMIT_CLOSE + 10 - MAX_AGE_SECS as i64
+        REFERENCE_TIME + 10 - MAX_AGE_SECS as i64
     );
 }
 
@@ -635,7 +635,7 @@ fn move_question_counts_both_directions_and_equality_is_no() {
     for (price, yes, why) in cases {
         let mut env = setup_with(DAY0, observed::KIND_MOVE, 200);
         let payer = env.payer.insecure_clone();
-        set_time(&mut env.svm, COMMIT_CLOSE + 5);
+        set_time(&mut env.svm, REFERENCE_TIME + 5);
         let upd = reference_update(&mut env);
         sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
         let round = read_round(&env, 0);
@@ -656,6 +656,115 @@ fn move_question_counts_both_directions_and_equality_is_no() {
     }
 }
 
+/// The promise in the copy: "The reference is taken after sealing closes. Nobody who sealed
+/// could have seen it." Enforced by create_round, not by the calendar's good behaviour.
+#[test]
+fn no_admissible_reference_was_visible_while_sealing() {
+    // at the earliest valid submission, the oldest admissible reading is REFERENCE_TIME − A,
+    // which is strictly after COMMIT_CLOSE; anything published up to that point is refused
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    assert!(REFERENCE_TIME - (MAX_AGE_SECS as i64) > COMMIT_CLOSE);
+    set_time(&mut env.svm, REFERENCE_TIME);
+    for published in [
+        COMMIT_CLOSE - 1,
+        COMMIT_CLOSE,
+        REFERENCE_TIME - MAX_AGE_SECS as i64 - 1,
+    ] {
+        let d = price_update(
+            env.feed_id,
+            15_000_000_000,
+            100_000,
+            -8,
+            published,
+            published - 1,
+            VerificationLevel::Full,
+        );
+        let k = put_price_update(&mut env, d);
+        expect_err(
+            sendx!(env, &payer, [ix_set_reference(&env, 0, k)]),
+            "StaleReading",
+        );
+    }
+
+    // a calendar that puts the reference too close to the seal close cannot create a round
+    let payer_pk = payer.pubkey();
+    let mut terms = terms_of(env.day0, 1, env.feed_id);
+    terms.reference_time = terms.commit_close + MAX_AGE_SECS as i64; // oldest == close: refused
+    let (_, proof) = calendar(&terms.hash(SEASON, 1), 1);
+    expect_err(
+        sendx!(env, &payer, [ix_create_round(&payer_pk, 1, terms, proof)]),
+        "ReferenceBeforeSealCloses",
+    );
+}
+
+/// A round the player never sealed leaves no trace: no Entry, nothing to score, no missing.
+/// The Player account itself only exists from the first seal on. (Owner question 19.09.:
+/// the season opens 24.09., the app runs on the owner's device from 26.09.)
+#[test]
+fn rounds_without_a_seal_leave_no_trace_in_the_record() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let player = env.player.insecure_clone();
+    let payer_pk = payer.pubkey();
+    for round_id in 1..=2u32 {
+        let terms = terms_of(env.day0, round_id, env.feed_id);
+        let proof = env.proofs[round_id as usize].clone();
+        sendx!(
+            env,
+            &payer,
+            [ix_create_round(&payer_pk, round_id, terms, proof)]
+        )
+        .expect("create_round");
+    }
+
+    // round 0 runs completely without the player: referenced, resolved, reveal window over
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    set_time(&mut env.svm, REVEAL_CLOSE + 1);
+    assert!(read_entry(&env, 0).is_none(), "no seal, no entry");
+    expect_err(
+        sendx!(env, &payer, [ix_score(&env, 0)]),
+        "AccountNotInitialized",
+    );
+    assert!(
+        env.svm
+            .get_account(&player_pda(env.sgt_mint))
+            .is_none_or(|a| a.data.is_empty()),
+        "no Player account before the first seal"
+    );
+
+    // first seal in round 2: the record starts here, at zero
+    let day2 = env.day0 + 2 * 86_400;
+    set_time(&mut env.svm, day2 + 60);
+    let t2 = terms_of(env.day0, 2, env.feed_id);
+    let c = observed::commitment_hash(
+        &round_pda(2),
+        &t2.hash(SEASON, 2),
+        &env.sgt_mint,
+        &player.pubkey(),
+        4_000,
+        &SALT,
+    );
+    sendx!(env, &player, [ix_commit(&env, 2, c)]).expect("first seal");
+    let p = read_player(&env);
+    assert_eq!(
+        (
+            p.commits,
+            p.reveals,
+            p.missing_scored,
+            p.scored_rounds,
+            p.score_sum
+        ),
+        (1, 0, 0, 0, 0),
+        "rounds 0 and 1 are not in the record"
+    );
+}
+
 /// Account sizes others depend on: the resolver filters Entry by `dataSize: 184`, and Round's
 /// size sets the season's rent. A change here must be a decision, not an accident.
 #[test]
@@ -668,8 +777,8 @@ fn account_sizes_are_pinned() {
     );
     assert_eq!(
         8 + observed::Round::INIT_SPACE,
-        472,
-        "Round (terms v3, two readings, reserve)"
+        480,
+        "Round (terms v3 with reference_time, two readings, reserve)"
     );
     assert_eq!(observed::Reading::INIT_SPACE, 84, "one reading");
 }
@@ -736,7 +845,7 @@ fn resolve_without_reference_fails() {
 fn resolve_twice_and_out_of_window_fails() {
     let mut env = setup();
     let payer = env.payer.insecure_clone();
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
 
@@ -785,7 +894,7 @@ fn score_entry_is_idempotent_and_respects_the_window() {
         [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
     )
     .expect("commit");
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + 5);
@@ -820,7 +929,7 @@ fn unscored_entry_cannot_be_closed_in_a_resolved_round() {
         [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
     )
     .expect("commit");
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + 5);
@@ -919,8 +1028,8 @@ fn create_round_rejects_bad_windows() {
 #[test]
 fn real_sponsored_account_is_accepted() {
     const REAL_PUBLISH: i64 = 1_789_769_926;
-    // commit_close three seconds after that publish time; submit two seconds later (age 5 s)
-    let mut env = setup_day(REAL_PUBLISH + 3 - 12 * 3600);
+    // reference_time three seconds after that publish time; submit two seconds later (age 5 s)
+    let mut env = setup_day(REAL_PUBLISH + 3 - REFERENCE_DELAY - 12 * 3600);
     let payer = env.payer.insecure_clone();
     set_time(&mut env.svm, REAL_PUBLISH + 5);
     let real = put_fixture_account(&mut env, "pyth/real-sol-sponsored");
@@ -941,7 +1050,7 @@ fn real_sponsored_account_is_accepted() {
 #[test]
 fn real_pre_upgrade_and_partial_updates_are_refused() {
     const REAL_PUBLISH: i64 = 1_789_603_200;
-    let mut env = setup_day(REAL_PUBLISH - 12 * 3600 - 3);
+    let mut env = setup_day(REAL_PUBLISH - 3 - REFERENCE_DELAY - 12 * 3600);
     let payer = env.payer.insecure_clone();
     set_time(&mut env.svm, REAL_PUBLISH + 2);
     let key = env.price_account;
@@ -997,6 +1106,7 @@ fn calendar_fixture_matches_program() {
         max_age_secs: r["maxAgeSecs"].as_u64().expect("maxAgeSecs") as u16,
         commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
         commit_close: r["commitClose"].as_i64().expect("commitClose"),
+        reference_time: r["referenceTime"].as_i64().expect("referenceTime"),
         outcome_time: r["outcomeTime"].as_i64().expect("outcomeTime"),
     };
     let btc = hex_to_32("e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43");
@@ -1032,6 +1142,11 @@ fn calendar_fixture_matches_program() {
             terms.commit_close - terms.commit_open,
             12 * 3600,
             "closes 04:00 UTC"
+        );
+        assert_eq!(
+            terms.reference_time - terms.commit_close,
+            120,
+            "reference 04:02 UTC, two minutes after sealing closes"
         );
         assert_eq!(
             terms.outcome_time - terms.commit_close,
@@ -1278,7 +1393,7 @@ fn entry_layout_fixture() {
         [ix_commit(&env, 0, commitment(&env, 0, 6_500, SALT))]
     )
     .expect("commit");
-    set_time(&mut env.svm, COMMIT_CLOSE + 5);
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
     let upd = reference_update(&mut env);
     sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
     set_time(&mut env.svm, OUTCOME_TIME + 5);

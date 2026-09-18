@@ -38,6 +38,9 @@ const SOURCE_PRICE_ACCOUNT = 1;
 const MAX_CONF_BPS = 50;
 const WINDOW_SECS = 60; // W
 const MAX_AGE_SECS = 60; // A
+/** Reference 04:02: two minutes after sealing closes, so every admissible reference (at most
+ *  A = 60 s old) was published after 04:01. The program refuses anything closer. */
+const REFERENCE_DELAY_SECS = 120;
 const TERMS_DOMAIN = Buffer.from("observed/terms/v3", "utf8");
 const LEAF_TAG = 0x00;
 const NODE_TAG = 0x01;
@@ -75,6 +78,7 @@ function termsHash(t) {
     u16(t.maxAgeSecs),
     i64(t.commitOpen),
     i64(t.commitClose),
+    i64(t.referenceTime),
     i64(t.outcomeTime),
   );
 }
@@ -122,7 +126,8 @@ let weekendN = 0;
 for (let i = 0; i < leafCount; i++) {
   const roundId = firstRoundId + i;
   const commitOpen = startTs + i * 86_400; // 16:00 UTC
-  const commitClose = commitOpen + 12 * 3600; // 04:00 UTC next day = reference
+  const commitClose = commitOpen + 12 * 3600; // 04:00 UTC next day: sealing closes
+  const referenceTime = commitClose + REFERENCE_DELAY_SECS; // 04:02 UTC: reference
   const outcomeTime = commitClose + 12 * 3600; // 16:00 UTC that day = outcome
   const measured = new Date(commitClose * 1000); // the day the move is measured on
   const weekend = measured.getUTCDay() === 0 || measured.getUTCDay() === 6;
@@ -142,6 +147,7 @@ for (let i = 0; i < leafCount; i++) {
     maxAgeSecs: MAX_AGE_SECS,
     commitOpen,
     commitClose,
+    referenceTime,
     outcomeTime,
   };
   rounds.push({
@@ -150,7 +156,7 @@ for (let i = 0; i < leafCount; i++) {
     measuredDay: `${DAYS[measured.getUTCDay()]} ${measured.toISOString().slice(0, 10)}`,
     // Informational only; the client builds the sentence from docs/03-SCREEN-MAP.md.
     // "more than" is strict in the program: exactly x % is No.
-    question: `Will ${key} move more than ${offsetBps / 100}% up or down between 04:00 and 16:00 UTC on ${measured.toISOString().slice(0, 10)}?`,
+    question: `Will ${key} move more than ${offsetBps / 100}% up or down between 04:02 and 16:00 UTC on ${measured.toISOString().slice(0, 10)}?`,
     termsHash: termsHash(terms).toString("hex"),
   });
 }
@@ -185,7 +191,7 @@ const out = {
     maxConfBps: MAX_CONF_BPS,
     weekday: WEEKDAY.map(([k, x]) => `${k} ${x / 100}%`),
     weekend: WEEKEND.map(([k, x]) => `${k} ${x / 100}%`),
-    times: "commit 16:00–04:00 UTC, reference 04:00, outcome 16:00, reveal 16:00–04:00 next day",
+    times: "commit 16:00–04:00 UTC, reference 04:02, outcome 16:00, reveal 16:00–04:00 next day",
   },
   merkleRoot: root,
   emptyLeaf: emptyLeaf.toString("hex"),
@@ -203,7 +209,7 @@ const md = [
   `Generator: \`node services/calendar/generate.mjs --season ${season} --start ${startDay} --leaves ${leafCount}\``,
   `Rules: terms v${VERSION}; question kind "move", strict; source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}.`,
   `Mon–Fri rotate ${WEEKDAY.map(([k, x]) => `${k} ${x / 100} %`).join(", ")}; Sat/Sun rotate ${WEEKEND.map(([k, x]) => `${k} ${x / 100} %`).join(", ")} (no BTC on weekends).`,
-  "Times (UTC): commit 16:00–04:00, reference 04:00, outcome 16:00, reveal 16:00–04:00 the next day.",
+  "Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal 16:00–04:00 the next day.",
   `Unused leaves: sha256(0x00 || [0;32]) = ${out.emptyLeaf}`,
   "",
   `**Merkle root (= Config.calendar_root):** \`${root}\``,

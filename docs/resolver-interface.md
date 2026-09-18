@@ -23,14 +23,14 @@ Schlüssel, keine Pyth-Kosten.
 
 | Instruktion | Wann fällig | Vorbedingung im Programm |
 |---|---|---|
-| `set_reference(round)` | **nur** in [`commit_close`, `commit_close` + W], W = 60 s | Round `Open`; Konto = `round.price_account`, Owner `rec2HH…`, `Full`, Feed, Alter ≤ A = 60 s, Konfidenz ≤ `max_conf_bps` |
+| `set_reference(round)` | **nur** in [`reference_time`, `reference_time` + W], W = 60 s (Saison 1: 04:02–04:03 UTC) | Round `Open`; Konto = `round.price_account`, Owner `rec2HH…`, `Full`, Feed, Alter ≤ A = 60 s, Konfidenz ≤ `max_conf_bps` |
 | `resolve(round)` | **nur** in [`outcome_time`, `outcome_time` + W] | Round `Referenced`; dieselbe Regel |
 | `cancel_round(round)` | sobald ein Fenster ohne Lesung abgelaufen ist (spätestens `resolve_deadline`) | Round nicht `Resolved`/`Cancelled` |
 | `score_entry(round, entry)` | aufgedeckt: ab `resolve`; Missing: ab `reveal_close` | Round `Resolved`, Entry nicht gescored |
 
 Die Zeitpunkte stehen in jeder Runde und kommen aus dem Kalender (CALENDAR.md). Weil die
 Lesungen nur 60 s lang möglich sind, reicht der stündliche Lauf dafür **nicht**: Ein zweiter
-Cron (`59 3,15 * * *`) wartet bis `commit_close` bzw. `outcome_time` und sendet dann innerhalb
+Cron (`1 4 * * *` und `59 15 * * *`) wartet bis `reference_time` bzw. `outcome_time` und sendet dann innerhalb
 von W mit bis zu drei Versuchen. Fällt dieser Lauf aus, ist die Runde NO_RESOLVE; der
 stündliche Lauf erledigt danach `cancel_round` und das Scoring.
 
@@ -44,7 +44,7 @@ Resolver nachziehen:
   Mainnet-ID wird beim Deploy eingetragen).
 - Diskriminatoren von `set_reference`, `resolve`, `score_entry`, `cancel_round` und der
   Konten `Round`, `Entry` (aus `target/idl/observed.json`).
-- Byte-Layout von `Round` (472 B seit Terms v3, 41ca39b) und `Entry` (184 B, unverändert).
+- Byte-Layout von `Round` (480 B seit Terms v3 mit `reference_time`) und `Entry` (184 B, unverändert).
   Beide Größen sind im Test `account_sizes_are_pinned` festgenagelt. Das `Entry`-Layout ist über eine Fixture abgesichert:
   Der Rust-Test `entry_layout_fixture` schreibt `tests/fixtures/generated/entry-layout.json`;
   eine Kopie liegt im Resolver unter `test/fixtures/`, und `npm test` prüft jedes Feld dagegen.

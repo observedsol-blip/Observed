@@ -35,6 +35,9 @@ pub const POSTED_SLOT: u64 = 4_242;
 /// 2026-09-17 00:00:00 UTC — commit window of round 0 opens here.
 pub const DAY0: i64 = 1_789_603_200;
 pub const COMMIT_CLOSE: i64 = DAY0 + 12 * 3600;
+/// Reference two minutes after sealing closes (04:02 when sealing closes 04:00).
+pub const REFERENCE_DELAY: i64 = 120;
+pub const REFERENCE_TIME: i64 = COMMIT_CLOSE + REFERENCE_DELAY;
 pub const OUTCOME_TIME: i64 = DAY0 + 24 * 3600;
 pub const REVEAL_CLOSE: i64 = OUTCOME_TIME + 12 * 3600;
 pub const RESOLVE_DEADLINE: i64 = OUTCOME_TIME + 24 * 3600;
@@ -138,6 +141,7 @@ pub fn terms_rule(
         max_age_secs: MAX_AGE_SECS,
         commit_open: open,
         commit_close: open + 12 * 3600,
+        reference_time: open + 12 * 3600 + REFERENCE_DELAY,
         outcome_time: open + 24 * 3600,
     }
 }
@@ -241,15 +245,15 @@ pub fn put_price_update_at(env: &mut Env, key: Pubkey, data: Vec<u8>) -> Pubkey 
     key
 }
 
-/// The happy-path reference update: exactly at commit close, price 150.00 with 8 decimals.
+/// The happy-path reference update: published exactly at the reference time, price 150.00.
 pub fn reference_update(env: &mut Env) -> Pubkey {
     let data = price_update(
         env.feed_id,
         15_000_000_000,
         100_000,
         -8,
-        COMMIT_CLOSE,
-        COMMIT_CLOSE - 1,
+        REFERENCE_TIME,
+        REFERENCE_TIME - 1,
         VerificationLevel::Full,
     );
     put_price_update(env, data)
