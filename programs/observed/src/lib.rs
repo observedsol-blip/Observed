@@ -158,6 +158,7 @@ pub mod observed {
         r.price_account = terms.price_account;
         r.offset_bps = terms.offset_bps;
         r.max_conf_bps = terms.max_conf_bps;
+        r.band_bps = terms.band_bps;
         r.window_secs = terms.window_secs;
         r.max_age_secs = terms.max_age_secs;
         r.commit_open = terms.commit_open;
@@ -333,6 +334,7 @@ pub mod observed {
         } else {
             Outcome::No as u8
         };
+        round.outcome_margin_bps = margin_bps(round, &reading)?;
         round.evidence = reading;
         round.status = RoundStatus::Resolved as u8;
         Ok(())
@@ -586,6 +588,38 @@ fn decide(round: &Round, outcome: &Reading) -> Result<bool> {
     Ok(lhs > up || lhs < down)
 }
 
+/// How far the outcome cleared the threshold, in basis points, signed (positive = Yes).
+/// MOVE: |move| − x. ABOVE: move − x, with move = (out − ref) · 10 000 / ref, truncated
+/// toward zero. Clamped to i32 so an absurd price can never make a round unresolvable.
+/// The outcome itself is decided exactly in `decide`; a margin of 0 therefore means
+/// "within one basis point of the threshold", not necessarily No.
+fn margin_bps(round: &Round, outcome: &Reading) -> Result<i32> {
+    let (out, reference) = normalize(
+        outcome.price,
+        outcome.expo,
+        round.reference.price,
+        round.reference.expo,
+    )?;
+    require!(reference > 0, ObservedError::NonPositivePrice);
+    let move_bps = out
+        .checked_sub(reference)
+        .ok_or(ObservedError::MathOverflow)?
+        .checked_mul(10_000)
+        .ok_or(ObservedError::MathOverflow)?
+        .checked_div(reference)
+        .ok_or(ObservedError::MathOverflow)?;
+    let signed = if round.kind == KIND_MOVE {
+        move_bps.abs()
+    } else {
+        move_bps
+    };
+    let margin = signed
+        .checked_sub(i128::from(round.offset_bps))
+        .ok_or(ObservedError::MathOverflow)?
+        .clamp(i128::from(i32::MIN), i128::from(i32::MAX));
+    Ok(margin as i32)
+}
+
 /// ref × (10 000 + offset) / 10 000 in the reference's exponent, truncated toward zero.
 fn scaled_threshold(price: i64, offset_bps: i32) -> Result<i64> {
     let factor = 10_000i128
@@ -648,6 +682,11 @@ pub struct RoundTerms {
     pub price_account: Pubkey,
     pub offset_bps: i32,
     pub max_conf_bps: u16,
+    /// Measurement band in basis points: how far the outcome could have moved through the
+    /// choice of measurement moment inside W (p90 of the measured spread, rounded up).
+    /// A round whose margin is inside this band was decided within the measurement noise.
+    /// Fixed in the terms so anyone can recompute "close" for themselves.
+    pub band_bps: u16,
     /// W: submissions are valid in [t, t + window_secs].
     pub window_secs: u16,
     /// A: the reading may be at most this old at the moment of submission.
@@ -673,6 +712,7 @@ impl RoundTerms {
             self.price_account.as_ref(),
             &self.offset_bps.to_le_bytes(),
             &self.max_conf_bps.to_le_bytes(),
+            &self.band_bps.to_le_bytes(),
             &self.window_secs.to_le_bytes(),
             &self.max_age_secs.to_le_bytes(),
             &self.commit_open.to_le_bytes(),
@@ -702,6 +742,11 @@ impl RoundTerms {
             _ => return err!(ObservedError::UnknownKind),
         }
         require!(self.max_conf_bps > 0, ObservedError::BadConfidenceBound);
+        // A band that reaches the threshold would call every round close and say nothing.
+        require!(
+            self.band_bps > 0 && i32::from(self.band_bps) < self.offset_bps.abs(),
+            ObservedError::BadBand
+        );
         require!(
             (1..=MAX_WINDOW_SECS).contains(&self.window_secs)
                 && (1..=MAX_WINDOW_SECS).contains(&self.max_age_secs),
@@ -787,6 +832,7 @@ pub struct Round {
     pub price_account: Pubkey,
     pub offset_bps: i32,
     pub max_conf_bps: u16,
+    pub band_bps: u16,
     pub window_secs: u16,
     pub max_age_secs: u16,
     pub commit_open: i64,
@@ -803,6 +849,10 @@ pub struct Round {
     pub threshold_mantissa: i64,
     /// Display only, MOVE rounds: ref × (1 − offset). 0 otherwise.
     pub threshold_low_mantissa: i64,
+    /// How far the outcome cleared the threshold, in basis points, signed: positive = Yes by
+    /// this much, negative = No by this much. `|outcome_margin_bps| ≤ band_bps` is the round
+    /// the measurement could have decided either way. Written by `resolve`.
+    pub outcome_margin_bps: i32,
     pub commit_count: u32,
     pub reveal_count: u32,
     pub histogram: [u32; BUCKETS],
@@ -1163,6 +1213,8 @@ pub enum ObservedError {
     BadWindowParams,
     #[msg("reference_time − max_age must be after commit_close")]
     ReferenceBeforeSealCloses,
+    #[msg("band_bps must be > 0 and smaller than the threshold")]
+    BadBand,
     #[msg("price must be > 0")]
     NonPositivePrice,
     #[msg("confidence interval too wide")]

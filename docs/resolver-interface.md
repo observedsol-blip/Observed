@@ -44,7 +44,7 @@ Resolver nachziehen:
   Mainnet-ID wird beim Deploy eingetragen).
 - Diskriminatoren von `set_reference`, `resolve`, `score_entry`, `cancel_round` und der
   Konten `Round`, `Entry` (aus `target/idl/observed.json`).
-- Byte-Layout von `Round` (480 B seit Terms v3 mit `reference_time`) und `Entry` (184 B, unverändert).
+- Byte-Layout von `Round` (486 B seit Terms v3 mit `reference_time`, `band_bps` und `outcome_margin_bps`) und `Entry` (184 B, unverändert).
   Beide Größen sind im Test `account_sizes_are_pinned` festgenagelt. Das `Entry`-Layout ist über eine Fixture abgesichert:
   Der Rust-Test `entry_layout_fixture` schreibt `tests/fixtures/generated/entry-layout.json`;
   eine Kopie liegt im Resolver unter `test/fixtures/`, und `npm test` prüft jedes Feld dagegen.

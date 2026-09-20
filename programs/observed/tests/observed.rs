@@ -656,6 +656,62 @@ fn move_question_counts_both_directions_and_equality_is_no() {
     }
 }
 
+/// A round decided inside the measurement band is marked as such on chain: `outcome_margin_bps`
+/// says how far the outcome cleared the threshold, `band_bps` (from the terms) how far the
+/// choice of measurement moment could have moved it. Everyone can recompute "close".
+#[test]
+fn close_rounds_are_visible_in_the_margin() {
+    // reference 150.00000000, MOVE with x = 2 % → thresholds 153.00 / 147.00
+    let cases: [(i64, i32, bool, &str); 5] = [
+        (
+            15_301_500_000,
+            1,
+            true,
+            "+2.01 %: Yes by one basis point, inside the band",
+        ),
+        (
+            15_298_500_000,
+            -1,
+            false,
+            "+1.99 %: No by one basis point, just as close",
+        ),
+        (
+            14_695_500_000,
+            3,
+            true,
+            "−2.03 %: Yes by three basis points on the lower side",
+        ),
+        (15_600_000_000, 200, true, "+4 %: Yes, far outside the band"),
+        (
+            15_000_000_000,
+            -200,
+            false,
+            "unchanged: No, far outside the band",
+        ),
+    ];
+    for (price, margin, yes, why) in cases {
+        let mut env = setup_with(DAY0, observed::KIND_MOVE, 200);
+        let payer = env.payer.insecure_clone();
+        set_time(&mut env.svm, REFERENCE_TIME + 5);
+        let upd = reference_update(&mut env);
+        sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+        set_time(&mut env.svm, OUTCOME_TIME + 5);
+        let out = outcome_update(&mut env, price);
+        sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+        let round = read_round(&env, 0);
+        let want = if yes {
+            observed::Outcome::Yes
+        } else {
+            observed::Outcome::No
+        } as u8;
+        assert_eq!(round.outcome, want, "{why}");
+        assert_eq!(round.outcome_margin_bps, margin, "{why}");
+        assert_eq!(round.band_bps, BAND_BPS, "band comes from the terms");
+        let close = round.outcome_margin_bps.abs() <= i32::from(round.band_bps);
+        assert_eq!(close, margin.abs() <= BAND_BPS as i32, "{why}");
+    }
+}
+
 /// The promise in the copy: "The reference is taken after sealing closes. Nobody who sealed
 /// could have seen it." Enforced by create_round, not by the calendar's good behaviour.
 #[test]
@@ -777,8 +833,8 @@ fn account_sizes_are_pinned() {
     );
     assert_eq!(
         8 + observed::Round::INIT_SPACE,
-        480,
-        "Round (terms v3 with reference_time, two readings, reserve)"
+        486,
+        "Round (terms v3 with reference_time and band, two readings, reserve)"
     );
     assert_eq!(observed::Reading::INIT_SPACE, 84, "one reading");
 }
@@ -806,6 +862,11 @@ fn create_round_refuses_unknown_or_unsafe_terms() {
                 t.offset_bps = -100
             }),
             "BadOffset",
+        ),
+        (Box::new(|t| t.band_bps = 0), "BadBand"),
+        (
+            Box::new(|t| t.band_bps = t.offset_bps.unsigned_abs() as u16),
+            "BadBand",
         ),
         (Box::new(|t| t.window_secs = 0), "BadWindowParams"),
         (Box::new(|t| t.max_age_secs = 3_601), "BadWindowParams"),
@@ -1102,6 +1163,7 @@ fn calendar_fixture_matches_program() {
             .expect("b58"),
         offset_bps: r["offsetBps"].as_i64().expect("offsetBps") as i32,
         max_conf_bps: r["maxConfBps"].as_u64().expect("maxConfBps") as u16,
+        band_bps: r["bandBps"].as_u64().expect("bandBps") as u16,
         window_secs: r["windowSecs"].as_u64().expect("windowSecs") as u16,
         max_age_secs: r["maxAgeSecs"].as_u64().expect("maxAgeSecs") as u16,
         commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
@@ -1127,6 +1189,14 @@ fn calendar_fixture_matches_program() {
         assert!(
             terms.offset_bps >= 100,
             "threshold ≥ 1.0 % (4 × measurement spread)"
+        );
+        assert_eq!(
+            terms.band_bps, 25,
+            "measurement band 25 bps (p90 22.7, rounded up)"
+        );
+        assert!(
+            i32::from(terms.band_bps) * 4 <= terms.offset_bps,
+            "threshold is at least four times the band"
         );
         assert_eq!(
             terms.price_account,

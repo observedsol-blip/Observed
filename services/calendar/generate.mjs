@@ -36,6 +36,11 @@ const VERSION = 3;
 const KIND_MOVE = 1;
 const SOURCE_PRICE_ACCOUNT = 1;
 const MAX_CONF_BPS = 50;
+/** Measurement band: how far the choice of measurement moment inside W could move the outcome.
+ *  p90 of the measured spread per timestamp was 22.7 bps for SOL, 11.6 for BTC, 15.3 for ETH
+ *  (docs/spikes/baserate.md); rounded up to 25 for every feed. A round whose margin is inside
+ *  this band was decided within the measurement noise — the app says so, everyone can check. */
+const BAND_BPS = 25;
 const WINDOW_SECS = 60; // W
 const MAX_AGE_SECS = 60; // A
 /** Reference 04:02: two minutes after sealing closes, so every admissible reference (at most
@@ -74,6 +79,7 @@ function termsHash(t) {
     base58(t.priceAccount),
     i32(t.offsetBps),
     u16(t.maxConfBps),
+    u16(t.bandBps),
     u16(t.windowSecs),
     u16(t.maxAgeSecs),
     i64(t.commitOpen),
@@ -143,6 +149,7 @@ for (let i = 0; i < leafCount; i++) {
     priceAccount: feed.account,
     offsetBps,
     maxConfBps: MAX_CONF_BPS,
+    bandBps: BAND_BPS,
     windowSecs: WINDOW_SECS,
     maxAgeSecs: MAX_AGE_SECS,
     commitOpen,
@@ -189,6 +196,7 @@ const out = {
     windowSecs: WINDOW_SECS,
     maxAgeSecs: MAX_AGE_SECS,
     maxConfBps: MAX_CONF_BPS,
+    bandBps: BAND_BPS,
     weekday: WEEKDAY.map(([k, x]) => `${k} ${x / 100}%`),
     weekend: WEEKEND.map(([k, x]) => `${k} ${x / 100}%`),
     times: "commit 16:00–04:00 UTC, reference 04:02, outcome 16:00, reveal 16:00–04:00 next day",
@@ -207,7 +215,7 @@ const md = [
   `# Calendar season ${season} — generated, review before publishing`,
   "",
   `Generator: \`node services/calendar/generate.mjs --season ${season} --start ${startDay} --leaves ${leafCount}\``,
-  `Rules: terms v${VERSION}; question kind "move", strict; source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}.`,
+  `Rules: terms v${VERSION}; question kind "move", strict; source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}, measurement band ${BAND_BPS} bps.`,
   `Mon–Fri rotate ${WEEKDAY.map(([k, x]) => `${k} ${x / 100} %`).join(", ")}; Sat/Sun rotate ${WEEKEND.map(([k, x]) => `${k} ${x / 100} %`).join(", ")} (no BTC on weekends).`,
   "Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal 16:00–04:00 the next day.",
   `Unused leaves: sha256(0x00 || [0;32]) = ${out.emptyLeaf}`,

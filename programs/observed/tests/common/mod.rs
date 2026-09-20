@@ -43,6 +43,9 @@ pub const REVEAL_CLOSE: i64 = OUTCOME_TIME + 12 * 3600;
 pub const RESOLVE_DEADLINE: i64 = OUTCOME_TIME + 24 * 3600;
 pub const MAX_CONF_BPS: u16 = 50;
 pub const OFFSET_BPS: i32 = 100; // +1 %
+/// Measurement band: p90 of the measured spread per timestamp was 22.7 bps (SOL, W = A = 60 s),
+/// rounded up to 25 (docs/spikes/baserate.md, HANDOFF 18.09.2026).
+pub const BAND_BPS: u16 = 25;
 pub const SEASON: u16 = 1;
 
 pub struct Env {
@@ -137,6 +140,7 @@ pub fn terms_rule(
         price_account: feed_account(&feed_id),
         offset_bps,
         max_conf_bps: MAX_CONF_BPS,
+        band_bps: BAND_BPS,
         window_secs: WINDOW_SECS,
         max_age_secs: MAX_AGE_SECS,
         commit_open: open,

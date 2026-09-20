@@ -12,6 +12,7 @@
     "windowSecs": 60,
     "maxAgeSecs": 60,
     "maxConfBps": 50,
+    "bandBps": 25,
     "weekday": [
       "SOL 1.7%",
       "BTC 1.3%",
@@ -23,7 +24,7 @@
     ],
     "times": "commit 16:00–04:00 UTC, reference 04:02, outcome 16:00, reveal 16:00–04:00 next day"
   },
-  "merkleRoot": "fca5712fa32d0758692fb134349ba7d61aac693311cb9d04ec8d5e9eb1a44af0",
+  "merkleRoot": "c40a35486e1485f08d3f61a87e1eeff55cbab1d526f84675473f2f6adb1345b7",
   "emptyLeaf": "7f9c9e31ac8256ca2f258583df262dbc7d6f68f2a03043d5c99a4ae5a7396ce9",
   "lastOutcomeUtc": "2026-11-27T16:00:00.000Z",
   "rounds": [
@@ -37,6 +38,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790265600,
@@ -46,14 +48,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Fri 2026-09-25",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-09-25?",
-      "termsHash": "271a10ceaa45e0cf315c2554e0b063b6c7970ad8fb9b7147b940a20a61d7bee5",
+      "termsHash": "d96e2c16ad5cf182c6197ae85227f10623151c3669da2c87843de938ec25bd0e",
       "proof": [
-        "26102f1b34ccc7183bba61deed3977f14c07f78d623f8ffbfc8ca283bdbd4629",
-        "098c27446f0550aac79c93c21c4c6aed1fb79dc7194277d2c17d31b03b94e1b1",
-        "8f5506c7156a5d4f9c8d971e85068e66158d9442fdde587f14ed1a2193ed8988",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "c9562e1270273131f3843bb2c0d76bc798831436af04eb803cf00fe319161d3d",
+        "2497c3fc4cd27c66d95578f7284702abc9c0d38e3e974208eaf531892ca12a0d",
+        "b1ec4a5a17818fbd81593d873f5d6c70d9c657730986abffbdd42ca4388a8100",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -66,6 +68,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790352000,
@@ -75,14 +78,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-09-26",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-09-26?",
-      "termsHash": "65c1195dde53f086a0f4022d2befb10b15cedf78beb398c45a4f6fff9111bf8c",
+      "termsHash": "a87c183264bd7ed2e6ce72c959a92b3184b4ee8c3913f5cdf93807354d24983d",
       "proof": [
-        "178ac38e9da841f4fa59ef56324058e55c2cc150ba7e12c93c9190f466c80166",
-        "098c27446f0550aac79c93c21c4c6aed1fb79dc7194277d2c17d31b03b94e1b1",
-        "8f5506c7156a5d4f9c8d971e85068e66158d9442fdde587f14ed1a2193ed8988",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "ce6b948746d41dc11c945658c0503b900f9dd896248781106d3bcd97d4e2a50e",
+        "2497c3fc4cd27c66d95578f7284702abc9c0d38e3e974208eaf531892ca12a0d",
+        "b1ec4a5a17818fbd81593d873f5d6c70d9c657730986abffbdd42ca4388a8100",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -95,6 +98,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790438400,
@@ -104,14 +108,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-09-27",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-09-27?",
-      "termsHash": "f397ab9e97232b27d3daddc8d7f0fbb3522f33753369bb7e993ba837b48d512f",
+      "termsHash": "7d277d8ed549b1e9f1c69793b3b380c148677be2730e117020bdf7fde1c1916e",
       "proof": [
-        "553d4fd9b31a26830854d75a3649309bb5b6ec7d4115fbc20c57170a7c7a66df",
-        "982512fe55391f4a8a6948cb43c44be74e13583b4c041bc9be36772fc0ac5ff4",
-        "8f5506c7156a5d4f9c8d971e85068e66158d9442fdde587f14ed1a2193ed8988",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "045e4836d92cbfa02062a3d1c1c3541d743e7ed420631279a6ac46cba8df588b",
+        "91d7114fc6af18e1d7d69dfb04786f7631e30be5e79b278a26f9ce52b8938907",
+        "b1ec4a5a17818fbd81593d873f5d6c70d9c657730986abffbdd42ca4388a8100",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -124,6 +128,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790524800,
@@ -133,14 +138,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Mon 2026-09-28",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-09-28?",
-      "termsHash": "860b1ccfd15e9c84077aae3df98dc5430978eccd0571a2e7cc960850818a5757",
+      "termsHash": "05dccda22730c43d966893436f3aaad1e7f7e41afa7c170f4c2ef2fc78a12864",
       "proof": [
-        "d0c552f4da70ec39df2f324a337a504a46424cec7a3a615f16fd5f59c45f3d6b",
-        "982512fe55391f4a8a6948cb43c44be74e13583b4c041bc9be36772fc0ac5ff4",
-        "8f5506c7156a5d4f9c8d971e85068e66158d9442fdde587f14ed1a2193ed8988",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "ed9f7a2de17e8548f76f8ee717dd2549db910276479110805475e8efcdf12ab0",
+        "91d7114fc6af18e1d7d69dfb04786f7631e30be5e79b278a26f9ce52b8938907",
+        "b1ec4a5a17818fbd81593d873f5d6c70d9c657730986abffbdd42ca4388a8100",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -153,6 +158,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790611200,
@@ -162,14 +168,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Tue 2026-09-29",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-09-29?",
-      "termsHash": "fd3d71234dd27eddd282137d46dac8ec586a4dc204fbc5c4c5473efd1d767098",
+      "termsHash": "555d09e4426524fd6e44324e62ac29e228775aaccf5b8080db60c5eabad7f6eb",
       "proof": [
-        "678d6ba739bb27e7e3ad7e4ad5bbae3da2214703376ef3505d98669a9c11a1d9",
-        "b348098e583494473d93074eba784ecd9d164894fcd35d997db82239686b7df4",
-        "0ea7f6f69bd583663bb9ab254317f5ce6f480c4327adcd7ac6f1ad7c518f992c",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "c69f9005fefc2bc1b8b2aa3234f8275f396b43cfa1a10bdba06ee17be30ff672",
+        "e1dd3209a79a1122a8ee4cc4f6de74d129157bae98ca6d1835c4547762e1c5e0",
+        "459ae57d268285626b98e9f0a37fe1311d7856154431e604304ac9b24cd23628",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -182,6 +188,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790697600,
@@ -191,14 +198,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Wed 2026-09-30",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-09-30?",
-      "termsHash": "2dc0eae375a5c605476506cadf508c0066179062417a8d8b39a5e88fad8b0c45",
+      "termsHash": "8fdff31cb31884e2df24aa3821a644368d322097f307ffba89ec0de8e4302001",
       "proof": [
-        "c428e994db9eb20207a7708145395d01b6d93739125508130e078622188a710f",
-        "b348098e583494473d93074eba784ecd9d164894fcd35d997db82239686b7df4",
-        "0ea7f6f69bd583663bb9ab254317f5ce6f480c4327adcd7ac6f1ad7c518f992c",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "673cd1cea63eb5ef0228ed815a14c14c0292909907129c263a69e0be62673a77",
+        "e1dd3209a79a1122a8ee4cc4f6de74d129157bae98ca6d1835c4547762e1c5e0",
+        "459ae57d268285626b98e9f0a37fe1311d7856154431e604304ac9b24cd23628",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -211,6 +218,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790784000,
@@ -220,14 +228,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Thu 2026-10-01",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-01?",
-      "termsHash": "3a980f68d5995e1e3b46eded3b25b1b7d42d02802bef4bb6c7a814e7f470fad5",
+      "termsHash": "619d2acef613d51f975bf162c9939249a1c19de9b40c16960ec37055e3a3819c",
       "proof": [
-        "72e3774f026aa46f21823ffecd9685fc93e37ae9a6a2eb18945a5d60568bc3c8",
-        "21002a3ed987445d379ac22383407824f3776c2fdbf65f19ae63dea1aafa73ff",
-        "0ea7f6f69bd583663bb9ab254317f5ce6f480c4327adcd7ac6f1ad7c518f992c",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "b3a18100e3b3527ba99e8d5b2fff6c5f3e23ae4b2ddc13f942ac078fcf7bd77f",
+        "54e7841d688a73f5bb8efa208dd846da3df70ebe732ec3e7056b7322a6d226fc",
+        "459ae57d268285626b98e9f0a37fe1311d7856154431e604304ac9b24cd23628",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -240,6 +248,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790870400,
@@ -249,14 +258,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Fri 2026-10-02",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-02?",
-      "termsHash": "b6ee12a9e80af2da65313b00a3e5aaf53c0ab8651686d83d1a33cad149461a47",
+      "termsHash": "d9c1c1baeb477b4fa6e7a36d719b14d10e0a9ad72073e49257ab11d41f3877be",
       "proof": [
-        "03b0779d667be5d012e1a22d04d38f0d02c96732675d3751650b7712be264457",
-        "21002a3ed987445d379ac22383407824f3776c2fdbf65f19ae63dea1aafa73ff",
-        "0ea7f6f69bd583663bb9ab254317f5ce6f480c4327adcd7ac6f1ad7c518f992c",
-        "181d7b31d53eb5d1254520bfca9b316ee4193a2f8a9203fb4821fa1c9a4cb2d9",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "b0160fca82a2244b47d4609c9bb035e53e42d1748666119e9a002068b4c4e33d",
+        "54e7841d688a73f5bb8efa208dd846da3df70ebe732ec3e7056b7322a6d226fc",
+        "459ae57d268285626b98e9f0a37fe1311d7856154431e604304ac9b24cd23628",
+        "cba3469124c6d6795a6f30e6e9fd735fea567a3313caa13525af5761bac4e5c6",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -269,6 +278,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1790956800,
@@ -278,14 +288,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-10-03",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-10-03?",
-      "termsHash": "d37a20a5a42d43bba0883c45b61f8d2f5e7d40506dd6a86efbb5179b3926dc4f",
+      "termsHash": "db847317d3d66c23ae2ee9328b5ef0c0483d00af96671ed3a85db28feffd39aa",
       "proof": [
-        "6df90abb6a0ca4523e0372902301658ab7ceeb4155ab5bce0e4304a2084cdb1d",
-        "2d4aed29d7e8968eaaed23f61308c6ef24f432becd838c6bdcdbf8255a5afe93",
-        "d5f5a28be8f952b885d04c70bc10a5efd1d0dd716ffde67411fa4dfb183ee8ce",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "15e155ec829d4174ffd4d8a8aac0d2e91a71c9703f3c0d852ea32e7c474cfdbc",
+        "46acc2f9331679b436718447cb41998f371723fe4e588695656b6305c230b331",
+        "c6fd168a79a34343a98a6dad4a063fadebbe2d911b61ea77a78c062b0168d7c0",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -298,6 +308,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791043200,
@@ -307,14 +318,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-10-04",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-10-04?",
-      "termsHash": "aa63f8087db1d539897171d6cf8d8a8919005ecae77804bf8b503c01dac4e201",
+      "termsHash": "467071415538022744ce2cd6d5b91599a6e539def439b34f054a4b96a691a95c",
       "proof": [
-        "cf687be5c895710842a98df97f27b3ee18cb981137a96acadf2bcff914923416",
-        "2d4aed29d7e8968eaaed23f61308c6ef24f432becd838c6bdcdbf8255a5afe93",
-        "d5f5a28be8f952b885d04c70bc10a5efd1d0dd716ffde67411fa4dfb183ee8ce",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "137baac30894bdf80a074df9216cdb795dcdb7878688d64afce689332dcba59a",
+        "46acc2f9331679b436718447cb41998f371723fe4e588695656b6305c230b331",
+        "c6fd168a79a34343a98a6dad4a063fadebbe2d911b61ea77a78c062b0168d7c0",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -327,6 +338,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791129600,
@@ -336,14 +348,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Mon 2026-10-05",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-05?",
-      "termsHash": "c116dfc7ba8ff17a0070724e9f1782a6c5c5c550b18fe7643f45d8fae6df61c2",
+      "termsHash": "9dc6739cb511c84e56d11b619bda28ea73ecbcb6fd93ad79a1bcc2c5ba968dcb",
       "proof": [
-        "319b51a9907698782da5ff2b752f08e70a66c7913290484c6022b5985a90b3a7",
-        "7741249c8f7e0feb5052b249f1d943e192f145613fbebe2071f52388894276a3",
-        "d5f5a28be8f952b885d04c70bc10a5efd1d0dd716ffde67411fa4dfb183ee8ce",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "709c6c922794b0f89d6aef6e09d0bb7cacfd864192fe598c58cb11f6ec86a4f1",
+        "b44cb65c0fb22e71e1e61920940188844d6b8637ea54d23c7ae7e255d5e2709d",
+        "c6fd168a79a34343a98a6dad4a063fadebbe2d911b61ea77a78c062b0168d7c0",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -356,6 +368,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791216000,
@@ -365,14 +378,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Tue 2026-10-06",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-06?",
-      "termsHash": "b50b0002341f3996bcb3025a77ea58c767030b8a058d11c024ae690fd7807068",
+      "termsHash": "0654d3be2fa36b9e6b5067887382da7334161ba712a9ed947565bc4897d29b8d",
       "proof": [
-        "093dceffaa761af99363a83557dc77a9868df51ddeab26c07d60f63359f931d8",
-        "7741249c8f7e0feb5052b249f1d943e192f145613fbebe2071f52388894276a3",
-        "d5f5a28be8f952b885d04c70bc10a5efd1d0dd716ffde67411fa4dfb183ee8ce",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "f7e66bf68806d6f78c39601612edc10d41861046b01e68e26bed119c9fcf0036",
+        "b44cb65c0fb22e71e1e61920940188844d6b8637ea54d23c7ae7e255d5e2709d",
+        "c6fd168a79a34343a98a6dad4a063fadebbe2d911b61ea77a78c062b0168d7c0",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -385,6 +398,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791302400,
@@ -394,14 +408,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Wed 2026-10-07",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-07?",
-      "termsHash": "b9f501e52068ac91fb725302e06c099edeabddbb774ddacf9b42add99cc131fb",
+      "termsHash": "3a11d2c02079f9a1469290198bb229663585d51c72de569f159a34b5c529d0d2",
       "proof": [
-        "9249117ab970a0d3ae20106412e90d85637742104acdfa777c1ab260d2db3d56",
-        "456132b0ed12eae6eebb2ef847f99aa715e5cde48abc37b523d875e6c28dc290",
-        "951a6b2091e9a03b7b9e5859213bc5432c3b906fd46fe511125ddff8481ffd4a",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "53b186a42e215afe5af14dedd73916dd1d4059272895f67e8168873bc25d3939",
+        "742fab7d4cac8303732072ba1163d66cc2b2da21793e048801868c01c78245fe",
+        "a9da4db0468dc07a9605241b860d85d089feb6e5b8f5596227310b21b2bf4377",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -414,6 +428,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791388800,
@@ -423,14 +438,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Thu 2026-10-08",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-08?",
-      "termsHash": "1b8d10bebcc625d5ae979e3818ad5beeebd1a61ef943f757f8ab54b87bfcb18a",
+      "termsHash": "8be88e8d1d7971a2f0e25e6b0219c3967dedcd84096ef8a42576bffcbcab21f1",
       "proof": [
-        "ab5a2bc849b11cc886644422a72099a632d65211c91580cf89cc50918199c2bb",
-        "456132b0ed12eae6eebb2ef847f99aa715e5cde48abc37b523d875e6c28dc290",
-        "951a6b2091e9a03b7b9e5859213bc5432c3b906fd46fe511125ddff8481ffd4a",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "85848d59c5e954a42002624d649e8a1e7e02e920ad0592038b5cc0d4836143ff",
+        "742fab7d4cac8303732072ba1163d66cc2b2da21793e048801868c01c78245fe",
+        "a9da4db0468dc07a9605241b860d85d089feb6e5b8f5596227310b21b2bf4377",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -443,6 +458,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791475200,
@@ -452,14 +468,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Fri 2026-10-09",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-09?",
-      "termsHash": "c6164626e1793c88361b04b9d8aa217d9d1fab8398e8adcedb45a63e0362d9f4",
+      "termsHash": "403e6335bfc72cf770ee2d5377627be7df2abd2158c58be637c5bc94f2f9ee27",
       "proof": [
-        "f9885a742dc4ef2a9025441ac33ce222f19b0a258f68edc6c04a30ad450afd7e",
-        "c5c38ac9bbd4180a25a9c116cb61f1ca2efeb27567ece65a9b5d4902f9c671ca",
-        "951a6b2091e9a03b7b9e5859213bc5432c3b906fd46fe511125ddff8481ffd4a",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "512ea5ddb2b3adabb86cdfe594c086c0cfb6476868fcda2f52bc5a5e8f91e029",
+        "1c73d36903d989044f3e8cd8c0a340156319a330fbd7c0b08c7776831b7cea72",
+        "a9da4db0468dc07a9605241b860d85d089feb6e5b8f5596227310b21b2bf4377",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -472,6 +488,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791561600,
@@ -481,14 +498,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-10-10",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-10-10?",
-      "termsHash": "8042ccf1e3193c03a8df9bc32ca47aa79ab42fd2f7e51409a70dc6b24d8334f9",
+      "termsHash": "a53292233692cff8ab24e64ff8ebeb01187abfb042c43b3ba92c706e7f33b930",
       "proof": [
-        "4c269764f4b83641f03380388fe6e1b3e596c55ca43cf43fef5699393aa9d385",
-        "c5c38ac9bbd4180a25a9c116cb61f1ca2efeb27567ece65a9b5d4902f9c671ca",
-        "951a6b2091e9a03b7b9e5859213bc5432c3b906fd46fe511125ddff8481ffd4a",
-        "0fd515a974769164e4e08fca9df9c404293fbb5b55aceab9b428a16a86d70b81",
-        "0b7eac9f37e960939dcfc295650daaff0f3012655368ef43a9ffd76c10347f41",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "dfb8ed00884e50087fe3a2e7d19540e278f8ed271f17bf306f4e72512dd9b815",
+        "1c73d36903d989044f3e8cd8c0a340156319a330fbd7c0b08c7776831b7cea72",
+        "a9da4db0468dc07a9605241b860d85d089feb6e5b8f5596227310b21b2bf4377",
+        "df1e7763d2fcf6a17f313a2684fc5912a6a8da01117db8c5327fb20bced4a790",
+        "2e631008fd416c5064eebd6051294bdc413206a7fcc4a91e17c4feb9ca3c9718",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -501,6 +518,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791648000,
@@ -510,14 +528,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-10-11",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-10-11?",
-      "termsHash": "3a0c1588a67311b414931fbcd5db8642212dc87ac88cddc548e0a590a6ba5e87",
+      "termsHash": "26e34598be75efb7346136a690d8759839929655e705b282abdd68d2d74ff1bd",
       "proof": [
-        "6aad732fb46eaec46b3106fc36cf47601a207eed1512bc2b4d2d52130c67ed06",
-        "6213f927e9dcaafe36f91cfa1f73bddfde6fcb6e814f4a7523d070f8031ba7a1",
-        "bdc7c7faba820269b46dd52a00c26018674d54cc43d658010e4bf1f08208db4e",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "402f32dced50d48d552e6e3e07f01cfef87939afd94c5530066fdbc927b1a91f",
+        "20e5fc37cefd24d1a0573b5807497dacd97f09a5e4f3763e4e275c9aeb8f7d9c",
+        "160def7e792239286d0198adec4b9f9c7635322ce52410222f633421eb39bfbf",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -530,6 +548,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791734400,
@@ -539,14 +558,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Mon 2026-10-12",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-12?",
-      "termsHash": "0c3d3e24163c8962ca216ba1a249f81071fb12d98778929a1c51b2dd61868652",
+      "termsHash": "e3fe5815034a93145344c04e60a22e9d5fd5e29e739e004d54fb79380e1a748f",
       "proof": [
-        "cf7517083bce459f12d356bc66a6d7d5b3b4b2a742e9468247c21a0e102767e2",
-        "6213f927e9dcaafe36f91cfa1f73bddfde6fcb6e814f4a7523d070f8031ba7a1",
-        "bdc7c7faba820269b46dd52a00c26018674d54cc43d658010e4bf1f08208db4e",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "2dd45a8808122034842dca16391ec6abf0ab6862f4cec3e2f727fb6e8a04ad8d",
+        "20e5fc37cefd24d1a0573b5807497dacd97f09a5e4f3763e4e275c9aeb8f7d9c",
+        "160def7e792239286d0198adec4b9f9c7635322ce52410222f633421eb39bfbf",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -559,6 +578,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791820800,
@@ -568,14 +588,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Tue 2026-10-13",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-13?",
-      "termsHash": "50bfe712f4e66e2188db187daa32b9a7bb3b8c889c74a7a129b2a8cc6c8a0c26",
+      "termsHash": "ed171298e152db9590ee6d66294ca57ef16bf90b53bcdbb71011133ab608ccc8",
       "proof": [
-        "6d86af4c1f2d0053fff13eb72544cd327df6dc51e92080caff5b034dc3faf459",
-        "bbb38620809237e2c4cdb6d9ad89256066d16ed5061f8843fa710b28830d4f05",
-        "bdc7c7faba820269b46dd52a00c26018674d54cc43d658010e4bf1f08208db4e",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "5985c7da0fb4c6fb01c21301bc3f10634f91a980daaefed528466be6599d2aed",
+        "25c084a1135af119b4c114a06a357b55e16caa9673180fddb34b20e5e6e15e9a",
+        "160def7e792239286d0198adec4b9f9c7635322ce52410222f633421eb39bfbf",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -588,6 +608,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791907200,
@@ -597,14 +618,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Wed 2026-10-14",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-14?",
-      "termsHash": "56877f1e6d494e6152b1650427342158ac6e48ff2f9d02c8cb0371677031a04c",
+      "termsHash": "f232f7a8933ad388ae69260fad58b5350529bf5af3f04aca5e1748ad0850e826",
       "proof": [
-        "7cb02cf2ca44b492e51fc71e12f1b194dd5615fb4defbac0c2ef47bf31728cce",
-        "bbb38620809237e2c4cdb6d9ad89256066d16ed5061f8843fa710b28830d4f05",
-        "bdc7c7faba820269b46dd52a00c26018674d54cc43d658010e4bf1f08208db4e",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "433c42fc6d4359a5b3f01b25f091cf5120a30109dc55c9a0357d95734cfb5e7c",
+        "25c084a1135af119b4c114a06a357b55e16caa9673180fddb34b20e5e6e15e9a",
+        "160def7e792239286d0198adec4b9f9c7635322ce52410222f633421eb39bfbf",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -617,6 +638,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1791993600,
@@ -626,14 +648,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Thu 2026-10-15",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-15?",
-      "termsHash": "a0843405dc6fc85066489e78788bfeb877cac3bb69d32a124ad5b2a8af132e69",
+      "termsHash": "220987fa2e933f05f710361eb7cf943ff677b067e132c6e32c0f40359647f750",
       "proof": [
-        "e69a0c84abdf2179e2c1410f1b2e8101d7e7d7062c9ea5a170507dd436af3c5f",
-        "9498cc7488fe9e291a33ff3b4937aa45d3afce26b7f18b2503ca02d373085f0a",
-        "ce28a513e440eeefde22a8268ff469bd63c0f9ab7e1aed81ed5742daf12cfcda",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "0500b8ee84f61953aff46385fd88d8c4e0e873de4c77152cd6a74cc8160f31e2",
+        "d4d9f08505a23d99c6b5b1bd1d930db8fa217c17cd1c2a235bea928e622cf926",
+        "a38fc3aa4e340c1e914ce449ebe614ed391262e170d3d22dd357fd54bbff3d11",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -646,6 +668,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792080000,
@@ -655,14 +678,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Fri 2026-10-16",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-16?",
-      "termsHash": "0bc56e7fb9138c0992320167767b634bdc3d4c1f4bade673ca3bb1d3adacc99c",
+      "termsHash": "26fba1018c84d923f764aec407907ba7bf6eb58983543fe1795cba666347351f",
       "proof": [
-        "6573c6d419b24f5895f1240e0f7bc30fbcdf3bc00c42a2fd663ad6d1ae1f9a3a",
-        "9498cc7488fe9e291a33ff3b4937aa45d3afce26b7f18b2503ca02d373085f0a",
-        "ce28a513e440eeefde22a8268ff469bd63c0f9ab7e1aed81ed5742daf12cfcda",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "bbdbd6d1d932c2bb457d33a8a5e10ff7f635e3e20f220685415a3cb6edf1e5a4",
+        "d4d9f08505a23d99c6b5b1bd1d930db8fa217c17cd1c2a235bea928e622cf926",
+        "a38fc3aa4e340c1e914ce449ebe614ed391262e170d3d22dd357fd54bbff3d11",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -675,6 +698,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792166400,
@@ -684,14 +708,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-10-17",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-10-17?",
-      "termsHash": "0b9a009e3a38a36009e1878440f29967d237d2229bbfcaeb178df8442c6ed617",
+      "termsHash": "357c9e42b78327cec0550cbc201c19df13b86c7395c3c724d849abb5a92f2d6a",
       "proof": [
-        "15e7210e7140e6cab38343f3e0839814d191608646298c3875475be09652762a",
-        "ede07b6bd3810e6282df9223040d545504677ca086bed738241f3efd8a8cd57f",
-        "ce28a513e440eeefde22a8268ff469bd63c0f9ab7e1aed81ed5742daf12cfcda",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "e3a7a701ae38be9b97d7ddb0350ec0edc576361deeccb75cc336599034cbad11",
+        "620c257d4ce5536758f08d4effdc058fdbd9de6127a19957f25520c95c9f6c6e",
+        "a38fc3aa4e340c1e914ce449ebe614ed391262e170d3d22dd357fd54bbff3d11",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -704,6 +728,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792252800,
@@ -713,14 +738,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-10-18",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-10-18?",
-      "termsHash": "0a59cdc0166fd20b6716490f70bc1e1d0d4d27eecd1bbcbe0c4ea3133353a0fb",
+      "termsHash": "fd54c15fbe8528d571befd52332f5926c50781c7a92948cdd17678c224a8a142",
       "proof": [
-        "257c8293943a0c81b0ccbba189491de6deda6ca872896e806743cdb633f48b1b",
-        "ede07b6bd3810e6282df9223040d545504677ca086bed738241f3efd8a8cd57f",
-        "ce28a513e440eeefde22a8268ff469bd63c0f9ab7e1aed81ed5742daf12cfcda",
-        "f9af2a34c0a0910d7c7412226993d8b7765ff6a126f45c20a808a83e2c30be49",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "eb0dcf1c09e404963a3579f168890e919be3e8773e050bdcc8d8efbd492e88a7",
+        "620c257d4ce5536758f08d4effdc058fdbd9de6127a19957f25520c95c9f6c6e",
+        "a38fc3aa4e340c1e914ce449ebe614ed391262e170d3d22dd357fd54bbff3d11",
+        "4ab582d1f3d9f4b5085d5bdcbae808021f8f79b19b296b0f39329b697d6a1020",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -733,6 +758,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792339200,
@@ -742,14 +768,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Mon 2026-10-19",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-19?",
-      "termsHash": "795c0fd482f7ff14bef0012a938394c95fff42709df0dabe9e41ee0e532c37ed",
+      "termsHash": "93cf061fe8e81b2c3607fd3f366287199077b53aff3edb5f5803df061a39b0ba",
       "proof": [
-        "6abef3c247d63e46990054fba1938a3921bf1478d7c1cadd73553fd9eb91153f",
-        "f8f1a778d1dc3021a4567aa3b956134a145fcd6485271c089624cdbabd7f043f",
-        "ad710698e37b95c34d7f7106fa4e8414b47983c61164dc850ed1bd8d8b8ffc7e",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "1267d1ee8ee1fe34c4b8dcab9ec91ae6ead25a284d791911cf38cff8be5dce61",
+        "042db010e63b1b846a5b6fa82081fe91035b18ce088fc0353d9804dcb657d33b",
+        "5c90db51bdf77fad263fef67e0921bcd29dde89fb0616a830a8779d88f17c009",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -762,6 +788,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792425600,
@@ -771,14 +798,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Tue 2026-10-20",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-20?",
-      "termsHash": "874b536b853d9b4597e0f9a868f2b3dfff266e245562f7da7a1fab3b79e97c49",
+      "termsHash": "9e5c0c9ad0a0de3952f7384d2a9b5a8058cd676ac1d3e2f48bd1f4423a552eb0",
       "proof": [
-        "a5e7d362992eb59c96a41cd7f56aef840fe0f78406de202bc56c5ba714f1e6a2",
-        "f8f1a778d1dc3021a4567aa3b956134a145fcd6485271c089624cdbabd7f043f",
-        "ad710698e37b95c34d7f7106fa4e8414b47983c61164dc850ed1bd8d8b8ffc7e",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "16fc186e6c55b6150c32e850eafb49f35627f97e38953d6ea611a4e63270830e",
+        "042db010e63b1b846a5b6fa82081fe91035b18ce088fc0353d9804dcb657d33b",
+        "5c90db51bdf77fad263fef67e0921bcd29dde89fb0616a830a8779d88f17c009",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -791,6 +818,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792512000,
@@ -800,14 +828,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Wed 2026-10-21",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-21?",
-      "termsHash": "aeff213576654719996dc4b0b1bbe8345c2caa2eb3ea271856033d5ff9beba98",
+      "termsHash": "561451c5fa91f5461712b5d00e0625c1cc3aafa0f80096b2f7e0115ecee2977e",
       "proof": [
-        "9f4592585f395811a0c5d2c5bd56fc397a5324d01454543a8d515f4a94d76261",
-        "472614478e21fabb23fe76acf339bafa1348c8533da32206c815d5b808260a30",
-        "ad710698e37b95c34d7f7106fa4e8414b47983c61164dc850ed1bd8d8b8ffc7e",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "57cf603a97cde4af0ffcb290104858362212c313492aa8598f5a0d4700190399",
+        "508b268b31b20a17bf0a9f77dd07c59719cdea448354bb365d0848907c6ce7e9",
+        "5c90db51bdf77fad263fef67e0921bcd29dde89fb0616a830a8779d88f17c009",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -820,6 +848,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792598400,
@@ -829,14 +858,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Thu 2026-10-22",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-22?",
-      "termsHash": "43312420f40110a6aa69d263e762a9f6ac42395c41e00820a6ecabfd270bc079",
+      "termsHash": "bf143b5eabdc7bc6acd3ef1be43737646284df1f00a85bb9f39bcaf3407a0450",
       "proof": [
-        "62fc84cea38671029ba55fe64148637376a19d64802b06416f3fc117a41e8908",
-        "472614478e21fabb23fe76acf339bafa1348c8533da32206c815d5b808260a30",
-        "ad710698e37b95c34d7f7106fa4e8414b47983c61164dc850ed1bd8d8b8ffc7e",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "b5083cbe94a6a61df233e39d4f893d2f8f9a2e96a8c526ca542a57e1a8aeda12",
+        "508b268b31b20a17bf0a9f77dd07c59719cdea448354bb365d0848907c6ce7e9",
+        "5c90db51bdf77fad263fef67e0921bcd29dde89fb0616a830a8779d88f17c009",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -849,6 +878,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792684800,
@@ -858,14 +888,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Fri 2026-10-23",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-23?",
-      "termsHash": "c08a38ed0577ceb80cbc322f792e34b99b8bd2e24f325c8c09c960e18e274ebf",
+      "termsHash": "398ed76ee84d5a6a4509ce3ee4f26b555e8d34d5836e49730bb9d6faecf83aab",
       "proof": [
-        "4e323aadeabc68aa4401f5ee2aca972a5e88f2dcbab46df197fb70d70d655fd5",
-        "77160fe1bbdeb8a52624f37ae795a3df94889df25379f925cb7891a3caf0e95a",
-        "8d0322926f17a1abf482d3ac906fc1f27eb954505ed7c07ca5283f5738910631",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "ccd6e1502b234c16850c81024bc690b764859434263276553ea3bd74e0fc3c50",
+        "8c6c7f6e6441da7c6c5af6e61629a0350f65b1242fb121fee4786fcf806e39cd",
+        "ea41dd7d3c6ee9b2a7e85e7c8e8ca4b7339baf70858b874aef620279a32bceab",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -878,6 +908,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792771200,
@@ -887,14 +918,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-10-24",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-10-24?",
-      "termsHash": "3aa9d2db414285e741e35d86c54c7af7fbb67043a79cada9e3135734db29811e",
+      "termsHash": "8c0957eb1e516dbd8dae1976ea616a46661637d1a14e9c87bae074c9551d3c3a",
       "proof": [
-        "a34b8c176e296383c3d308b26f181a6e82e8853ed1c4a5e3c9e6697141f5e10d",
-        "77160fe1bbdeb8a52624f37ae795a3df94889df25379f925cb7891a3caf0e95a",
-        "8d0322926f17a1abf482d3ac906fc1f27eb954505ed7c07ca5283f5738910631",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "c9fa41a4133bfe1ce73ad40d3d2e2601a6c92e174108d4f7faf6f959e46ae56c",
+        "8c6c7f6e6441da7c6c5af6e61629a0350f65b1242fb121fee4786fcf806e39cd",
+        "ea41dd7d3c6ee9b2a7e85e7c8e8ca4b7339baf70858b874aef620279a32bceab",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -907,6 +938,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792857600,
@@ -916,14 +948,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-10-25",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-10-25?",
-      "termsHash": "7e1644dd95b21d7965e44fd40fc465f65a526ec6da1709f6f6ce957016db98d7",
+      "termsHash": "f1143e30d8867a9c15e342764edc918a8d8c7560539a90d9f7b17a4f5c8a9284",
       "proof": [
-        "65610103200ae1f888b437e686077afad589d3e1766f3d39d33b97c628f0c7dd",
-        "c59cf16e6d718a3909919a4710e7b7a98ee63082e14a720271438930b790994c",
-        "8d0322926f17a1abf482d3ac906fc1f27eb954505ed7c07ca5283f5738910631",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "8a55dcad63a008a10f1c768ecb94f511d9b1da7a93860ff6f8038f1b1afc4872",
+        "29cb841cbe3f09afb4d58833e992f5a77b5b49552d39298d2861afc0f9fa12cb",
+        "ea41dd7d3c6ee9b2a7e85e7c8e8ca4b7339baf70858b874aef620279a32bceab",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -936,6 +968,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1792944000,
@@ -945,14 +978,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Mon 2026-10-26",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-26?",
-      "termsHash": "672e594fb47faceb1b9f46b647f24185604c4aae6a646477976ab4c8c00089e9",
+      "termsHash": "5e0da9aa6f8e5459f57353ce32a1805ab2771c44b00cb2067dd56bc1c3635337",
       "proof": [
-        "29258a30d1958f0dd34a10bb6c09f1efd993d23a6a21cd2044f73cec6c6c4d5e",
-        "c59cf16e6d718a3909919a4710e7b7a98ee63082e14a720271438930b790994c",
-        "8d0322926f17a1abf482d3ac906fc1f27eb954505ed7c07ca5283f5738910631",
-        "70f4ffcd92be85ee58adbcccbcae3fa41a7ff224c9bf3a6a9138f509840d281e",
-        "a5470487a93f5a7b2bf49782a7cc323486b94b3796e2a00c8ebce71a5b9bf12a",
-        "4227ef4f5bc3cc9246803c9a94fb96c3e4763652f19c36d047c09d888631d993"
+        "3b1124107554bedd986492a455fb44947035a8d7773f4e8c8de928e1a9374f1e",
+        "29cb841cbe3f09afb4d58833e992f5a77b5b49552d39298d2861afc0f9fa12cb",
+        "ea41dd7d3c6ee9b2a7e85e7c8e8ca4b7339baf70858b874aef620279a32bceab",
+        "cf82f28f52dfa77e5bfadf040d13fd7e56921cb531caf03d2eb57cef27accc39",
+        "026858bca2a6c9f3b78a0a537b24118fdb61441b10cfef756d552a6278251c84",
+        "adf598ad34794192d0256cb06599c49e22ade3aa757c3ef9bea49b97c641e2eb"
       ]
     },
     {
@@ -965,6 +998,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793030400,
@@ -974,14 +1008,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Tue 2026-10-27",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-27?",
-      "termsHash": "581be89ab6796fcd86edc8c2f78c3f0c8e3fafe482648de87e18e45f2b12d6fa",
+      "termsHash": "04cf0296da1f8325ace0aa701c50e8656a7901cb62522d4cecd5567738b883d7",
       "proof": [
-        "35437f1b2cc6be4e76e75f7f908ee1b04ab96f66aa71ec13c132b794b639ff8d",
-        "36e581a20cf2ce48de79c2a854393394b5cca69702ba4d7e1b30635b2cff1818",
-        "3c426797062d24735777dece1cd15848b4db0f42831c80f0ad8e1052438e478d",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "dfc9bf6641a9baf65cdba2f31aac9697b36427c8894009f6de6936c0ddd62eb3",
+        "fd7a5bae7e35feb9c8be3030521926c50eb250630bb60d4af135bab8bf423b56",
+        "4445971769a1ac3b6ff6f41ffd771c5af3f4aa7e070580a84a162616239ed23e",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -994,6 +1028,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793116800,
@@ -1003,14 +1038,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Wed 2026-10-28",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-10-28?",
-      "termsHash": "7beda9fddf23a23c62ae755596b3b5fc6e685276dcb3156407466f269f32746f",
+      "termsHash": "c695516a884b0ecc3b8fb4b907f9da6eb64ce6cd0a25e2d0398105dfecf6bf9b",
       "proof": [
-        "c4caeeafafa1d502bb51c4fa49d98f7fc39f47c5bd8d98782e6469b7d0e642c6",
-        "36e581a20cf2ce48de79c2a854393394b5cca69702ba4d7e1b30635b2cff1818",
-        "3c426797062d24735777dece1cd15848b4db0f42831c80f0ad8e1052438e478d",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "0d4e2830268d47fcb62d0a2d032a5deb7254b9f5073df82f93e7653b1b2573c5",
+        "fd7a5bae7e35feb9c8be3030521926c50eb250630bb60d4af135bab8bf423b56",
+        "4445971769a1ac3b6ff6f41ffd771c5af3f4aa7e070580a84a162616239ed23e",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1023,6 +1058,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793203200,
@@ -1032,14 +1068,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Thu 2026-10-29",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-10-29?",
-      "termsHash": "4bdc584731b00eca3ebb400170ee644ae9306f917fdba6ffd5e53748c242acdb",
+      "termsHash": "68efb8a9cbe7208127e834a628364a8d39aa13febbf5bb732de7319d243e461d",
       "proof": [
-        "c673d165cf5ebeb6834ae05681bec25367a57a27ccd53c9034489b3a2b86f9db",
-        "9f21a3f9552acf2bb9445815179eefb479dd9c74b424a8900d5ade81c492132c",
-        "3c426797062d24735777dece1cd15848b4db0f42831c80f0ad8e1052438e478d",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "c10f0a15c57b90f8ee55dc0d53aec9489800f66d2abea80965826fb087d428bf",
+        "e0ecf3089ea05b1e563657e50cb7ee8b9f220814f0be7f6891c36b2ad22818ef",
+        "4445971769a1ac3b6ff6f41ffd771c5af3f4aa7e070580a84a162616239ed23e",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1052,6 +1088,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793289600,
@@ -1061,14 +1098,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Fri 2026-10-30",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-10-30?",
-      "termsHash": "f7c668e6b33c7d3918f5c6369ac4a7c3882b1c78fee038e7f10631b89195cc99",
+      "termsHash": "6c6a15a30590fcae063f350c772e356ab74acf65eb8f893689f1c2bf0b895577",
       "proof": [
-        "73704b861bb3e178f224419c0923bb2176429dc58bc270c1d52b6a8a1ab10910",
-        "9f21a3f9552acf2bb9445815179eefb479dd9c74b424a8900d5ade81c492132c",
-        "3c426797062d24735777dece1cd15848b4db0f42831c80f0ad8e1052438e478d",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "0f2d7b1589e78114fd0cc94f509ff63bcc303bfef89b40bd7e8fe0e0895d727c",
+        "e0ecf3089ea05b1e563657e50cb7ee8b9f220814f0be7f6891c36b2ad22818ef",
+        "4445971769a1ac3b6ff6f41ffd771c5af3f4aa7e070580a84a162616239ed23e",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1081,6 +1118,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793376000,
@@ -1090,14 +1128,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-10-31",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-10-31?",
-      "termsHash": "622af2cc7bab21ee66a3455d3f2e4e3779e9e809dca0b69f49c382a3eaa2a9fe",
+      "termsHash": "3f4a63bbfbb53efcc56f1930ca4a5898b5225508c6d901b833becce677c8df2c",
       "proof": [
-        "bb7662769535a3e7fd6283167376ac500d16d16bfca7800f6c70f456593b5434",
-        "61f07856d8a7b9e148464dd38033a7b5739815d2e93db4256c28ad64014d1aaa",
-        "8b3699832791ed455f538293a82b643374983cf2f87125e06667073c22752a15",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "c1375392d7fff016d66a21c3c631d9658961c6e15aa2af49802eb547b4efdb1f",
+        "8a985a9d2affc6f20f6e37e80f6998b2a71cac01f5e80930cd608264800c46ba",
+        "f35b70f8bb3ff70347e9469ae1d3a74b762a48b0c10981e223395da41db18447",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1110,6 +1148,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793462400,
@@ -1119,14 +1158,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-11-01",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-11-01?",
-      "termsHash": "6028ea0c6c23ec195d4a27aec89a739e8639077a3a23983724470c5baaf1bf88",
+      "termsHash": "8857407d6ec8920d3e85c7b82aac40e3b568f7b2685291f7744a28c86b53e056",
       "proof": [
-        "ecd650ff73e02186d79b6c029f1ea0a22a430e13e96c166269d99b0754460a8c",
-        "61f07856d8a7b9e148464dd38033a7b5739815d2e93db4256c28ad64014d1aaa",
-        "8b3699832791ed455f538293a82b643374983cf2f87125e06667073c22752a15",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "b94f77ebc62b34c848eca305370168b42faefeada8e68dfa11c6b82380402496",
+        "8a985a9d2affc6f20f6e37e80f6998b2a71cac01f5e80930cd608264800c46ba",
+        "f35b70f8bb3ff70347e9469ae1d3a74b762a48b0c10981e223395da41db18447",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1139,6 +1178,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793548800,
@@ -1148,14 +1188,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Mon 2026-11-02",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-02?",
-      "termsHash": "99d01d79fcabbc53cf299077fa32f36cf47e8ea84048e6d164aa2b447e10da8f",
+      "termsHash": "4d726b332320224385e367d99c314e55fbf8077c64cf9f6fa36cc877cb4da57e",
       "proof": [
-        "13d252546383574d527ff922d2f90a11b2140da4136398e72bd557b602aa79e3",
-        "6ddcd07e9afed0a5156174e5a92a2a233d4fe531ce9d43b73ba4384e5e555e86",
-        "8b3699832791ed455f538293a82b643374983cf2f87125e06667073c22752a15",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "bf8f9b8af8787e345f73e245b6097ae897a8d7187dd4b2786727405f6497b1d4",
+        "739728800dae6f1dbda6b93bab9a63c7338694a8a23f97233e220dfba75706f8",
+        "f35b70f8bb3ff70347e9469ae1d3a74b762a48b0c10981e223395da41db18447",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1168,6 +1208,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793635200,
@@ -1177,14 +1218,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Tue 2026-11-03",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-03?",
-      "termsHash": "5083a0b06a0efab376e5553f25e8dae1bac9be760388f3be5afb8a92da966c6a",
+      "termsHash": "d4941dceedcbe633da52241bc8df2813a3f8f09a83ba922b4f2f0894317f2736",
       "proof": [
-        "33368403fd0a480766657e4a7ef1a2af0bb2c14a9c4c994137f5c9a50b00e1a8",
-        "6ddcd07e9afed0a5156174e5a92a2a233d4fe531ce9d43b73ba4384e5e555e86",
-        "8b3699832791ed455f538293a82b643374983cf2f87125e06667073c22752a15",
-        "2c695d4335165fbf0c6ce8ed18b804fc57aacca3145c24ede3d96b147d08026f",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "32b2c6dced5ada79efb16b19917ef0baf72073cca90c2ac25a325e52fd576b01",
+        "739728800dae6f1dbda6b93bab9a63c7338694a8a23f97233e220dfba75706f8",
+        "f35b70f8bb3ff70347e9469ae1d3a74b762a48b0c10981e223395da41db18447",
+        "29625abf5c9e3ec918c3be879b13591410edb996cffce728e928c0e6dfaa9b27",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1197,6 +1238,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793721600,
@@ -1206,14 +1248,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Wed 2026-11-04",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-11-04?",
-      "termsHash": "bb29f4c7532edc8070caa4cd71fd312fff55167ee3a905ec433fff9de93dd2ce",
+      "termsHash": "d05a8e2a439d83cc2697324f70c288a469520e69b675a54ee10c542b3ec11ef2",
       "proof": [
-        "0d693ff240ecac73f4f72999cc56b8324ebd7b839a42717241124d03523b888f",
-        "fe07d486850143f13018c92545556c5cb1a007d9fb748408b14b79a2622f412a",
-        "7b3ea97d967fa3053146414d8631fab7cab7a35ed820712435a1a6fd8846e26c",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "3a202e1e7831149fdaad14013d484f73993e244d32e02b5044e3e8b5f8f19702",
+        "dfeaf39e8a5ee010ae55733589af88ab083194c1571069caa7b6dc4a42d96f10",
+        "587d37f754e602f344c90369efcc216ae3f1ca5abc5b12d97f3c85afdc5767d4",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1226,6 +1268,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793808000,
@@ -1235,14 +1278,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Thu 2026-11-05",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-05?",
-      "termsHash": "80433f4a0cf595d9af10bfda0764ee871007119c063660b59877dfe31492a91c",
+      "termsHash": "dada227d8272856131093c57cb6c1935995a1ff588f67c54dede0d56af3ea1ee",
       "proof": [
-        "98ddff71fb75be1767ee1313f00c2328f0ccf1136a87e183ea38dccf3fd0fcdc",
-        "fe07d486850143f13018c92545556c5cb1a007d9fb748408b14b79a2622f412a",
-        "7b3ea97d967fa3053146414d8631fab7cab7a35ed820712435a1a6fd8846e26c",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "6ca730fb436886bfcdb16fdd998276c966fa990c7d6461ef2f35999c46fc588d",
+        "dfeaf39e8a5ee010ae55733589af88ab083194c1571069caa7b6dc4a42d96f10",
+        "587d37f754e602f344c90369efcc216ae3f1ca5abc5b12d97f3c85afdc5767d4",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1255,6 +1298,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793894400,
@@ -1264,14 +1308,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Fri 2026-11-06",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-06?",
-      "termsHash": "b70d405bfa032b4721c578b8558ca346a5c18a73b52559e8f093d77561f04caf",
+      "termsHash": "78aca5f0c1f7e8e987092d7dd8d4415fc4543b5956b15e2a5c1dec9e1c54c68a",
       "proof": [
-        "b3be38cd9f5311eb04697c430b0e20984d7239e36a35a932e189bdc6bc010d7e",
-        "d6e1abefb86819b9b9fad53f9b1f5165b7ddb019f659cfc9815f25630b1df607",
-        "7b3ea97d967fa3053146414d8631fab7cab7a35ed820712435a1a6fd8846e26c",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "7806746e473395dd59137b85e8c8d5f72d6c468c8240c99563b31511d130fe87",
+        "d22d7cd58b34ef532d0b9f4c8329b59053057726254625acb0f821d3656c7b86",
+        "587d37f754e602f344c90369efcc216ae3f1ca5abc5b12d97f3c85afdc5767d4",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1284,6 +1328,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1793980800,
@@ -1293,14 +1338,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-11-07",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-11-07?",
-      "termsHash": "c91bc92afcb10392f773159376ad2e245e2be43089fa450cd352f02e1cca223f",
+      "termsHash": "043c44608fea668aba30545a29e7d10a3473228c5f2a725f1db94cb4f3a15538",
       "proof": [
-        "2972cd7e7b9d8c965056c7fa32e60444f1080eb6231187e2a1a0bd6e3be66a5a",
-        "d6e1abefb86819b9b9fad53f9b1f5165b7ddb019f659cfc9815f25630b1df607",
-        "7b3ea97d967fa3053146414d8631fab7cab7a35ed820712435a1a6fd8846e26c",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "547aeda6fc1f205a2c0c17a7acee4680b39061359dfb78a62cfdb85c84c5f205",
+        "d22d7cd58b34ef532d0b9f4c8329b59053057726254625acb0f821d3656c7b86",
+        "587d37f754e602f344c90369efcc216ae3f1ca5abc5b12d97f3c85afdc5767d4",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1313,6 +1358,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794067200,
@@ -1322,14 +1368,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-11-08",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-11-08?",
-      "termsHash": "6750b47a06e7addf9d4a6a057e4d9f6397d473e42f3bb026879e954ef76de769",
+      "termsHash": "3320d4e98a2c1f77bc49957772166711838a134e69ac6958407adf561d5a3752",
       "proof": [
-        "5c67ef3990f0e81d2f2d9f9a71e95d83f43cf0ea5a057d130a4af32e69aee103",
-        "c43273f27208556024622c3560b81f2f095ea37d28e612f961e20320d28e64d2",
-        "b9d8e26ce2f583172b7f96f26bf8af06eb63bd9bb3cfb6496cb07f5fab8fff90",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "9dbd21c5b24e4d8741e87ac3f2f7c002a9be3ea3e59b2cf0a422e1b09a734517",
+        "cdf96dc4bfca7a3a694dc9b929ce9824cacca066d7ffd519532c290a190c3b78",
+        "f3b98798509f83c87083774d9319d59012513991099291e87518f2019380b433",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1342,6 +1388,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794153600,
@@ -1351,14 +1398,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Mon 2026-11-09",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-11-09?",
-      "termsHash": "43f001d62fdf007234ee9a3010b9bd9858e2c5b7c08db37bc8041245961692f1",
+      "termsHash": "43669d7cad7e07134f83e5a076441e0ef75ed1561ababeb27157e99213457fe2",
       "proof": [
-        "869ef39d265057dcb209269f9495caf9f56b944c685c6db734cf5c5342a3496f",
-        "c43273f27208556024622c3560b81f2f095ea37d28e612f961e20320d28e64d2",
-        "b9d8e26ce2f583172b7f96f26bf8af06eb63bd9bb3cfb6496cb07f5fab8fff90",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "05d3043b1d2d54895e8e1f22c3ac9a3772ac72216c9b683f07f306db2861c273",
+        "cdf96dc4bfca7a3a694dc9b929ce9824cacca066d7ffd519532c290a190c3b78",
+        "f3b98798509f83c87083774d9319d59012513991099291e87518f2019380b433",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1371,6 +1418,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794240000,
@@ -1380,14 +1428,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Tue 2026-11-10",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-10?",
-      "termsHash": "bc625b3568c19e144e87aa8b8af423d57a1378969f2d9483c1c52f01f1a9a8e8",
+      "termsHash": "9fe296f8ac4dd9b3283d742fc831df808de432cc3f61c93cb6f9e04acb3e1190",
       "proof": [
-        "1f49ade78933b9c69af85570475ff40f58146459d03a9c8cd3805f01ac45bbc6",
-        "aece8d15a39245b9b088e66ae2fa680a258b94ce22a540785afa7a7477ef9322",
-        "b9d8e26ce2f583172b7f96f26bf8af06eb63bd9bb3cfb6496cb07f5fab8fff90",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "f1ee1ef334a187d9ebe0fd273e837d1a6bfc6e56ffaafa9defbe01656c0bfc86",
+        "a3e4cb4f8e142363fcbdd262c5bccb2dada208f20c63c945cf54a1227052b86f",
+        "f3b98798509f83c87083774d9319d59012513991099291e87518f2019380b433",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1400,6 +1448,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794326400,
@@ -1409,14 +1458,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Wed 2026-11-11",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-11?",
-      "termsHash": "63011dee23c324fb88415e430346f8c117aed7c35c4d06cd3eee4c1d03b2bbed",
+      "termsHash": "a3178879a50254853422621c357eb55f36f968862b84b495b4fda7be7c33bf2e",
       "proof": [
-        "00d141b6d772a8ea46f0c18774ae6e17fb3892d74e991fa6bbd73604651f5054",
-        "aece8d15a39245b9b088e66ae2fa680a258b94ce22a540785afa7a7477ef9322",
-        "b9d8e26ce2f583172b7f96f26bf8af06eb63bd9bb3cfb6496cb07f5fab8fff90",
-        "e8c6a104b33a2a759b9d3a1e99b48bc6dbc1ac3a7ea28e44fb441c3361e3c6b7",
-        "0efe2f0588ee5aca07de0f9790dc6e10dd879c910ba1849b87484bd3cef265a5",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "81bed6a660cfa6cd6f4ba3c23f8f33dd1a0a29f65cca02d2e43a4478d7c2c3e3",
+        "a3e4cb4f8e142363fcbdd262c5bccb2dada208f20c63c945cf54a1227052b86f",
+        "f3b98798509f83c87083774d9319d59012513991099291e87518f2019380b433",
+        "d8bcc5bac8308e77cc997e202fe5eb53c77ab614d38b9144a4b5b52f16b08f54",
+        "db8d08615b6e6d1bff6ed6f1a37f6207a4dabfd490b4d5d72843ce4fec459f01",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1429,6 +1478,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794412800,
@@ -1438,14 +1488,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Thu 2026-11-12",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-11-12?",
-      "termsHash": "95a126f5a8e1403b1891e265faea4a68457fcf826f90ecb2197bd07fdaed4511",
+      "termsHash": "047e9d6b4fc38c7dba776d5c84299efb36b247cc8e1890fe9b65cb5cdf513028",
       "proof": [
-        "2c4a97c91a8a23b149a5b5ef29929e77c7f29e321520983da689398097785cf5",
-        "65486bcf378e2f725d7a36ee54533cfc6100899806e155bd10ab842ced5ec69f",
-        "d35a6ae143dced5393e0c3d40e55b56e2aeca6e51da6b8dd35eff530aaa86e35",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "ec5bad7248171fef3517321cbcea171e4a6b4ff90d7ce52731e56d62e97ea73d",
+        "9f62ac8d0238e3735d11048d636ac5c4dcfb39626602105c116bc229d621db91",
+        "4cf209959c2994d78e829a1dd1a95bbd130659a61bf7c7fc1c432e50f54b4599",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1458,6 +1508,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794499200,
@@ -1467,14 +1518,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Fri 2026-11-13",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-13?",
-      "termsHash": "115be89f612f35ec67a391c9bfa04894295910194f8c8b95a820b4045bc953c6",
+      "termsHash": "316be6c99722eae33a872d2d8900de92d07cb79c36fcaa72cc76cde62d6be5c5",
       "proof": [
-        "2b61538be88ef88311309838c16faaddd85d23264dda61d0b5c64f915a58eb83",
-        "65486bcf378e2f725d7a36ee54533cfc6100899806e155bd10ab842ced5ec69f",
-        "d35a6ae143dced5393e0c3d40e55b56e2aeca6e51da6b8dd35eff530aaa86e35",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "ed3334f6d51c76c6ae6c932e03add6afcad09be6ab23b6f386c927efb42c2699",
+        "9f62ac8d0238e3735d11048d636ac5c4dcfb39626602105c116bc229d621db91",
+        "4cf209959c2994d78e829a1dd1a95bbd130659a61bf7c7fc1c432e50f54b4599",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1487,6 +1538,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794585600,
@@ -1496,14 +1548,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-11-14",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-11-14?",
-      "termsHash": "f0edefe093f6feaea53f07b5df7af3f4d5fe0733cf6da55ad224526109138fe8",
+      "termsHash": "2a2f8a684ab3d73eff44a1e9f8c605ef0666d585fb49331adda18df2177d103b",
       "proof": [
-        "7742cb9164743e2c6d92535fd734befe40e3b445bc28062ff7184e6bffdf9b0f",
-        "58c84251d96673fdc9714b27795e5ae53f97b26042a43ec7cc049e73ed687ecb",
-        "d35a6ae143dced5393e0c3d40e55b56e2aeca6e51da6b8dd35eff530aaa86e35",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "d50d1bffbeb91b7fb139a42835561b73015ff80c0c2df7f413bc3cbba6d76134",
+        "38b056efa509826c655c6ed17e2d93849e84a73e545fa373f307d9c119cc8fa0",
+        "4cf209959c2994d78e829a1dd1a95bbd130659a61bf7c7fc1c432e50f54b4599",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1516,6 +1568,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794672000,
@@ -1525,14 +1578,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-11-15",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-11-15?",
-      "termsHash": "cef39ae6ff0dee7c04d9359c92488b5e0e06cb66a872521d92544af87bdda0ce",
+      "termsHash": "51b3a6876733471a0f06befd375e0f7adad3cc1f590b8389da097534bd8fa373",
       "proof": [
-        "ead9ae28a5d3f5961268d2e30a0dc07aea7fe10e364b096098a71d7cf35f0b9d",
-        "58c84251d96673fdc9714b27795e5ae53f97b26042a43ec7cc049e73ed687ecb",
-        "d35a6ae143dced5393e0c3d40e55b56e2aeca6e51da6b8dd35eff530aaa86e35",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "d36fe858c31996ac7cec706d80ac0361389be2a89dad0b276f18805b724bb197",
+        "38b056efa509826c655c6ed17e2d93849e84a73e545fa373f307d9c119cc8fa0",
+        "4cf209959c2994d78e829a1dd1a95bbd130659a61bf7c7fc1c432e50f54b4599",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1545,6 +1598,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794758400,
@@ -1554,14 +1608,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Mon 2026-11-16",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-16?",
-      "termsHash": "ff449511f5d984ed020e92b88526d0768ce226276d99ddf05eeb7beaf5c6dded",
+      "termsHash": "5c973539de15a8029e985495587d32c4fb6ee88a89a77ad946abcac3386f2a88",
       "proof": [
-        "4ddf1cac1b274db89fc478dad8fe9eb759750f1ee15df51f7c77ff8556385475",
-        "dc03fa18ddad5e48f0ea73a6503cc77fb0f8e6fb013377af2b58ffcfec09bb32",
-        "7b9cbba4c2833e15a2897ae15a6a9e176a2446397b7a656f95e631c22ce95399",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "38c25106aa8f9354d1819f81afeee0282949537d6bb5d56cc53ab1311be9ee20",
+        "cc03b2b3e343a7a559db30a0076f16dd9fa8c2227dd3482f29c7414ccb999ab4",
+        "e95ff41017ec4fee97571f5d3006780560c4419e4eeb95da4638ddb52b845f08",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1574,6 +1628,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794844800,
@@ -1583,14 +1638,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Tue 2026-11-17",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-11-17?",
-      "termsHash": "40910e93eeb8f2d494d02b6db21f470ea8dce7ef519181b12c7f8158e3d9643a",
+      "termsHash": "8f094c2ec86b2a3f44fed8fb6d3f7a686382c846fd78d373b13ebb20fa3b0c90",
       "proof": [
-        "d177fa65b3a3b24a3c87b436b813855f6d8e9f965ada4f601133f1ba809ea47f",
-        "dc03fa18ddad5e48f0ea73a6503cc77fb0f8e6fb013377af2b58ffcfec09bb32",
-        "7b9cbba4c2833e15a2897ae15a6a9e176a2446397b7a656f95e631c22ce95399",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "c41e7dc7c652cc17d7247327cd8b1918764badfca0fb4f462b1450a5e5db6744",
+        "cc03b2b3e343a7a559db30a0076f16dd9fa8c2227dd3482f29c7414ccb999ab4",
+        "e95ff41017ec4fee97571f5d3006780560c4419e4eeb95da4638ddb52b845f08",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1603,6 +1658,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1794931200,
@@ -1612,14 +1668,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Wed 2026-11-18",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-18?",
-      "termsHash": "9d3118abc639efdb7542f31f9e413b702fa43ab0542485c38af2cdef7f1316b8",
+      "termsHash": "0f71ac46c50ad432025af3003c8865b7ad7d6adb7db10ead9c565ae88e681b7e",
       "proof": [
-        "9638304645ce411d1f2e26d04ebae6e77ba76d9bf415bd1df9a11d8cfc7948e0",
-        "b08f7ae1fd919c37c0da47cdd6bbe9de66ffd69ebda8f4a6644bd52227116d97",
-        "7b9cbba4c2833e15a2897ae15a6a9e176a2446397b7a656f95e631c22ce95399",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "eb35a68d7679db91172cac988ac526c1a03a326c3631dcbbb47e6cf3da217b80",
+        "d9d820c8f98e1e97b21937231425dabc2d680872aae3a19225252933530c8b07",
+        "e95ff41017ec4fee97571f5d3006780560c4419e4eeb95da4638ddb52b845f08",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1632,6 +1688,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795017600,
@@ -1641,14 +1698,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Thu 2026-11-19",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-19?",
-      "termsHash": "8100af6408ec0d67e9ae4a2dfb023897af62601f686d39f3cf76b6cd26c25a9e",
+      "termsHash": "4dc95f81ad7194ac91a9657356844d9f3eb5229dcbeca386b0c29ba7f8f9ceaa",
       "proof": [
-        "b68a50ac60f8533e2f37b2071393eac65335729c00426ebe5fd3bf7c28e1c8f2",
-        "b08f7ae1fd919c37c0da47cdd6bbe9de66ffd69ebda8f4a6644bd52227116d97",
-        "7b9cbba4c2833e15a2897ae15a6a9e176a2446397b7a656f95e631c22ce95399",
-        "ee62981e282dd18ed61d48c7092b4f37997879227c2db4eaa3578b15e8679a63",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "8c8f95287c7631c59ce97a3d1c9a589bbcac5958401ab8d4f2dd554e180c2dad",
+        "d9d820c8f98e1e97b21937231425dabc2d680872aae3a19225252933530c8b07",
+        "e95ff41017ec4fee97571f5d3006780560c4419e4eeb95da4638ddb52b845f08",
+        "67a575d08f65d617c6860b9bb881d74e9ccaeba32f3cbb4d1ecacdc20a19d1f2",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1661,6 +1718,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795104000,
@@ -1670,14 +1728,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Fri 2026-11-20",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-11-20?",
-      "termsHash": "d124b24bb90450f84dc1d682f134c31e85bdb787ab13c0e72b7299d1e4eae723",
+      "termsHash": "0e81d4bff56fd4b12337818e39aa10cb3227942035f4b276371b218f469a4f1b",
       "proof": [
-        "3ff4d4920b379c509d2dde30aa801badc20e7a1447606978a37f1b7165fbf987",
-        "cad75a68fcc5ffd17ff946b79b7e76c11e81b90d488ad31e41b08d087ea1a324",
-        "eaedba0c4c4e9851ac778f48a4d8c1ce53a266dc3baf81e128d7975d8ebc37b2",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "86b20a9dec3d14e4d06667a5af4ac8c1112cd2857da0a4c39f2f2a1776535cac",
+        "6065b87f45f1aeffee8e1ac0ff459e7fe0955167ec407388e147515fd10d91c5",
+        "a3dad975fecd070b49d4dec98ccd305a266b2d06d257fabd1e6ed69deff6efb0",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1690,6 +1748,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 110,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795190400,
@@ -1699,14 +1758,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Sat 2026-11-21",
       "question": "Will SOL move more than 1.1% up or down between 04:02 and 16:00 UTC on 2026-11-21?",
-      "termsHash": "7d7e671819307302052ac73a98605c8e7f210fe9c4bfee6c7d0fc45207141741",
+      "termsHash": "5958711241b204a1edb35cb95819202e18d6ffd0253f6e16ce6bea5a3aa907a0",
       "proof": [
-        "08e61dcf43f762f42df4c8c8b3be30b88dafba2ffcc6d18529609c6479faa2f4",
-        "cad75a68fcc5ffd17ff946b79b7e76c11e81b90d488ad31e41b08d087ea1a324",
-        "eaedba0c4c4e9851ac778f48a4d8c1ce53a266dc3baf81e128d7975d8ebc37b2",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "6959ef4c5b64ee8c3382575423222c44091fd6de1de7076b0b0871b98f83deb1",
+        "6065b87f45f1aeffee8e1ac0ff459e7fe0955167ec407388e147515fd10d91c5",
+        "a3dad975fecd070b49d4dec98ccd305a266b2d06d257fabd1e6ed69deff6efb0",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1719,6 +1778,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 100,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795276800,
@@ -1728,14 +1788,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Sun 2026-11-22",
       "question": "Will ETH move more than 1% up or down between 04:02 and 16:00 UTC on 2026-11-22?",
-      "termsHash": "e665faf72e0910863a6170034bb46a2bc387ba3e1ba9b64b02a67cf2ea72f45f",
+      "termsHash": "0ff75f7279f7b998db2e16c1a7c3570c934af99a552fde1a05e491a9c45b87fa",
       "proof": [
-        "e5b831fcb4d561eb842739b15aa1a816d18f73b30ee2b32883c32d530120fa5c",
-        "bcd711c0d2b750bcc9b6718efe7105b69ac57ad1ce99d0e88be0468340a76882",
-        "eaedba0c4c4e9851ac778f48a4d8c1ce53a266dc3baf81e128d7975d8ebc37b2",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "ecc1ff7d230ffb1702c9f4c3c61c4c8e6018684bb1a60b8a9d380f52d29506df",
+        "687f45789572718060090adefe4d3e4832c77b7ca41ade10b77d489e89fb970a",
+        "a3dad975fecd070b49d4dec98ccd305a266b2d06d257fabd1e6ed69deff6efb0",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1748,6 +1808,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795363200,
@@ -1757,14 +1818,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Mon 2026-11-23",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-23?",
-      "termsHash": "637b1f06570195705b5c7da3d5e42a93ab3f53069f9871ddfe3db5e6b8886ef4",
+      "termsHash": "da3dc57e5f55f6f387d7b488ca19a260144afee238ed9833c311b8a9d88104d3",
       "proof": [
-        "282100f36991a8ac96bdbb469ba182b21ba410a407eebbe55f713815e6f1cd74",
-        "bcd711c0d2b750bcc9b6718efe7105b69ac57ad1ce99d0e88be0468340a76882",
-        "eaedba0c4c4e9851ac778f48a4d8c1ce53a266dc3baf81e128d7975d8ebc37b2",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "4ab1b7d1f4e311ef2b7aa2c279c91ceea0ae9674f901b25ba444ac8dca9e578d",
+        "687f45789572718060090adefe4d3e4832c77b7ca41ade10b77d489e89fb970a",
+        "a3dad975fecd070b49d4dec98ccd305a266b2d06d257fabd1e6ed69deff6efb0",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1777,6 +1838,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795449600,
@@ -1786,14 +1848,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Tue 2026-11-24",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-24?",
-      "termsHash": "9e9b5626142b8c59e3baa81a8cea4927366f884c8cc62ac945a918311caa0f4c",
+      "termsHash": "0dc5f0aedde28aab75f32d9508cac17f6f4211da60e2162e5d6b9b27d1228203",
       "proof": [
-        "1ed742b69b8a8112cc1f2f6c2364c7554b32a7c7ebff8719a8d58aec75ecdbd8",
-        "a6a2708201955088ef32cd1b7e004c70c1dedd5f7aa452e6b1dc3f3ebd53debb",
-        "aec7019d93ea2dc0181fda79166a5529db2f6351cbd617adb410581fdd1a0142",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "a68034ba13832cfb8b4866ea2f1318c5c3108a65a68b4bf208cdf1a6b95ab886",
+        "a1a2721d3aa9bf9f81346dcb2106ed1cc2f8624dc2f7d5d851270de37f50dd36",
+        "8381df5993fab27f3e5263a02e27c44983ada209413c39e18a0da1fd3b4420d5",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1806,6 +1868,7 @@
       "priceAccount": "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5",
       "offsetBps": 130,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795536000,
@@ -1815,14 +1878,14 @@
       "feed": "BTC/USD",
       "measuredDay": "Wed 2026-11-25",
       "question": "Will BTC move more than 1.3% up or down between 04:02 and 16:00 UTC on 2026-11-25?",
-      "termsHash": "fcc3a9c10225c4a84e20a424edc40af29e9eb6c7926e21d234d3af1bbe120253",
+      "termsHash": "9efb4762a88a81dc71f839a8a0a9d848e549e866b6eaef2261f59273a9d0a7ea",
       "proof": [
-        "6521f936daa239265c8e21ccb7527f9f21c3d97b75612160b838250481fe84c2",
-        "a6a2708201955088ef32cd1b7e004c70c1dedd5f7aa452e6b1dc3f3ebd53debb",
-        "aec7019d93ea2dc0181fda79166a5529db2f6351cbd617adb410581fdd1a0142",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "7f36d3436e19701325f9f0bcd12aac8fb27c7115947b6d69eee5ac0667ba0d8a",
+        "a1a2721d3aa9bf9f81346dcb2106ed1cc2f8624dc2f7d5d851270de37f50dd36",
+        "8381df5993fab27f3e5263a02e27c44983ada209413c39e18a0da1fd3b4420d5",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1835,6 +1898,7 @@
       "priceAccount": "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH",
       "offsetBps": 120,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795622400,
@@ -1844,14 +1908,14 @@
       "feed": "ETH/USD",
       "measuredDay": "Thu 2026-11-26",
       "question": "Will ETH move more than 1.2% up or down between 04:02 and 16:00 UTC on 2026-11-26?",
-      "termsHash": "6962df902ff66e79b2d8c408170bf9881e4c8006a40972592cdc62bbf0624bbe",
+      "termsHash": "f1d68d547ba74dbd1ea4a2c405708d463c4625024e9308ff53c4805dfab8e337",
       "proof": [
-        "3180f96a411c6ef295805f35ae9a2c47564a3611e1464bd4b9b91cf92611f066",
-        "7ebc2a50886f8901d2c098508b75f7af98ae4df1b6288a3aade29e8f0f448b82",
-        "aec7019d93ea2dc0181fda79166a5529db2f6351cbd617adb410581fdd1a0142",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "475ec429d62015e18092c0ef60774c217bcade117d28a643498589512d6b7904",
+        "3c810e101ca655827def760b664487b6d42dd0adafed338162d1c69088f4310b",
+        "8381df5993fab27f3e5263a02e27c44983ada209413c39e18a0da1fd3b4420d5",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     },
     {
@@ -1864,6 +1928,7 @@
       "priceAccount": "7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE",
       "offsetBps": 170,
       "maxConfBps": 50,
+      "bandBps": 25,
       "windowSecs": 60,
       "maxAgeSecs": 60,
       "commitOpen": 1795708800,
@@ -1873,14 +1938,14 @@
       "feed": "SOL/USD",
       "measuredDay": "Fri 2026-11-27",
       "question": "Will SOL move more than 1.7% up or down between 04:02 and 16:00 UTC on 2026-11-27?",
-      "termsHash": "e21dd2af9d59f6b311620e0edc85ae73d0b1b37162c3e54f505f3504bee858bc",
+      "termsHash": "ab9b80965093bdaa66b150da1c1f7f0f369216dd1366dbcecfa36457a67f25ef",
       "proof": [
-        "ff150627f6946499dd90cf96ccc3655288ec19fbad2f6d5162878bb541e0af7a",
-        "7ebc2a50886f8901d2c098508b75f7af98ae4df1b6288a3aade29e8f0f448b82",
-        "aec7019d93ea2dc0181fda79166a5529db2f6351cbd617adb410581fdd1a0142",
-        "86d93ef13afac0261a97829e37047ddeaa6e846e0548e77428aba1a10cb8d6e8",
-        "4bf58254ad94aa04378d77a1b24e79a4ff8007b5e6e1051e91575f63912b7cee",
-        "08742b0996ffa00248fa94823d0c2192e9d16409b6447c965159a2da30d75973"
+        "ff70eb8e8d2dfca2169613cfe17bca96ee2ee053f35158f733950c6986ee5458",
+        "3c810e101ca655827def760b664487b6d42dd0adafed338162d1c69088f4310b",
+        "8381df5993fab27f3e5263a02e27c44983ada209413c39e18a0da1fd3b4420d5",
+        "2f0ceb2c0a9254ce9eb42fc87a0f6cbe8ec17104f09c6956299f50e9de290475",
+        "73b285c3fb4bbed02d1e3ba5d2705c503e8b0ec73da4c20ca3e46493ff03b035",
+        "1b181d91dcd213420b3e1d74284c5e03e5b29f4aae1bfecbe8f1106c9e7148af"
       ]
     }
   ]
