@@ -821,6 +821,77 @@ fn rounds_without_a_seal_leave_no_trace_in_the_record() {
     );
 }
 
+/// Writes a finished Round the program itself serialised to tests/fixtures/generated, so the
+/// resolver (TypeScript) can prove its byte offsets against it — like `entry_layout_fixture`.
+#[test]
+fn round_layout_fixture() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let player = env.player.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 6_500, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    sendx!(env, &player, [ix_reveal(&env, 0, 6_500, SALT)]).expect("reveal");
+
+    let round = read_round(&env, 0);
+    let account = env.svm.get_account(&round_pda(0)).expect("round account");
+    let json = serde_json::json!({
+        "note": "Written by programs/observed/tests/observed.rs::round_layout_fixture. The resolver decodes this with its own offsets.",
+        "pubkey": round_pda(0).to_string(),
+        "owner": observed::id().to_string(),
+        "lamports": account.lamports,
+        "data_base64": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &account.data),
+        "expected": {
+            "round_id": round.round_id,
+            "version": round.version,
+            "kind": round.kind,
+            "source_kind": round.source_kind,
+            "feed_id": round.feed_id.iter().map(|b| format!("{b:02x}")).collect::<String>(),
+            "price_account": round.price_account.to_string(),
+            "offset_bps": round.offset_bps,
+            "max_conf_bps": round.max_conf_bps,
+            "band_bps": round.band_bps,
+            "window_secs": round.window_secs,
+            "max_age_secs": round.max_age_secs,
+            "commit_open": round.commit_open,
+            "commit_close": round.commit_close,
+            "reference_time": round.reference_time,
+            "outcome_time": round.outcome_time,
+            "reveal_close": round.reveal_close,
+            "resolve_deadline": round.resolve_deadline,
+            "status": round.status,
+            "outcome": round.outcome,
+            "reference_price": round.reference.price,
+            "reference_publish_time": round.reference.publish_time,
+            "reference_posted_slot": round.reference.posted_slot,
+            "evidence_price": round.evidence.price,
+            "outcome_margin_bps": round.outcome_margin_bps,
+            "commit_count": round.commit_count,
+            "reveal_count": round.reveal_count,
+            "size": account.data.len(),
+        }
+    });
+    let dir = format!(
+        "{}/../../tests/fixtures/generated",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    std::fs::create_dir_all(&dir).expect("fixture dir");
+    std::fs::write(
+        format!("{dir}/round-layout.json"),
+        format!("{}\n", serde_json::to_string_pretty(&json).expect("json")),
+    )
+    .expect("write fixture");
+}
+
 /// Account sizes others depend on: the resolver filters Entry by `dataSize: 184`, and Round's
 /// size sets the season's rent. A change here must be a decision, not an accident.
 #[test]

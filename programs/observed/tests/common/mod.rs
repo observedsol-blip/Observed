@@ -68,6 +68,13 @@ pub struct Env {
     pub proofs: Vec<Vec<[u8; 32]>>,
 }
 
+/// Reveal window length, mirrored from the program (used by the season test).
+pub const REVEAL_WINDOW: i64 = 12 * 3600;
+
+pub fn read_fixture(name: &str) -> (Pubkey, Pubkey, u64, Vec<u8>) {
+    fixture(name)
+}
+
 fn fixture(name: &str) -> (Pubkey, Pubkey, u64, Vec<u8>) {
     let path = format!(
         "{}/../../tests/fixtures/{name}.json",
@@ -348,10 +355,19 @@ pub fn ix_initialize(payer: &Pubkey, authority: &Pubkey) -> Instruction {
 }
 
 pub fn ix_publish_calendar(authority: &Pubkey, root: [u8; 32], leaf_count: u32) -> Instruction {
+    ix_publish_calendar_for(authority, root, leaf_count, SEASON)
+}
+
+pub fn ix_publish_calendar_for(
+    authority: &Pubkey,
+    root: [u8; 32],
+    leaf_count: u32,
+    season: u16,
+) -> Instruction {
     Instruction::new_with_bytes(
         observed::id(),
         &observed::instruction::PublishCalendar {
-            season: SEASON,
+            season,
             calendar_root: root,
             leaf_count,
         }
@@ -518,6 +534,44 @@ pub fn setup_day(day0: i64) -> Env {
     setup_with(day0, observed::KIND_ABOVE, OFFSET_BPS)
 }
 
+/// Config and calendar only, with a root that comes from outside (the real season file).
+/// No rounds, no SGT for the harness player — the caller builds its own devices.
+pub fn setup_bare(now: i64, root: [u8; 32], season: u16) -> Env {
+    let mut env = setup_with(now, observed::KIND_MOVE, 200);
+    // setup_with published its own calendar and created round 0; start over on a fresh svm
+    let mut fresh = LiteSVM::new();
+    let so = include_bytes!(concat!(
+        env!("CARGO_TARGET_TMPDIR"),
+        "/../deploy/observed.so"
+    ));
+    fresh.add_program(observed::id(), so).expect("add_program");
+    for k in [&env.payer, &env.authority] {
+        fresh
+            .airdrop(&k.pubkey(), 100_000_000_000)
+            .expect("airdrop");
+    }
+    env.svm = fresh;
+    env.root = root;
+    set_time(&mut env.svm, now);
+    let payer = env.payer.insecure_clone();
+    let authority = env.authority.insecure_clone();
+    let payer_pk = payer.pubkey();
+    let auth_pk = authority.pubkey();
+    sendx!(env, &payer, [ix_initialize(&payer_pk, &auth_pk)]).expect("initialize");
+    sendx!(
+        env,
+        &authority,
+        [ix_publish_calendar_for(
+            &auth_pk,
+            root,
+            CALENDAR_LEAVES,
+            season
+        )]
+    )
+    .expect("publish_calendar");
+    env
+}
+
 /// A season whose every round has question kind `kind` and offset `offset_bps`.
 pub fn setup_with(day0: i64, kind: u8, offset_bps: i32) -> Env {
     let mut svm = LiteSVM::new();
@@ -623,6 +677,22 @@ pub fn read_entry(env: &Env, round_id: u32) -> Option<observed::Entry> {
     }
     anchor_lang::AccountDeserialize::try_deserialize(&mut acc.data.as_slice()).ok()
 }
+pub fn read_entry_for(env: &Env, round_id: u32, mint: Pubkey) -> Option<observed::Entry> {
+    let acc = env.svm.get_account(&entry_pda(round_pda(round_id), mint))?;
+    if acc.data.is_empty() {
+        return None;
+    }
+    anchor_lang::AccountDeserialize::try_deserialize(&mut acc.data.as_slice()).ok()
+}
+
+pub fn read_player_for(env: &Env, mint: Pubkey) -> observed::Player {
+    let acc = env
+        .svm
+        .get_account(&player_pda(mint))
+        .expect("player account");
+    anchor_lang::AccountDeserialize::try_deserialize(&mut acc.data.as_slice()).expect("player")
+}
+
 pub fn read_player(env: &Env) -> observed::Player {
     let acc = env
         .svm
