@@ -8,22 +8,9 @@ import { Pressable, Text, View } from "react-native";
 import Scale from "./Scale";
 import { Label } from "./Type";
 import { copy } from "../copy.ts";
+import { type Side, clampToStep, toPBps } from "../core/answer.ts";
 import { color, space, type } from "../tokens";
 
-export type Side = "up" | "down" | null;
-
-/** p_bps for a side and a confidence in percent: Up 80 → 8000, Down 80 → 2000. */
-export function toPBps(side: Side, confidence: number): number {
-  if (side === null) return 5_000;
-  return side === "up" ? confidence * 100 : 10_000 - confidence * 100;
-}
-
-/** The other direction, for a record that was already sealed. */
-export function fromPBps(pBps: number): { side: Side; confidence: number } {
-  if (pBps === 5_000) return { side: null, confidence: 50 };
-  const up = pBps > 5_000;
-  return { side: up ? "up" : "down", confidence: (up ? pBps : 10_000 - pBps) / 100 };
-}
 
 export default function SideConfidence({
   side,
@@ -66,13 +53,6 @@ export default function SideConfidence({
       </View>
     </View>
   );
-}
-
-/** The program only accepts steps of 5 percentage points, and never below 50 on the chosen
- *  side — 45 % Up is 55 % Down, and saying it twice would be two names for one answer. */
-function clampToStep(percent: number): number {
-  const stepped = Math.round(percent / 5) * 5;
-  return Math.min(100, Math.max(50, stepped));
 }
 
 function SideButton({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {

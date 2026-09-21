@@ -209,6 +209,11 @@ Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihe
 
 `p = 50` heißt „keine Seite“: kein Treffer, kein Fehlschlag. Im Saisonwert zählt die Runde normal.
 
+**Siegeln ist gesperrt, bis beide Hälften entschieden sind (Owner, 22.09.2026):** eine Seite
+**und** eine Sicherheit, die jemand gesetzt hat. Solange `How sure?` steht, ist `Seal today`
+inaktiv. Den Regler anzufassen und auf 50 stehen zu lassen genügt — das ist eine Entscheidung;
+ein unberührter Regler ist keine.
+
 **Die drei Zustände der Eingabe (Owner, 22.09.2026, freigegeben):**
 - keine Seite gewählt: `Pick a side first.` (steht unter der Zahl, nicht unter dem Knopf)
 - Seite gewählt, Regler noch nicht bewegt: `How sure?`

@@ -3,14 +3,16 @@
 // Every string comes from docs/03-SCREEN-MAP.md (§2 for the states, §11 for the input), and
 // every state comes from `TodayView`, which is derived from the chain plus the local record.
 // The screen has exactly one job beyond drawing: it must not let a seal start before the player
-// has touched the side, because a 50/50 nobody chose is not an answer.
+// has decided BOTH halves — the side and how sure. A 50/50 nobody chose is not an answer, and
+// until 22.09.2026 a tap on `Up` alone was enough to arm the button (`core/answer.ts`).
 import React, { useState } from "react";
 import { Text, View } from "react-native";
 import Screen from "../components/Screen";
 import Hairline from "../components/Hairline";
 import PrimaryButton from "../components/PrimaryButton";
 import SentenceField from "../components/SentenceField";
-import SideConfidence, { type Side, fromPBps, toPBps } from "../components/SideConfidence";
+import SideConfidence from "../components/SideConfidence";
+import { type Side, canSeal, fromPBps, toPBps } from "../core/answer.ts";
 import { Block, Body, Kicker, Label, Mono, MonoMeta, Question } from "../components/Type";
 import type { TodayView } from "../core/day.ts";
 import { copy } from "../copy.ts";
@@ -38,8 +40,10 @@ export default function Today({
   const initial = view.phase === "open" && view.pBps !== null ? fromPBps(view.pBps) : null;
   const [side, setSide] = useState<Side>(initial?.side ?? null);
   const [confidence, setConfidence] = useState<number>(initial?.confidence ?? 50);
-  // A record that already carries a number was touched on an earlier visit.
-  const [confidenceTouched, setConfidenceTouched] = useState(initial !== null);
+  // A record that already carries a side was decided on an earlier visit. A record of exactly
+  // 50/50 does not count: it carries no side, so the scale has to be set again — otherwise the
+  // very hole this rule closes would reopen for anyone who once sealed a 50.
+  const [confidenceTouched, setConfidenceTouched] = useState(initial?.side != null);
   const [sentence, setSentence] = useState("");
   const [share, setShare] = useState(false);
 
@@ -84,7 +88,8 @@ export default function Today({
 
   // --- open for sealing
   const pBps = toPBps(side, confidence);
-  const touched = side !== null;
+  // Both halves have to be a decision: a side AND a confidence somebody actually set.
+  const ready = canSeal({ side, confidenceTouched });
   const blocked = view.blocked;
 
   return (
@@ -138,7 +143,7 @@ export default function Today({
           ) : null}
           <PrimaryButton
             label="Seal today"
-            disabled={!touched || busy}
+            disabled={!ready || busy}
             onPress={async () => {
               await actions.onSave(pBps, sentence.trim() || undefined, share);
               await actions.onSeal();

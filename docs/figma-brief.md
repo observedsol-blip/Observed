@@ -289,7 +289,8 @@ gebaut und steht in §4.
 | `open` + kein Token | `hasGenesisToken === false` | statt Knopf: `No Genesis Token found in this wallet.` |
 | `open` + zu wenig SOL | `checkFunding` schlägt an, vor dem Wallet-Sheet | Titel + `Your answer is saved on this phone. …` |
 | `open` + offene Aufdeckungen | `openReveals > 0` | Zeile `{n} calls still open to reveal — they go out with this signature` |
-| `open`, Seite noch nicht berührt | `side === null` | Knopf deaktiviert, darunter `Pick a side first.` |
+| `open`, Seite noch nicht gewählt | `side === null` | Label unter der Zahl: `Pick a side first.`, Knopf inaktiv |
+| `open`, Seite gewählt, Regler unberührt | `canSeal()` ist falsch (`core/answer.ts`) | Label: `How sure?`, Knopf **weiter inaktiv** — ein unberührter Regler ist keine 50 |
 | `open`, läuft | Seal ausgelöst | Knopfbeschriftung `Sealing…` |
 | `sealed` | Record-Status `confirmed` | Frage bleibt, `Sealed`, `Hidden until you reveal.` |
 | `closed` | kein Fenster offen, aber ein späteres existiert | `Window closed · next question 16:00 UTC` |
