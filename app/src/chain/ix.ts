@@ -15,8 +15,8 @@ import {
 } from "@solana/web3.js";
 import {
   CU_COMMIT,
-  CU_MEMO,
   CU_REVEAL,
+  cuForMemo,
   IX,
   MEMO_ID,
   PROGRAM_ID,
@@ -143,7 +143,7 @@ export function buildDaily(plan: DailyPlan, blockhash: Blockhash = "111111111111
   }
   for (const m of plan.memos ?? []) {
     instructions.push(memoIx(m));
-    computeUnits += CU_MEMO;
+    computeUnits += cuForMemo(m.length);
   }
   if (instructions.length === 0) throw new Error("nothing to do: no reveals, no seal");
 

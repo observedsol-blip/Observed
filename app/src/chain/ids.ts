@@ -45,7 +45,14 @@ export const Outcome = { Unset: 0, Yes: 1, No: 2 } as const;
 
 /** Transaction limits the daily transaction has to respect (measured in tests/capacity.rs). */
 export const TX_SIZE_LIMIT = 1232;
-/** Measured: commit 28 868 CU, reveal 16 032 CU. Plus head room for the memo program. */
+/** Measured on a validator (spikes/e2e/drive-app.mjs): commit 26 500 CU, reveal 16 032 CU.
+ *  LiteSVM says 28 868 for the commit; the larger of the two is the one budgeted. */
 export const CU_COMMIT = 30_000;
 export const CU_REVEAL = 17_000;
-export const CU_MEMO = 1_000;
+/** The memo program is NOT cheap: a 42-byte memo cost 14 918 CU on the validator — it validates
+ *  UTF-8 and logs the whole thing. Budgeting a thousand per memo (as this did at first) makes
+ *  the evening transaction fail after the approval, which is the worst possible moment.
+ *  Linear fit through the measurement, with the 20 % head room added by buildDaily on top. */
+export const CU_MEMO_BASE = 10_000;
+export const CU_MEMO_PER_BYTE = 160;
+export const cuForMemo = (bytes: number) => CU_MEMO_BASE + CU_MEMO_PER_BYTE * bytes;
