@@ -27,12 +27,19 @@ Schlüssel, keine Pyth-Kosten.
 | `resolve(round)` | **nur** in [`outcome_time`, `outcome_time` + W] | Round `Referenced`; dieselbe Regel |
 | `cancel_round(round)` | sobald ein Fenster ohne Lesung abgelaufen ist (spätestens `resolve_deadline`) | Round nicht `Resolved`/`Cancelled` |
 | `score_entry(round, entry)` | aufgedeckt: ab `resolve`; Missing: ab `reveal_close` | Round `Resolved`, Entry nicht gescored |
+| `close_entry(round, entry)` | rollierend, ab `max(reveal_close + close_after_secs, earliest_close_unix)` (Saison 1: 30 Tage, aber nie vor dem 09.11.2026) | Round `Resolved` **und** Entry gescored, oder Round `Cancelled`; `rent_refund_to` muss die im Entry festgehaltene Wallet sein |
 
 Die Zeitpunkte stehen in jeder Runde und kommen aus dem Kalender (CALENDAR.md). Weil die
 Lesungen nur 60 s lang möglich sind, reicht der stündliche Lauf dafür **nicht**: Ein zweiter
 Cron (`1 4 * * *` und `59 15 * * *`) wartet bis `reference_time` bzw. `outcome_time` und sendet dann innerhalb
 von W mit bis zu drei Versuchen. Fällt dieser Lauf aus, ist die Runde NO_RESOLVE; der
 stündliche Lauf erledigt danach `cancel_round` und das Scoring.
+
+Das Schließen läuft im stündlichen Kehrlauf mit, in Achterpaketen und innerhalb desselben
+Zeitbudgets. Es ist **additiv**: Fällt es aus, passiert nichts weiter — die Einträge bleiben
+stehen und werden beim nächsten Lauf geschlossen. Die Miete geht immer an `entry.rent_refund_to`,
+die beim Siegeln festgehaltene Wallet des Spielers; der Resolver kann sie nicht umlenken, das
+Programm prüft die Adresse (`WrongRentRefund`).
 
 **Nicht** Aufgabe des Resolvers: `create_round` (alle Runden der Saison werden zu Beginn vom
 Owner angelegt), `publish_calendar`, `pause`, Programm-Upgrade.
@@ -44,11 +51,14 @@ Resolver nachziehen:
   Mainnet-ID wird beim Deploy eingetragen).
 - Diskriminatoren von `set_reference`, `resolve`, `score_entry`, `cancel_round` und der
   Konten `Round`, `Entry` (aus `target/idl/observed.json`).
-- Byte-Layout von `Round` (486 B seit Terms v3 mit `reference_time`, `band_bps` und `outcome_margin_bps`) und `Entry` (184 B, unverändert).
-  Beide Größen sind im Test `account_sizes_are_pinned` festgenagelt. Das `Entry`-Layout ist über eine Fixture abgesichert:
-  Der Rust-Test `entry_layout_fixture` schreibt `tests/fixtures/generated/entry-layout.json`;
-  eine Kopie liegt im Resolver unter `test/fixtures/`, und `npm test` prüft jedes Feld dagegen.
-  **Nach jeder Änderung an `Entry` die Datei neu erzeugen und in den Resolver kopieren.**
+- Diskriminator von `close_entry` und die Kontenreihenfolge `payer, rent_refund_to, config, round, entry`.
+- Byte-Layout von `Round` (**498 B** seit Terms v3 mit `close_after_secs` und `earliest_close_unix`)
+  und `Entry` (184 B, unverändert). Beide Größen sind im Test `account_sizes_are_pinned`
+  festgenagelt, und beide Layouts sind über Fixtures abgesichert: Die Rust-Tests
+  `entry_layout_fixture` und `round_layout_fixture` schreiben `tests/fixtures/generated/*.json`;
+  Kopien liegen im Resolver unter `test/fixtures/`, und `npm test` prüft jedes Feld dagegen.
+  **Nach jeder Änderung an `Entry` oder `Round` die Dateien neu erzeugen und in den Resolver
+  kopieren** — sonst liest der Worker an falschen Offsets, ohne dass irgendetwas kracht.
 - Seeds: `config` = `["config", game_id_le]`, `round` = `["round", config, round_id_le]`,
   `player` = `["player", config, sgt_mint]`.
 

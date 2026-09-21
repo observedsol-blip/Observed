@@ -11,11 +11,12 @@ Ausweg, falls er scheitert.
 | Hot Wallet des Resolvers | **0,5 SOL** (Verbrauch der ganzen Saison < 0,1 SOL, siehe §5) |
 | Cloudflare | Workers Paid aktiv, Zahlungsmittel gültig bis Ende November |
 | Helius | Mainnet-Endpunkt bereit (`RPC_URL`) |
+| Zweiter Anbieter | QuickNode-Endpunkt bereit (`RPC_URL_FALLBACK`). Die Ablese-Läufe wechseln bei 429 oder Timeout dorthin — eine verpasste Lesung ist der einzige Fehler, der sich nicht nachholen lässt |
 | healthchecks.io | zwei Checks (RUN, BACKLOG), Telegram verbunden, einmal mit `/fail` getestet |
 | Repo | `docs/generated/CALENDAR-season1.md` gelesen — das sind die 64 Fragen der Saison |
 
 Die Kalender-Wurzel dieser Saison lautet
-`c40a35486e1485f08d3f61a87e1eeff55cbab1d526f84675473f2f6adb1345b7`.
+`66347dd5ad1c4eab1a6ea56decc736f4b76d21c29e6482d776a63430f98ec7fa`.
 Sie steht auch in `tests/fixtures/calendar/season1.json` und wird in Schritt 3 on-chain gesetzt.
 
 ## 1. Programm bauen und deployen (≈ 20 min)
@@ -74,6 +75,7 @@ am Siegeln hindert. 64 Transaktionen, ~0,004 SOL Miete je Runde.
 cd ~/observed-resolver
 wrangler secret put HOT_WALLET_KEY        # base58, nur Gebührenzahler
 wrangler secret put RPC_URL               # Helius mainnet
+wrangler secret put RPC_URL_FALLBACK      # QuickNode, anderer Anbieter, anderes Netz
 wrangler secret put HEALTHCHECK_RUN_URL
 wrangler secret put HEALTHCHECK_BACKLOG_URL
 npm run deploy
@@ -89,13 +91,26 @@ braucht sechs Versuche, vier Scoring-Transaktionen am Tag, Priority Fee am Decke
 **0,5 SOL im Hot Wallet sind rund das Siebenfache des schlechtesten Falls.** Alarmschwelle 0,05 SOL
 (anhebbar, siehe unten).
 
+**Ab dem 09.11. kommt das Zurückgeben der Mieten dazu.** Der Kehrlauf schließt fällige Einträge in
+Achterpaketen; die Miete geht an die Wallet, die der Eintrag beim Siegeln festgehalten hat, die Hot
+Wallet zahlt nur die Gebühr. Für eine volle Saison (Saisonlauf: 1 070 Einträge) sind das rund 134
+Transaktionen, im schlechtesten Fall (Priority Fee am Deckel) **≈ 0,007 SOL**; zurück an die Spieler
+gehen dabei **≈ 2,3 SOL**. Das läuft rollierend über Wochen, nicht an einem Tag.
+
 ## 6. Was du ab dem 08.10. tun darfst — ohne Code anzufassen
+> **Annahme bis zur Antwort der Veranstalter (Offen 11):** Auch der **Resolver** wird während der
+> Bewertung (08.10.–10.11.) **nicht angefasst**. Er liegt zwar in einem eigenen Repo und ist nicht
+> Teil der Einreichung — aber solange niemand bestätigt hat, dass ein Fix dort erlaubt ist, plant
+> dieses Drehbuch ohne ihn. Alles unten steht deshalb ohne eine einzige Codeänderung zur Verfügung;
+> `npm run deploy` **desselben** Stands mit einem anderen Secret ist keine Änderung des Codes.
+
 Nach der Einreichung ist der Stand im Hauptrepo eingefroren. Erlaubt und ohne Codeänderung möglich:
 
 | Fall | Was du tust |
 |---|---|
 | Hot Wallet wird leer (BACKLOG-Alarm) | SOL überweisen. Sonst nichts. |
-| RPC zickt (429, Timeouts) | `wrangler secret put RPC_URL` mit anderem Anbieter, dann `npm run deploy` **des unveränderten Stands** — das ist keine Codeänderung |
+| RPC zickt (429, Timeouts) | Erst einmal **nichts**: Die Ablese-Läufe wechseln von selbst auf `RPC_URL_FALLBACK` und sagen es im Log. Bleibt es dabei, `wrangler secret put RPC_URL` mit einem anderen Anbieter, dann `npm run deploy` **des unveränderten Stands** — das ist keine Codeänderung |
+| Beide Anbieter zicken | Dritter Endpunkt als `RPC_URL_FALLBACK` (`https://api.mainnet-beta.solana.com`, gedrosselt, aber besser als nichts), erneut deployen |
 | Pyth-Schlüssel | entfällt, der Resolver hat keinen |
 | Worker hängt | `npm run deploy` erneut (gleicher Code) oder im Dashboard „Redeploy" |
 | Ein Lauf ist ausgefallen | nichts tun. Der nächste Kehrlauf holt Scoring und `cancel_round` nach. Eine **Lesung** ist nicht nachholbar: Die Runde wird NO_RESOLVE, das ist ein vorgesehener Zustand |
@@ -113,8 +128,12 @@ Beispiel: ein Fehler im Resolver, der jede Lesung verpasst.
    von selbst (`test/disturbance.test.ts` im Resolver-Repo): verlorene Transaktion, später Cron,
    429, jemand anders war schneller, zwei Läufe, Absturz beim Scoring.
 2. **Der Resolver liegt in einem eigenen Repo** (`observedsol-blip/observed-resolver`) und ist
-   **nicht Teil des eingereichten Stands**. Ein Fix dort berührt die Einreichung nicht. Das war der
-   Grund für die Trennung. Also: reparieren, deployen, im HANDOFF vermerken.
+   **nicht Teil des eingereichten Stands** — technisch berührt ein Fix dort die Einreichung nicht.
+   **Solange Offen 11 unbeantwortet ist, gilt das trotzdem als verboten.** Dann bleibt: den
+   betroffenen Runden ihren Lauf lassen (NO_RESOLVE ist ein vorgesehener Zustand), von Hand
+   `curl "https://<worker>/__scheduled"` anstoßen, und im Notfall den Lauf vom Laptop aus fahren
+   (Zeile „Alles hängt“ in §6) — alles mit demselben Code. Antworten die Veranstalter mit „ja“:
+   reparieren, deployen, im HANDOFF vermerken.
 3. **Wäre der Fehler im Programm**, geht gar nichts: Ein Upgrade änderte das Verhalten der
    eingereichten Version. Dann bleibt nur, die betroffenen Runden als NO_RESOLVE laufen zu lassen
    und es im Deck zu benennen. Deshalb ist die ganze Saison vorher im Zeitraffer durchgespielt
@@ -125,4 +144,5 @@ Beispiel: ein Fehler im Resolver, der jede Lesung verpasst.
 ## 8. Tägliche Sichtprüfung (30 Sekunden)
 - 04:05 UTC: Runde des Tages steht auf `Referenced`.
 - 16:05 UTC: Runde steht auf `Resolved`, `outcome_margin_bps` gesetzt.
+- Ab 09.11.: die Zusammenfassung des Kehrlaufs nennt `closed=n` — die Mieten fließen zurück.
 - Telegram still = alles in Ordnung. RUN-Alarm = Dienst tot. BACKLOG-Alarm = Guthaben oder Rückstand.
