@@ -14,6 +14,8 @@ Wallet erst beim ersten Seal.
 **After-hours-Erststart (nach 12:00 UTC):** kein „Window closed“. Stattdessen ein vollständiges Result einer Sample-Runde mit Banner „Sample round · completed“ und der Zeile „Yours starts 00:00 UTC · 02:00 where you are“. CTA: „Remind me when the window opens“.
 
 ## 2. Today
+> **Eingabe und Ergebnisanzeige sind am 21.09.2026 ersetzt — siehe §11.** Die Zustände unten gelten weiter, aber: die Frage ist die Richtungsfrage, die Eingabe ist erst Seite, dann Sicherheit, und die Zeiten sind 16:00–04:00 UTC (Referenz 04:02, Ausgang 16:00). Die alten Uhrzeiten in diesem Abschnitt sind **veraltet** (siehe HANDOFF, Offen 14).
+
 Zustände:
 - **Offen, unbeantwortet:** Fensterzeile „Seal by 12:00 UTC · 14:00 where you are“ (ab 11:50 UTC: „Network is busy — seal now“); „ROUND 42 · 17 SEP“; „Genesis · verified“; Frage (Literata; vor 12:00 relativ: „Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“); große Zahl + „chance this is Yes“; horizontaler Maßstab mit 21 Ticks, Cursor, `−5` / `+5`; ein Primary „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday reveals in this same signature“); Kostenzeile (identisch mit Spec §11): „No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the round closes.“
 - **Versiegelt (Vormittag):** Frage bleibt, Status „Sealed · 09:12 UTC“, kein zweites Hero. Hinweis „Hidden until you reveal tomorrow.“
@@ -23,6 +25,8 @@ Zustände:
 - **Keine Runde heute** (niemand hat sie angelegt — `create_round` ist permissionless, der Cron hat gefehlt): „No question today. Yesterday still reveals.“ — Reveal-only-Pfad, kein leerer Fehler.
 
 ## 3. Result (Kern)
+> **Punkt 7 (tägliche Brier-Zeile) ist am 21.09.2026 ersetzt — siehe §11.** Täglich steht die Seite, nicht der Wert.
+
 Kicker: „READING · 16 SEP“ (nie „Yesterday / 16 Sep“). Reihenfolge von oben:
 1. Frage klein.
 2. Strich-Moment: „pending“ durchgestrichen, „observed“ in Pencil-Blau darüber (einzige Animation der App).
@@ -36,6 +40,7 @@ Kicker: „READING · 16 SEP“ (nie „Yesterday / 16 Sep“). Reihenfolge von 
 Zustände: **Resolved** (oben; ab ≈ 00:05 mit Teilmenge „63 of 71 revealed · closes 12:00 UTC“, ab 12:00 final) · **NO_RESOLVE** (Programmstatus `Cancelled`: „No valid reading in the window. Nobody scored.“; das Evidenz-Fenster nennt, welches Update fehlte: „Reference 12:00–12:01 UTC · missing“ bzw. „Outcome 00:00–00:01 UTC · missing“ — beide Fenster 60 s) · **Sample** (Banner).
 
 ## 4. Record
+> **Am 21.09.2026 erweitert — siehe §11:** zwei Zahlen (Seiten-Record und Saisonwert) mit einem Satz, der sagt, warum es beide gibt.
 - Kumulativer Brier groß (inklusive Missing, so beschriftet); darunter die drei ehrlichen Zahlen: **Commits · Reveals · Missing** (Beispiel „9 · 8 · 1“) mit Fußnote „missing counts as a full miss“.
 - Baselines: „Always 50%: 0.250 · Crowd: 0.211“.
 - Kalibrierungskurve: gesperrt bis 21 aufgedeckte Runden — Text „Unlocks after 21 revealed rounds · you're at 8“, kein leeres Chart. (Missing zählt im Record, nicht in der Kurve.)
@@ -76,3 +81,63 @@ Technik (02): Android-Widgets sind RemoteViews — keine eigenen Schriftarten. S
 
 ## Beispielzahlen (überall identisch)
 Runde 41 · 16 SEP · Regel SOL/USD +1 % · Frage vor 12:00 „Will SOL be more than 1% above its 12:00 UTC price at 00:00 UTC?“ · Referenz 12:00 $150.00 → Schwelle $151.50 · Ausgang **No** — Hero „It did not happen.“ (SOL $149.82 at 00:00) · du 40 % Ja · Brier 0.160 · Menge 64 (63 revealed of 71) · Record 0.313 · 9 commits · 8 reveals · 1 missing · 9 scored (8 aufgedeckt + 1 missing als 1,000) · Kalibrierung „you're at 8“.
+
+## 11. Eingabe, Ergebnis und Record — Texte vom 21.09.2026
+
+Vom Owner freigegeben (E8, E11, E13). **Wörtlich so in den Code**, App-Sprache Englisch.
+Ersetzt die widersprechenden Stellen in §2, §3 und §4.
+
+### 11.1 Eingabe (E11)
+Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihenfolge.
+
+- Seitenwahl: `Up` / `Down`
+- Darunter die Sicherheit, Reglerworte symmetrisch:
+  - 50: `Could go either way`
+  - 55–65: `Leaning Up` / `Leaning Down`
+  - 70–85: `Fairly sure: Up` / `Fairly sure: Down`
+  - 90–100: `Very sure: Up` / `Very sure: Down`
+
+`p = 50` heißt „keine Seite“: kein Treffer, kein Fehlschlag. Im Saisonwert zählt die Runde normal.
+
+### 11.2 Satzfeld (E13)
+- Überschrift: `What tipped you toward Up?` / `What tipped you toward Down?`
+- bei 50: `What makes this hard to call?`
+- Darunter: `One sentence for tomorrow. Optional.`
+- Freigabe-Schalter (E8), **Standard AUS**:
+  - `Share it after the reveal`
+  - Unterzeile: `Private until you reveal. If shared, it's public and permanent on Solana.`
+- Nur wenn AN: Hash-Memo beim Siegeln, Klartext-Memo beim Aufdecken.
+  Wenn AUS: keine Memos, der Satz bleibt auf dem Gerät.
+- Wird das Satzfeld ausgelassen, sagt die App dazu nichts.
+
+### 11.3 Ergebnis, täglich (E11)
+- Seite getroffen: `You called the side.`
+- Seite verfehlt: `It went the other way.`
+- Knapp (im Messband): `Too close to call.`
+  - Unterzeile: `SOL moved {x}% — inside the measurement band. A different reading could have
+    flipped it, so it doesn't count for or against your side record.`
+- Keine Seite (50): `You didn't pick a side.`
+- Serie: `{n} evenings in a row.` — bei 1: `First evening.`
+
+Der Brier-Wert steht **nicht** im täglichen Ergebnis, nur im Saison-Record.
+
+### 11.4 Sätze der anderen (E8)
+- Überschrift: `What others wrote`
+- Leer: `Nobody shared a sentence this time.`
+
+### 11.5 Record — zwei Zahlen, ein Satz (E11)
+- Seiten-Record (getroffene Seiten) **und** Saisonwert (Brier, inklusive Versäumnissen).
+- Der Satz, der beide erklärt: `Your side record counts calls. Your season score measures how
+  sure you were.`
+- Aussage über Übersicherheit erst ab **20 aufgedeckten Runden**.
+
+### 11.6 Regeln hinter den Texten
+- **Knappe Runden zählen im Saison-Brier normal, aber nicht in „Seite getroffen“.** Beides ist aus
+  der Kette ableitbar: `|outcome_margin_bps| ≤ band_bps` ist „knapp“, `outcome` die Seite,
+  `p_bps` die eigene. Die App rechnet, das Programm speichert.
+- `{x}` in „Too close to call“ ist `outcome_margin_bps / 100`, auf eine Nachkommastelle.
+- Die Serie zählt **aufgedeckte Abende**, nicht Treffer — eine knappe Runde bricht sie nicht.
+
+### 11.7 Noch gesperrt
+Die Erinnerungsschätzung vor dem Aufdecken (E12) wird **nicht** gebaut. Erst mündlich mit den
+Testern, dann Freigabe des Owners.

@@ -64,6 +64,13 @@ Link: `See a finished round →` (führt in die Beispielrunde)
 Link klein: `See a real sealed round on Solana →` (Explorer-Link auf eine echte Runde der Saison)
 
 ## B. Der Satz vor dem Siegeln
+> **Überholt am 21.09.2026 durch 03-SCREEN-MAP §11.2 (E13/E8).** Dort steht die
+> freigegebene Fassung: Überschrift nach Seite (`What tipped you toward Up?`), Unterzeile
+> `One sentence for tomorrow. Optional.` und der Freigabe-Schalter. Gilt weiter aus diesem
+> Abschnitt: Zeichengrenze 140 mit Zähler ab 120, die Anzeige auf Result
+> (`Yesterday you wrote:` / `No note yesterday.`) und der einmalige Hinweis beim ersten Mal.
+> **Hinfällig:** `Stays on this phone. Nobody else sees it.` — der Satz kann jetzt geteilt
+> werden; die Privatheit steht in der Unterzeile des Schalters.
 
 ### Eingabe auf Today, unter der Skala, über dem Seal-Knopf
 Label: `Why? (optional)`
