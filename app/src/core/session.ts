@@ -8,6 +8,7 @@ import type { PublicKey } from "@solana/web3.js";
 import type { Chain } from "../chain/rpc.ts";
 import { type CalendarRound, hexToBytes, roundIsInTheCalendar } from "../chain/calendar.ts";
 import { buildDaily } from "../chain/ix.ts";
+import { RoundStatus } from "../chain/ids.ts";
 import { findGenesisToken } from "../chain/sgt.ts";
 import type { Entry, Round } from "../chain/layout.ts";
 import { sha256Of } from "./sentence.ts";
@@ -166,7 +167,8 @@ export class Session {
       calendar,
       entry,
       record: records.find((r) => r.roundId === roundId) ?? null,
-      streak: streakOf(records, revealedIds),
+      // Only calls that actually reached an outcome can break or extend a streak.
+      streak: streakOf(records, revealedIds, (id) => rounds.get(id)?.status === RoundStatus.Resolved),
     });
   }
 
@@ -232,6 +234,16 @@ export class Session {
     });
 
     const signature = await this.deps.wallet.signAndSend(built.instructions, this.walletKey!);
+
+    // Write down what happened before anything else asks. Without this the records stay on
+    // "saved" although the entry is on chain — and then the streak counts zero evenings and the
+    // next start tries to seal again. Found by the validator run on 21.09.2026.
+    await this.deps.chain.confirm(signature).catch(() => false);
+    const touched = [...revealables.map((r) => r.round), ...(sealNow && sealRound ? [sealRound] : [])];
+    for (const round of touched) {
+      await this.sealing!.reconcile(round).catch(() => undefined);
+    }
+
     return {
       signature,
       revealed: revealables.map((r) => r.round.roundId),

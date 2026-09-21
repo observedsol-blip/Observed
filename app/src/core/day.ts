@@ -140,11 +140,23 @@ export function crowdMean(round: Round): number | null {
   return Math.round(sum / total);
 }
 
-/** Evenings in a row with a reveal — the streak counts revealed evenings, not hits (§11.6). */
-export function streakOf(records: SealRecord[], revealedRoundIds: Set<number>): number {
+/**
+ * Evenings in a row with a reveal — the streak counts revealed evenings, not hits (§11.6).
+ *
+ * `settled` says whether a call could have been revealed at all. Today's seal cannot: its
+ * outcome has not happened yet. Without that the streak was always zero, because the newest
+ * record is the one sealed minutes ago (found in the validator run, 21.09.2026). A call that
+ * nobody could reveal — cancelled, or still open — is skipped, not counted and not a break.
+ */
+export function streakOf(
+  records: SealRecord[],
+  revealedRoundIds: Set<number>,
+  settled?: (roundId: number) => boolean,
+): number {
   const sealed = records.filter((r) => r.status === "confirmed").sort((a, b) => b.roundId - a.roundId);
   let streak = 0;
   for (const r of sealed) {
+    if (settled && !settled(r.roundId)) continue;
     if (!revealedRoundIds.has(r.roundId)) break;
     streak += 1;
   }
