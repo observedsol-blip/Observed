@@ -110,6 +110,83 @@ drin, fragt also), und der Hook `guard-paths.sh` deckt Edit/Write ab — aber ei
 `Bash(cat ~/.config/solana/**)` und dieselben mit `Bash(head/tail/strings …)` explizit in `deny`.
 **Entscheidung liegt bei Dinkelberg** — ich ändere die Berechtigungen nicht selbst.
 
+## Teil A der Bewertungsrunde — Machbarkeit, gemessen am 21.09. (Claude Code)
+
+Antwort auf `claude/AUSWERTUNG-2026-09-21.md`. **Nichts gebaut**, nur gemessen. Rohdaten:
+`spikes/baserate/direction.mjs`, `spikes/baserate/eventdays.mjs`,
+`programs/observed/tests/capacity.rs`.
+
+**A1 — Richtungsfrage.** Die vorhandene Frageart reicht: `KIND_ABOVE` mit `offset_bps = 0`
+entscheidet `outcome > reference`, strikt, Gleichstand = Nein. Es braucht **keine neue Frageart**.
+Blockiert wird es heute von einer einzigen Zeile in `validate()`: `band_bps < |offset_bps|` — mit
+Schwelle 0 unerfüllbar. **Korrektur an der Auftragsformulierung:** Das Programm verlangt **nicht**
+das Vierfache des Messbands, sondern nur `Band < Schwelle`; die Vierfach-Regel ist eine
+Entscheidung vom 19.09. in den Dokumenten, nicht im Code. Mit Band 25 bps wäre die kleinste heute
+zulässige Schwelle also 26 bps, nicht 100.
+Gemessen (Coinbase-Stundenkerzen, 04:00→16:00 UTC, 364 Tage):
+
+| Feed | Ja-Quote 365 T | Ja-Quote 90 T | „knapp“ (≤ 25 bps) 365 T | knapp Werktag | knapp Wochenende |
+|---|---|---|---|---|---|
+| SOL | 47,3 % | 54,4 % | 10,4 % | 8,5 % | 15,2 % |
+| BTC | 48,9 % | 58,9 % | 19,2 % | 12,0 % | **37,1 %** |
+| ETH | 48,6 % | 62,2 % | 15,1 % | 11,2 % | 24,8 % |
+
+Längste Serie derselben Seite: SOL 6, BTC 8, ETH 7 Tage. Das Messband 25 bps bleibt richtig — es
+beschreibt die Messunschärfe, nicht die Schwelle —, aber es trifft bei Schwelle 0 **jede achte bis
+zehnte Runde am Werktag** und am Wochenende jede vierte bis dritte. BTC am Wochenende ist
+unbrauchbar (37 %); es fällt dort ohnehin schon aus dem Kalender.
+
+**A2 — Ereignistage im Zeitraum (Quellen: federalreserve.gov, bls.gov).** Nur fünf Termine liegen
+in der Saison (gemessener Tag = Tag des Ausgangs):
+
+| Runde | Tag | Ereignis | Uhrzeit UTC | im Messfenster? |
+|---|---|---|---|---|
+| 7 | Fr 02.10. | US-Arbeitsmarktbericht | 12:30 | ja |
+| 19 | Mi 14.10. | US-CPI | 12:30 | ja |
+| 34 | Do 29.10. | **Tag nach** dem FOMC-Beschluss (28.10., 18:00 UTC) | — | Beschluss fällt ins **Siegelfenster** |
+| 42 | Fr 06.11. | US-Arbeitsmarktbericht | 13:30 (EST) | ja |
+| 46 | Di 10.11. | US-CPI | 13:30 (EST) | ja |
+
+**Wichtig:** Der FOMC-Beschluss um 18:00 UTC liegt **nach** dem Ausgang um 16:00 und damit in
+keinem Messfenster. Ein FOMC-„Ereignistag“ ist bei uns immer der **Folgetag**, und gesiegelt wird
+mit bereits bekanntem Beschluss. Das muss die Kontextzeile sagen, sonst ist sie falsch.
+Ereignistage bewegen sich messbar stärker (Stichprobe: die 12 Arbeitsmarkt-Freitage des letzten
+Jahres gegen 247 andere Werktage, Median |Bewegung|): BTC 1,75 % gegen 1,06 %, ETH 2,04 % gegen
+1,34 %, SOL 1,78 % gegen 1,50 %. **SOL reagiert kaum** — für Ereignisrunden taugen BTC und ETH.
+Bei Schwelle 1,7 % lägen BTC und ETH an solchen Tagen bei 50 % (n = 12, Hinweis, keine Rate).
+**Bestätigt:** Die Kontextzeile steht **nicht** im Hash — der Terms-Hash enthält keinen Text,
+nur Regelwerte. Sie kann app-seitig hinterlegt und später korrigiert werden.
+
+**A3 — längeres Aufdeckfenster: das ist eine Programmänderung, keine Kalenderänderung.**
+`reveal_close = outcome_time + REVEAL_WINDOW_SECS` mit `REVEAL_WINDOW_SECS` als **Konstante**
+(lib.rs:60); die Länge steht weder in den Bedingungen noch im Hash. Nach der Regel aus E10
+entfällt E10 damit — es sei denn, es fährt in derselben einen Änderung mit.
+Gemessen (`capacity.rs`), Größe einer echten Transaktion:
+
+| Aufdeckungen | nur mit Siegeln | + zwei Memos (32 B / 140 B) |
+|---|---|---|
+| 1 | 588 B | 799 B |
+| 2 | 702 B | 913 B |
+| 3 | 816 B | **1 027 B** |
+| 4 | 930 B | 1 141 B |
+| 5 | 1 044 B | **1 255 B — zu groß** |
+
+Grenze 1 232 B. **Drei offene Runden plus Siegeln plus beide Memos passen, vier auch; bei fünf
+reißt es.** Rechenkosten unkritisch: Siegeln 28 868 CU, Aufdecken 16 032 CU, drei Aufdeckungen
+plus Siegeln rund 77 000 CU gegen 1,4 Mio. je Transaktion. **Empfehlung: 72 h.** Damit sind höchstens
+drei Runden offen (passt), zwei ausgelassene Abende kosten keinen vollen Fehlschlag, und die
+tägliche Transaktion bleibt eine. 36 h würde nur einen späten Abend verzeihen.
+Was sich verschiebt: Missing-Wertung und die vollständige Crowd-Verteilung kommen drei Tage
+später (relevant für die Zahlen auf der Deck-Folie), `close_entry` verschiebt sich um 60 h —
+irrelevant, weil der Boden 09.11. ohnehin später liegt. Auflösen, Absagen und Scoring bleiben
+unberührt.
+
+**A4 — bestätigt.** Ein ausgelassenes **Siegel** taucht nirgends im Saisonwert auf. Ohne `commit`
+gibt es kein `Entry`; `score_entry` scheitert dann an `AccountNotInitialized`, und `Player` wird
+nicht angefasst — weder `commits`, `reveals`, `missing_scored`, `scored_rounds` noch `score_sum`.
+Getestet in `rounds_without_a_seal_leave_no_trace_in_the_record`. Bestraft wird nur, wer siegelt
+und dann nicht aufdeckt. „Serie statt Pflicht“ trägt.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
