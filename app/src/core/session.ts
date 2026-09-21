@@ -21,8 +21,17 @@ import { type RecordView, recordView } from "./record.ts";
 import { type SettingsView, settingsView } from "./settings.ts";
 import { revealableNow } from "./revealing.ts";
 import { type SealRecord, sealKey } from "./records.ts";
+import {
+  NO_REMINDERS,
+  REMINDER_KEY,
+  type Notifier,
+  type ReminderState,
+  enableReminders,
+  plan as planReminders,
+  refreshAfterStart,
+} from "./reminders.ts";
 import { recoverAll } from "./recovery.ts";
-import { type Store, setJson } from "./store.ts";
+import { type Store, getJson, setJson } from "./store.ts";
 import type { Wallet } from "./wallet.ts";
 
 export type SessionDeps = {
@@ -375,6 +384,84 @@ export class Session {
     ]);
     const records = this.sealing ? await this.sealing.all() : [];
     return recordView({ now, calendar: this.deps.calendar, rounds, entries, records, player });
+  }
+
+  /* ---------------------------------------------------------------- reminders (E3) */
+
+  /** What the phone remembers: never asked, asked and refused, or on. */
+  async reminderState(): Promise<ReminderState> {
+    return (await getJson<ReminderState>(this.deps.store, REMINDER_KEY)) ?? NO_REMINDERS;
+  }
+
+  /**
+   * The offer is made once, and only after the player has actually sealed something. Before the
+   * first seal a reminder would be a notification about nothing — and the permission dialog would
+   * arrive before the app has earned it (E3).
+   */
+  async shouldOfferReminders(): Promise<boolean> {
+    const state = await this.reminderState();
+    if (state.offered || state.enabled) return false;
+    const records = this.sealing ? await this.sealing.all() : [];
+    return records.some((r) => r.status === "confirmed");
+  }
+
+  /** What would be scheduled right now, from the calendar and the open reveals. */
+  private async reminderPlan(): Promise<ReturnType<typeof planReminders>> {
+    const now = this.deps.now();
+    const records = this.sealing ? await this.sealing.all() : [];
+    const ids = this.deps.calendar
+      .filter((r) => now >= r.commitOpen - 60 && now < r.outcomeTime + REVEAL_WINDOW_SECS)
+      .map((r) => r.roundId);
+    const [rounds, entries] = this.sgtMint
+      ? await Promise.all([
+          this.deps.chain.rounds(ids),
+          this.deps.chain.entries(ids, this.sgtMint),
+        ])
+      : [new Map<number, Round>(), new Map<number, Entry>()];
+    const open = revealableNow({
+      now,
+      calendar: this.deps.calendar,
+      records,
+      roundState: (id) => rounds.get(id) ?? null,
+      entryState: (id) => entries.get(id) ?? null,
+    }).map((r) => ({
+      roundId: r.round.roundId,
+      revealCloseSeconds: rounds.get(r.round.roundId)?.revealClose ?? r.round.outcomeTime,
+    }));
+    return planReminders({
+      now,
+      calendar: this.deps.calendar,
+      openReveals: open,
+      hasSentence: records.some((r) => r.sentence !== undefined),
+    });
+  }
+
+  /** The tap. The only path that may ever reach the permission dialog. */
+  async turnRemindersOn(notifier: Notifier): Promise<{ granted: boolean; scheduled: number }> {
+    const result = await enableReminders(notifier, await this.reminderPlan());
+    await setJson(this.deps.store, REMINDER_KEY, {
+      enabled: result.granted,
+      offered: true,
+    } satisfies ReminderState);
+    return result;
+  }
+
+  /** The player said no. Remembered, so the offer does not come back by itself. */
+  async declineReminders(): Promise<void> {
+    await setJson(this.deps.store, REMINDER_KEY, {
+      enabled: false,
+      offered: true,
+    } satisfies ReminderState);
+  }
+
+  /**
+   * Cold start: rebuild the schedule if — and only if — reminders are already on. Nothing is
+   * asked, nothing is even looked at otherwise.
+   */
+  async refreshReminders(notifier: Notifier): Promise<number> {
+    const state = await this.reminderState();
+    if (!state.enabled) return 0;
+    return refreshAfterStart(notifier, await this.reminderPlan(), state);
   }
 
   /** Settings: the addresses that decide what this game is, each read from its own account. */

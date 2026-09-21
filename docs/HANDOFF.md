@@ -507,6 +507,30 @@ Seiten-Record mit einer knappen Runde, `open` vs. `missing` vor und nach Fenster
 Menge-Grundlinie berechnet statt geraten, jede Adresse aus ihrem Konto, unveränderliches Programm
 ohne Upgrade-Autorität, Push-Zeiten eine Stunde vor Schluss). **120 App-Tests grün**, vorher 109.
 
+## Erinnerungen verdrahtet (E3), 22.09.2026
+
+`core/reminders.ts` war seit dem 21.09. fertig und wurde von keinem Bildschirm aufgerufen. Jetzt:
+
+- **Das Angebot erscheint erst, wenn wirklich etwas versiegelt ist** (`session.shouldOfferReminders`),
+  im versiegelten Zustand von Today. Vor dem ersten Siegel wäre eine Erinnerung eine Benachrichtigung
+  über nichts — und der Berechtigungsdialog käme, bevor die App ihn verdient hat.
+- **Die Berechtigung wird ausschließlich aus dem Tippen heraus erfragt.** Der Kaltstart ruft
+  `refreshReminders`, und das kehrt bei ausgeschalteten Erinnerungen um, **bevor** `granted()`
+  gefragt wird: nachsehen ist eine Zeile vom Fragen entfernt.
+- **Ein Nein wird behalten** (`declineReminders`), das Angebot kommt nicht von selbst wieder.
+- Geplant wird lokal und ungenau, wie am 21.09. entschieden; der Plan wird bei jedem Einschalten
+  neu gebaut, nie nachgetragen.
+
+**Drei neue Tests:** Kaltstart fragt **nichts** (weder `request` noch `granted`), das Angebot kommt
+nach dem ersten bestätigten Siegel und verschwindet nach einem Nein, und der Tipp fragt **genau
+einmal**, löscht den alten Plan und legt den neuen an — ein späterer Kaltstart fragt nie wieder.
+
+**GAP:** Der Knopftext ist `Remind me when the window opens` — der freigegebene Satz aus §1, der
+dort zur **Vorschau** gehört. Er passt hier wörtlich, aber er ist für diesen Ort nicht freigegeben.
+Die Ablehnzeile heißt `Not now` und steht in keinem Dokument. Beides sind zwei Wörter, wenn du
+andere willst. Die Vorschau selbst (D1) ist weiterhin nicht gebaut, deshalb hängt das Angebot nur
+am ersten Siegel, nicht zusätzlich an ihr.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|

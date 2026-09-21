@@ -103,6 +103,7 @@ export default function App() {
               view={todayView}
               busy={live.busy}
               error={LIVE ? live.error : null}
+              reminders={live.reminders}
               actions={{
                 onSave: (pBps, sentence, share) => live.save(pBps, sentence, share),
                 onSeal: () => live.seal(),

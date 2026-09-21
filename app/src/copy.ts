@@ -27,6 +27,13 @@ export const copy = {
   howSure: "How sure?",
   waitingForWallet: "Waiting for your wallet.",
 
+  /**
+   * The reminder offer (E3). The sentence is the approved one from §1, where it belongs to the
+   * preview; it is reused here after the first seal, because it says exactly the same thing at
+   * exactly the right moment. Noted as a reuse in HANDOFF rather than replaced by an invention.
+   */
+  remindMe: "Remind me when the window opens",
+
   /** §11.2 — the sentence field. */
   sentence: {
     headingFor: (pBps: number) =>

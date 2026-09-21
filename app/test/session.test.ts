@@ -216,3 +216,104 @@ test("the shared sentence is checkable later, and only then", async () => {
   // the hash says nothing about the sentence until the salt is public
   assert.equal(bytesToHex(sealed).includes("tired"), false);
 });
+
+/* ------------------------------------------------------------------------------------------
+ * Reminders (E3): the permission dialog is reached by exactly one path — a tap.
+ * ---------------------------------------------------------------------------------------- */
+
+/** A notifier that counts every question it is asked. */
+function countingNotifier(granted = false) {
+  const calls = { granted: 0, request: 0, scheduled: 0, cancelled: 0 };
+  let allowed = granted;
+  return {
+    calls,
+    notifier: {
+      granted: async () => {
+        calls.granted += 1;
+        return allowed;
+      },
+      request: async () => {
+        calls.request += 1;
+        allowed = true;
+        return true;
+      },
+      schedule: async () => {
+        calls.scheduled += 1;
+      },
+      cancelAll: async () => {
+        calls.cancelled += 1;
+      },
+    },
+  };
+}
+
+/** Puts the entry this phone just sealed on the fake chain, so reconcile can confirm it. */
+async function sealToday(session: Session, fake: FakeChain) {
+  const record = await session.saveAnswer(today, 8_000);
+  fake.entries.set(today.roundId, {
+    pubkey: entryPda(roundPda(today.roundId), sgtMint),
+    round: roundPda(today.roundId),
+    sgtMint,
+    beneficiary: walletKey,
+    rentRefundTo: walletKey,
+    commitment: hexToBytes(record.commitment),
+    committedAt: today.commitOpen,
+    revealed: false,
+    pBps: 0,
+    scored: false,
+    scoredAsMissing: false,
+    scoreBps: 0,
+  });
+  await session.evening();
+}
+
+test("a cold start never asks for the notification permission", async () => {
+  const fake = new FakeChain();
+  const { session } = makeSession(fake, today.commitOpen + 300);
+  await session.connect();
+  const { calls, notifier } = countingNotifier();
+
+  // exactly what the app does on every start
+  assert.equal(await session.refreshReminders(notifier), 0);
+  assert.equal(calls.request, 0, "no permission dialog on start");
+  assert.equal(calls.granted, 0, "and not even a look — looking is one line away from asking");
+  assert.equal(calls.scheduled, 0);
+});
+
+test("the offer comes after the first sealed call, and only once", async () => {
+  const fake = new FakeChain();
+  const { session } = makeSession(fake, today.commitOpen + 300);
+  await session.connect();
+
+  assert.equal(await session.shouldOfferReminders(), false, "nothing sealed yet: no offer");
+
+  await sealToday(session, fake);
+  assert.equal(await session.shouldOfferReminders(), true, "after the first seal");
+
+  await session.declineReminders();
+  assert.equal(await session.shouldOfferReminders(), false, "a no is remembered");
+});
+
+test("the tap is the only thing that asks, and it schedules what it promised", async () => {
+  const fake = new FakeChain();
+  const { session } = makeSession(fake, today.commitOpen + 300);
+  await session.connect();
+  await sealToday(session, fake);
+
+  const { calls, notifier } = countingNotifier();
+  const result = await session.turnRemindersOn(notifier);
+  assert.equal(calls.request, 1, "asked exactly once");
+  assert.equal(result.granted, true);
+  assert.ok(result.scheduled > 0, "and something was actually scheduled");
+  assert.equal(calls.scheduled, result.scheduled);
+  assert.equal(calls.cancelled, 1, "the old schedule is cleared first");
+
+  // and the offer is gone afterwards
+  assert.equal(await session.shouldOfferReminders(), false);
+
+  // a later cold start rebuilds without asking again
+  const second = countingNotifier(true);
+  const scheduled = await session.refreshReminders(second.notifier);
+  assert.ok(scheduled > 0);
+  assert.equal(second.calls.request, 0, "never again");
+});

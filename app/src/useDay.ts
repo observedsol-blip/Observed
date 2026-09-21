@@ -9,6 +9,7 @@ import { Session, type DayState } from "./core/session.ts";
 import type { RecordView } from "./core/record.ts";
 import type { SettingsView } from "./core/settings.ts";
 import { SecureStoreAdapter } from "./platform/secureStore.ts";
+import { ExpoNotifier } from "./platform/notifier.ts";
 import { MwaWallet, type Cluster } from "./platform/mwaWallet.ts";
 import type { CalendarRound } from "./chain/calendar.ts";
 
@@ -18,6 +19,7 @@ export function useDay(config: LiveConfig | null) {
   const [session, setSession] = useState<Session | null>(null);
   const [day, setDay] = useState<DayState | null>(null);
   const [record, setRecord] = useState<RecordView | null>(null);
+  const [offerReminders, setOfferReminders] = useState(false);
   const [settings, setSettings] = useState<SettingsView | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export function useDay(config: LiveConfig | null) {
     if (!session) return;
     try {
       setDay(await session.day());
+      setOfferReminders(await session.shouldOfferReminders());
       setError(null);
     } catch (e) {
       // A network error is not a state of the game: say it, keep the last view.
@@ -131,6 +134,30 @@ export function useDay(config: LiveConfig | null) {
     }
   }, [session, refresh]);
 
+  /**
+   * Reminders (E3). The notifier is built here, but nothing touches the permission: on start the
+   * session only rebuilds a schedule that already exists, and `request()` lives behind the tap.
+   */
+  useEffect(() => {
+    if (!session) return;
+    void session.refreshReminders(new ExpoNotifier());
+  }, [session]);
+
+  const reminders = session
+    ? {
+        offer: offerReminders,
+        onEnable: async () => {
+          const result = await session.turnRemindersOn(new ExpoNotifier());
+          setOfferReminders(false);
+          return result;
+        },
+        onDecline: async () => {
+          await session.declineReminders();
+          setOfferReminders(false);
+        },
+      }
+    : null;
+
   const backup = session
     ? {
         onExport: () => session.exportSecret(),
@@ -142,7 +169,10 @@ export function useDay(config: LiveConfig | null) {
       }
     : null;
 
-  return { day, record, settings, busy, error, connect, save, seal, refresh, loadRecord, loadSettings, backup };
+  return {
+    day, record, settings, busy, error, reminders,
+    connect, save, seal, refresh, loadRecord, loadSettings, backup,
+  };
 }
 
 function message(e: unknown): string {

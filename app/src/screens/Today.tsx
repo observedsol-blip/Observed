@@ -18,6 +18,12 @@ import type { TodayView } from "../core/day.ts";
 import { copy } from "../copy.ts";
 import { color, space, type } from "../tokens";
 
+export type ReminderOffer = {
+  offer: boolean;
+  onEnable: () => Promise<{ granted: boolean; scheduled: number }> | void;
+  onDecline: () => Promise<void> | void;
+};
+
 export type TodayActions = {
   /** Writes the answer down. No wallet, no network. */
   onSave: (pBps: number, sentence?: string, share?: boolean) => Promise<void> | void;
@@ -31,11 +37,14 @@ export default function Today({
   actions,
   busy = false,
   error = null,
+  reminders = null,
 }: {
   view: TodayView;
   actions: TodayActions;
   busy?: boolean;
   error?: string | null;
+  /** E3: shown only after something has actually been sealed, and only once. */
+  reminders?: ReminderOffer | null;
 }) {
   const initial = view.phase === "open" && view.pBps !== null ? fromPBps(view.pBps) : null;
   const [side, setSide] = useState<Side>(initial?.side ?? null);
@@ -81,6 +90,7 @@ export default function Today({
         <Block top={space.md}>
           <Label>Hidden until you reveal.</Label>
         </Block>
+        {reminders?.offer ? <RemindOffer reminders={reminders} /> : null}
         <OpenReveals view={view} actions={actions} busy={busy} />
       </Screen>
     );
@@ -169,6 +179,21 @@ export default function Today({
         </MonoMeta>
       </Block>
     </Screen>
+  );
+}
+
+/** The offer, after the first seal. Tapping it is the only thing that may ask for permission. */
+function RemindOffer({ reminders }: { reminders: ReminderOffer }) {
+  return (
+    <Block top={space.xl}>
+      <PrimaryButton label={copy.remindMe} onPress={() => void reminders.onEnable()} />
+      <Label
+        onPress={() => void reminders.onDecline()}
+        style={{ marginTop: space.md, color: color.meta, textDecorationLine: "underline" }}
+      >
+        Not now
+      </Label>
+    </Block>
   );
 }
 

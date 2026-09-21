@@ -87,6 +87,35 @@ export function plan(args: {
   return out.sort((a, b) => a.atSeconds - b.atSeconds);
 }
 
+/** What the phone remembers about reminders. Two bits, and both matter. */
+export type ReminderState = {
+  /** The player tapped the offer and the system said yes. */
+  enabled: boolean;
+  /** The offer was shown and answered — it does not come back on its own. */
+  offered: boolean;
+};
+
+export const REMINDER_KEY = "reminders";
+export const NO_REMINDERS: ReminderState = { enabled: false, offered: false };
+
+/**
+ * Cold start.
+ *
+ * Reminders that were switched on get rebuilt, because the phone may have been off for days.
+ * Reminders that were never switched on cost **nothing at all** — not even a look at the
+ * permission state, because looking sits one line away from asking, and asking on start is
+ * exactly what this app must not do (owner, E3). `granted()` is reached only through
+ * `reschedule`, and that only after the player has said yes once.
+ */
+export async function refreshAfterStart(
+  notifier: Notifier,
+  reminders: Reminder[],
+  state: ReminderState,
+): Promise<number> {
+  if (!state.enabled) return 0;
+  return reschedule(notifier, reminders);
+}
+
 /**
  * Rebuilds the whole schedule. Cancel first, then plan: the calendar is the truth, and a phone
  * that was off for three days must not fire yesterday's reminders.
