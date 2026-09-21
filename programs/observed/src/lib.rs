@@ -552,15 +552,17 @@ fn accept_reading(
     require!(m.price > 0, ObservedError::NonPositivePrice);
 
     let price = u128::try_from(m.price).map_err(|_| ObservedError::MathOverflow)?;
-    let conf_bps = u128::from(m.conf)
+    // conf / price <= max_conf_bps / 10 000, by cross-multiplication. A division here would
+    // truncate downwards and quietly widen the bound by almost a basis point: a reading with
+    // 50.9 bps passed a 50 bps bound (found by Codex, 21.09.2026). The bound is part of the
+    // round terms and of the hash, so it has to mean exactly what it says.
+    let conf_scaled = u128::from(m.conf)
         .checked_mul(10_000)
-        .ok_or(ObservedError::MathOverflow)?
-        .checked_div(price)
         .ok_or(ObservedError::MathOverflow)?;
-    require!(
-        conf_bps <= u128::from(round.max_conf_bps),
-        ObservedError::ConfidenceTooWide
-    );
+    let conf_bound = price
+        .checked_mul(u128::from(round.max_conf_bps))
+        .ok_or(ObservedError::MathOverflow)?;
+    require!(conf_scaled <= conf_bound, ObservedError::ConfidenceTooWide);
     Ok(Reading {
         price: m.price,
         conf: m.conf,

@@ -897,6 +897,41 @@ fn round_layout_fixture() {
     .expect("write fixture");
 }
 
+/// The confidence bound is a rule, not an approximation. `conf / price <= max_conf_bps / 10 000`
+/// is decided by cross-multiplication, so the edge is where the terms say it is: exactly at the
+/// bound still counts, one unit above does not. With the earlier division the last basis point
+/// was open — a reading with 50.9 bps passed a 50 bps bound (found by Codex, 21.09.2026).
+#[test]
+fn confidence_bound_is_exact_at_the_edge() {
+    const PRICE: i64 = 15_000_000_000;
+    // 50 bps of the price, exactly — the division is exact for these numbers, so the edge is sharp
+    let bound = PRICE as u64 * u64::from(MAX_CONF_BPS) / 10_000;
+    assert_eq!(bound, 75_000_000, "the edge case has to sit on a whole unit");
+
+    for (conf, accepted) in [(bound - 1, true), (bound, true), (bound + 1, false)] {
+        let mut env = setup();
+        let payer = env.payer.insecure_clone();
+        set_time(&mut env.svm, REFERENCE_TIME + 5);
+        let d = price_update(
+            env.feed_id,
+            PRICE,
+            conf,
+            -8,
+            REFERENCE_TIME,
+            REFERENCE_TIME - 1,
+            VerificationLevel::Full,
+        );
+        let k = put_price_update(&mut env, d);
+        let result = sendx!(env, &payer, [ix_set_reference(&env, 0, k)]);
+        if accepted {
+            result.unwrap_or_else(|e| panic!("conf {conf} is within the bound: {e:?}"));
+            assert_eq!(read_round(&env, 0).reference.conf, conf, "the reading is kept as it was");
+        } else {
+            expect_err(result, "ConfidenceTooWide");
+        }
+    }
+}
+
 /// Account sizes others depend on: the resolver filters Entry by `dataSize: 184`, and Round's
 /// size sets the season's rent. A change here must be a decision, not an accident.
 #[test]

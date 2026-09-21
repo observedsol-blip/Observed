@@ -32,7 +32,7 @@ Nichts Neues. Alles hier ist entweder aus Echo bekannt oder Standard im Solana-M
 - Betriebszahlen ab Devnet-Tag 1 loggen: Runden aufgelöst / NO_RESOLVE, Median-Verzögerung der Auflösung, Anteil Commits mit Retry. Diese drei Zahlen kommen ins Deck.
 
 ## Backend (minimal, dokumentiert als Vertrauensannahme)
-- **Resolver** als **Cloudflare Worker mit stündlichem Cron Trigger** (`services/resolver`, Workers Paid): Jeder Lauf liest den Chain-Zustand und arbeitet mit Zeitbudget ab — fehlende Referenz, fehlende Auflösung, fällige `cancel_round`, dann gebündeltes `score_entry`. Kein separater Nachhol-Modus, ein verpasster Lauf heilt beim nächsten; Idempotenz kommt aus dem Zustand. Runden werden **nicht** täglich angelegt, sondern zu Saisonbeginn alle 64 auf einmal (docs/operations-daily-job.md). Fällt der Worker aus, kann jeder mit Pyth-Zugang posten; die App bietet es als optionalen Knopf an (mehrere Freigaben, im UI so gesagt). Totmann-Schalter: zwei Healthchecks (Lauf, Rückstand/Guthaben).
+- **Resolver** als **Cloudflare Worker mit stündlichem Cron Trigger** (eigenes Repo `observedsol-blip/observed-resolver`, **nicht** in diesem Baum — siehe docs/resolver-interface.md; Workers Paid): Jeder Lauf liest den Chain-Zustand und arbeitet mit Zeitbudget ab — fehlende Referenz, fehlende Auflösung, fällige `cancel_round`, dann gebündeltes `score_entry`. Kein separater Nachhol-Modus, ein verpasster Lauf heilt beim nächsten; Idempotenz kommt aus dem Zustand. Runden werden **nicht** täglich angelegt, sondern zu Saisonbeginn alle 64 auf einmal (docs/operations-daily-job.md). Fällt der Worker aus, kann jeder mit Pyth-Zugang posten; die App bietet es als optionalen Knopf an (mehrere Freigaben, im UI so gesagt). Totmann-Schalter: zwei Healthchecks (Lauf, Rückstand/Guthaben).
 - **Benchmarks-Proxy**: eine Route, API-Key serverseitig, Cache pro Runde.
 - **Push-Sender**: FCM-Topics pro Zeitzone-Bucket für die lokale Erinnerung.
 - Hosting: ein kleiner Node-Service (Fly/Railway/Cloud Run), Secrets nicht im Repo.
@@ -62,7 +62,7 @@ observed/
   crates/pyth-first-after/  wiederverwendbar
   tests/                    Anchor-Tests + Fixtures (SGT, Pyth)
   app/                      Expo-App
-  services/resolver/        Cron + Benchmarks-Proxy + Push
+  services/calendar/        Kalender-Generator (die 64 Runden der Saison)
   docs/                     00-SPEC … 05-LAUNCH-PLAN
   site/                     calendar + status (statisch)
   CALENDAR.md               Erzeugungsregeln, die kanonischen Terms-Blobs der Saison (bis 64), Merkle-Wurzel (= Config.calendar_root)

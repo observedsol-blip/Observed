@@ -22,7 +22,7 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 6. Keine Schlüssel, keine Wallet-Adressen von Dinkelberg, keine Secrets — auch nicht als Beispiel.
 
 ## Stand
-- Letzte Aktualisierung: 21.09.2026, von Claude Code (Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter).
+- Letzte Aktualisierung: 21.09.2026, von Claude Code (Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
 - **Entschieden am 21.09. (Dinkelberg):** `Player` wird **nicht** erweitert (Option 1, Bänder-Zähler erst nach dem 10.11.); `close_entry` rollierend — schließbar 30 Tage nach dem Aufdeckfenster, aber nie vor dem 09.11.2026, beide Werte in den Rundenbedingungen und im Hash; der Resolver schließt täglich, die Miete geht an die Wallet des Spielers, die Gebühr zahlt die Hot Wallet. Bis die Veranstalter antworten gilt: **der Resolver darf während der Bewertung nicht angefasst werden** — das Drehbuch plant so.
 - Davor: 19.09.2026, von Claude Code (O1 entschieden: W = A = 60 s, `posted_slot` für beide Lesungen; Basisraten-Linie (c); Schwellen ≥ 1,0 %, BTC nicht am Wochenende; zweiter Cron für 04:00 und 16:00; Schnitt am Do 24.09. aus gemessenen Zahlen).
 - **Arbeitsreihenfolge (Dinkelberg, 20.09.).** Zuerst 1–7: Flag für knappe Runden (erledigt, d1b32ce) · Resolver auf O1 (erledigt, Resolver-Repo `4aa25a8`, jetzt auf GitHub) · Devnet von Ende zu Ende · App-Kernablauf mit Attrappen · Release-Build-Konfiguration · Drehbuch für den Mainnet-Deploy am 24.09. · Tester-Anleitung.
@@ -58,6 +58,11 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 | 18.09. | Claude Code → Chat | ANSPRUCH §2: „Die Tests zu den drei Ablehnungen liegen grün im Repo“ | Die Tests für „zeitlich falscher Kurs“ und „günstigerer Kurs“ prüfen die alte Hermes-Regel (`NotFirstAfter`, `BeforeWindow`, `OutsideOracleWindow`). Nur der Test „Zahl nachträglich ändern“ überlebt den Umbau unverändert | Die beiden anderen werden beim Wechsel auf den Schnappschuss neu geschrieben. Grün sind sie heute, nach dem Umbau erst wieder mit neuen Tests |
 
 ## Stolpersteine, die zweimal Zeit gekostet haben
+- **`cargo test` testet nicht den Quelltext, sondern `target/deploy/observed.so`.** Die Tests laden
+  das gebaute Programm per `include_bytes!`. Ohne vorheriges `anchor build` prüft man den alten
+  Stand und sieht grüne Tests für eine Änderung, die gar nicht drin ist — beim Konfidenz-Fix am
+  21.09. genau so passiert (der Grenzwerttest fiel erst nach dem Build korrekt aus).
+  **Immer `anchor build && cargo test`.**
 - **Pyth ist kein fester Grund.** Hermes braucht seit 26.08. einen Schlüssel, Pythnet wird
   abgeschaltet, der Emitter hat gewechselt (`G9LV2mp9…` → `6R92oFT…`). Jede Annahme über Pyth wird
   gegen die Doku von heute geprüft, nie gegen Erinnerung.
@@ -67,6 +72,43 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
   benannt — Dinkelberg rechnet sie erfahrungsgemäß nach unten.
 - **UI-Texte**: `CLAUDE.md` verlangt sie wörtlich aus `docs/03-SCREEN-MAP.md`. Neue Texte liegen
   zuerst in `docs/COPY-NEUE-TEILE.md` und müssen von dort nach 03 wandern, bevor sie in Code gehen.
+
+## Codex-Teilscan (Revision `35f0cfe`, Hauptrepo) — triagiert am 21.09. von Claude Code
+
+**Worauf Codex geschaut hat:** `35f0cfe` ist der Drehbuch-Commit im **Hauptrepo** vom 21.09.,
+11:37 — aktuell genug. Der Fund „Resolver unter `services/resolver/`“ war **kein Irrtum**: Dort lag
+tatsächlich noch eine **zweite, alte Kopie** des Resolvers (Stand `2983077` vom 18.09., also vor
+O1, mit Hermes-`pyth.ts`). Die drei hohen Funde beschreiben diese Kopie korrekt. Sie ist jetzt
+**gelöscht** (`git rm -r services/resolver`); der Resolver lebt ausschließlich in
+`observedsol-blip/observed-resolver`, docs/02-TECH-STACK.md und docs/resolver-interface.md sagen das.
+
+| # | Fund (Codex) | Urteil | Stand |
+|---|---|---|---|
+| 1 | Round-Offsets falsch | **gilt — und galt auch im echten Resolver** | Nicht nur die alte Kopie: Der laufende Worker las `Round` noch an den 486-Byte-Offsets, obwohl das Konto mit `close_after_secs`/`earliest_close_unix` auf 498 B gewachsen war. Behoben `10ab6ac` (Resolver-Repo), Fixtures neu, Decode-Test pinnt beide neuen Felder |
+| 2 | Enge Ablese-Crons | **schon behoben** | Die alte Kopie hatte nur den stündlichen Lauf. Aktuell: zwei enge Crons (`1 4 * * *`, `59 15 * * *`), Backoff, zweiter RPC-Anbieter, 21 Tests (`d0116af`) |
+| 3 | Hermes-Update-Konten | **entfallen** | Mit O1 postet der Resolver nichts mehr und hat keinen Pyth-Schlüssel; `pyth.ts` gab es nur in der alten Kopie |
+| a | Rundung an der Oracle-Konfidenzgrenze | **gilt** | `conf * 10 000 / price` schnitt ab und öffnete das letzte Basispunkt-Stück: eine Lesung mit 50,9 bps kam durch eine 50-bps-Schranke. Jetzt Kreuzmultiplikation ohne Division, exakt. Test `confidence_bound_is_exact_at_the_edge` prüft genau an der Kante: `conf` = Schranke (angenommen), +1 (abgelehnt), −1 (angenommen). 46/46 grün |
+| b | Zugangsdaten in Spike-Logs oder Historie | **nichts gefunden** | Beide Repos, **ganze Historie** (`git grep` über `git rev-list --all`) auf RPC-Keys, QuickNode/Alchemy-Pfade, Telegram-Bot-Token, `ghp_`/`github_pat_`, PEM-Blöcke und 64-Byte-Schlüsselarrays: **0 Treffer**. Die zwei Beinahe-Treffer sind harmlos: `keystorePassword` steht nur in dem README-Satz, der belegt, dass es nie committet wurde; `api-key=` nur in der Zeile des Loggers, die den Key **maskiert**, bevor er ins Log geht. Auch im Arbeitsbaum (inkl. ignorierter Spike-Logs) keine Datei mit einem echten Key. Signaturen und Konto-Fixtures sind öffentliche Daten. **Es muss nichts rotiert und nichts bereinigt werden** |
+| c | `/__scheduled` ohne Schutz | **gilt** | Jeder hätte Läufe auslösen und damit Gebühren der Hot Wallet verbrennen können. Jetzt: ohne `KICK_TOKEN` gibt es den Weg **gar nicht** (404, auch kein Hinweis darauf); mit Secret nur mit `?key=…`, konstantzeitiger Vergleich. Im Drehbuch überall nachgezogen |
+| d | Deterministische Programmfehler erneut gesendet | **gilt, mit einer Einschränkung** | Stimmt für strukturelle Fehler (falscher Feed, falsches Konto, falscher Status) — die scheitern identisch und fraßen das Fenster. **Nicht** stimmt es für die fünf datenabhängigen (`TooEarly`, `NotFullyVerified`, `StaleReading`, `NonPositivePrice`, `ConfidenceTooWide`): Die müssen weiter wiederholt werden, weil das nächste Update des Sponsors sie auflöst. Genau so umgesetzt, zwei Tests |
+| e | Gescheiterte Ablesung als gesunder Lauf gemeldet | **teils** | Der Fehlerfall war schon richtig (Fenster zu → `runFailed` + Backlog-Alarm). Still war der Fall **„nichts fällig“** — und in der Saison ist zur Lesezeit immer etwas fällig, das heißt also Kalender, Uhr oder Chain-Sicht ist kaputt. Jetzt Alarm statt Schweigen |
+| f | Berechtigungen der Agenten zu breit | **gilt, zwei Zeilen** | Siehe unten |
+
+**Zu f), konkret.** Zu breit sind genau zwei Einträge in `.claude/settings.json`:
+- `Bash(npm install*)` — führt beliebige `postinstall`-Skripte aus dem Netz aus, ohne Nachfrage, auf
+  der Maschine, auf der `~/.config/observed/` liegt. Das ist der breiteste Weg nach innen.
+  Vorschlag: raus aus der Erlaubnisliste (oder `npm ci --ignore-scripts`).
+- `Bash(gh pr create*)` — veröffentlicht Repo-Inhalt, ohne dass jemand gefragt wird. Kommt selten
+  vor und ist eine Nachfrage wert. Vorschlag: raus.
+
+Nicht zu breit, obwohl es so aussieht: `git add`/`git commit` (kein `git push` in der Liste — Pushen
+fragt), `solana airdrop` (geht nur auf Devnet), `cargo`/`anchor`-Aufrufe.
+**Eine echte Lücke ist die Form der Verbotsliste:** `Read(~/.config/observed/**)` gilt nur für das
+Lese-Werkzeug, nicht für `Bash(cat …)`. Heute fängt das die Erlaubnisliste ab (`cat` steht nicht
+drin, fragt also), und der Hook `guard-paths.sh` deckt Edit/Write ab — aber ein später ergänztes
+`Bash(cat*)` würde die Sperre aushebeln. Vorschlag: `Bash(cat ~/.config/observed/**)`,
+`Bash(cat ~/.config/solana/**)` und dieselben mit `Bash(head/tail/strings …)` explizit in `deny`.
+**Entscheidung liegt bei Dinkelberg** — ich ändere die Berechtigungen nicht selbst.
 
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
@@ -81,6 +123,7 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 | 8 | Offline-Schlüssel + Hot Wallet erzeugen, Cloudflare/Helius/healthchecks einrichten, **Mainnet-Deploy bis Do 24.09.** (SGT gibt es nur auf Mainnet, fremde Tester ab 27.09. brauchen Mainnet) | Dinkelberg | Do 24.09. |
 | 9 | Expo-Token erneuern (stand im Chat). **Pyth-Key wird nicht mehr gebraucht**: Der Resolver liest nur noch das gesponserte Konto, kein Hermes, kein Schlüssel | Dinkelberg | sofort |
 | 10 | Zweiter RPC-Anbieter für die Ablese-Läufe: Konto anlegen, dann `wrangler secret put RPC_URL_FALLBACK`. Vorschlag **QuickNode** (eigenes Netz, eigene Firma, kostenloser Solana-Endpunkt) als Zweiten; **Helius** bleibt der Erste. Dritter Rückfall ohne Konto ist `api.mainnet-beta.solana.com` — gedrosselt, aber besser als nichts | Dinkelberg | vor Do 24.09. |
+| 12 | Berechtigungen der Agenten: `Bash(npm install*)` und `Bash(gh pr create*)` aus der Erlaubnisliste nehmen, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` ergänzen (Begründung im Codex-Abschnitt) | Dinkelberg | vor Do 24.09. |
 | 11 | Frage an die Veranstalter: Darf der Resolver (eigenes Repo, nicht Teil der Einreichung) während der Bewertung geändert werden? Bis zur Antwort plant das Drehbuch mit **nein** | Dinkelberg | offen |
 
 ## Bewertung Claude Code, 18.09. (Vorschläge aus dem Chat)

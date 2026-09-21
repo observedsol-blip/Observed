@@ -13,6 +13,7 @@ Ausweg, falls er scheitert.
 | Helius | Mainnet-Endpunkt bereit (`RPC_URL`) |
 | Zweiter Anbieter | QuickNode-Endpunkt bereit (`RPC_URL_FALLBACK`). Die Ablese-Läufe wechseln bei 429 oder Timeout dorthin — eine verpasste Lesung ist der einzige Fehler, der sich nicht nachholen lässt |
 | healthchecks.io | zwei Checks (RUN, BACKLOG), Telegram verbunden, einmal mit `/fail` getestet |
+| `KICK_TOKEN` | lange Zufallszeichenkette ausgedacht und notiert (für den Hand-Anstoß; ohne sie ist der HTTP-Weg zu) |
 | Repo | `docs/generated/CALENDAR-season1.md` gelesen — das sind die 64 Fragen der Saison |
 
 Die Kalender-Wurzel dieser Saison lautet
@@ -78,8 +79,9 @@ wrangler secret put RPC_URL               # Helius mainnet
 wrangler secret put RPC_URL_FALLBACK      # QuickNode, anderer Anbieter, anderes Netz
 wrangler secret put HEALTHCHECK_RUN_URL
 wrangler secret put HEALTHCHECK_BACKLOG_URL
+wrangler secret put KICK_TOKEN            # frei wählbar, lang, nur für dich
 npm run deploy
-curl "https://<worker>/__scheduled"       # Kehrlauf von Hand, muss die 64 Runden sehen
+curl "https://<worker>/__scheduled?key=$KICK"   # Kehrlauf von Hand, muss die 64 Runden sehen
 ```
 **Prüfen:** Die Ausgabe nennt `rounds: 64 total`, und healthchecks.io meldet RUN als „up".
 Am 25.09. um 04:03 UTC prüfen: Runde 0 steht auf `Referenced`. Um 16:01 UTC: `Resolved`.
@@ -115,7 +117,7 @@ Nach der Einreichung ist der Stand im Hauptrepo eingefroren. Erlaubt und ohne Co
 | Worker hängt | `npm run deploy` erneut (gleicher Code) oder im Dashboard „Redeploy" |
 | Ein Lauf ist ausgefallen | nichts tun. Der nächste Kehrlauf holt Scoring und `cancel_round` nach. Eine **Lesung** ist nicht nachholbar: Die Runde wird NO_RESOLVE, das ist ein vorgesehener Zustand |
 | Alarm quittieren | auf healthchecks.io pausieren/fortsetzen; der Alarm ist eine Information, keine Aktion |
-| Runde hängt trotzdem | `curl "https://<worker>/__scheduled"` von Hand anstoßen |
+| Runde hängt trotzdem | `curl "https://<worker>/__scheduled?key=<KICK_TOKEN>"` von Hand anstoßen. **Ohne das Secret gibt es diesen Weg nicht** — der Worker antwortet 404, damit niemand sonst Läufe und damit Gebühren auslösen kann |
 | Alles hängt, Cloudflare ist das Problem | Resolver vom Notfall-Laptop: `npm run dev`, dann `curl "localhost:8787/__scheduled?cron=1+4+*+*+*"` zur Referenzzeit und `…cron=59+15+*+*+*` zur Ergebniszeit |
 
 **Nicht erlaubt:** App-Update, Programm-Upgrade, Änderungen im Hauptrepo nach dem Tag
@@ -131,7 +133,7 @@ Beispiel: ein Fehler im Resolver, der jede Lesung verpasst.
    **nicht Teil des eingereichten Stands** — technisch berührt ein Fix dort die Einreichung nicht.
    **Solange Offen 11 unbeantwortet ist, gilt das trotzdem als verboten.** Dann bleibt: den
    betroffenen Runden ihren Lauf lassen (NO_RESOLVE ist ein vorgesehener Zustand), von Hand
-   `curl "https://<worker>/__scheduled"` anstoßen, und im Notfall den Lauf vom Laptop aus fahren
+   `curl "https://<worker>/__scheduled?key=<KICK_TOKEN>"` anstoßen, und im Notfall den Lauf vom Laptop aus fahren
    (Zeile „Alles hängt“ in §6) — alles mit demselben Code. Antworten die Veranstalter mit „ja“:
    reparieren, deployen, im HANDOFF vermerken.
 3. **Wäre der Fehler im Programm**, geht gar nichts: Ein Upgrade änderte das Verhalten der
