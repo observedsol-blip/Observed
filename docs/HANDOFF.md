@@ -293,6 +293,44 @@ Expo-Vorlagenbild (grau auf Weiß, `splash-icon.png` byte-identisch mit `adaptiv
 weiter aus `mock.ts` — mit den alten Zeiten, „rounds“ statt „calls“, Schwelle 21 statt 20 und einem
 Versäumnis zu 0.250 statt als vollem Fehlschlag.
 
+## Audit 21./22.09.2026 (Claude Code, eigener Code) — Befunde und Stand
+
+Automatisch geprüft: `anchor build` + **56 Rust-Tests**, `cargo clippy -D warnings` leer,
+**92 App-Tests** (vorher 86), `tsc --noEmit` sauber, Secret-Scan über Arbeitsbaum **und ganze
+Historie** ohne Treffer. **Nicht geprüft:** der Resolver (eigenes Repo — Punkt 8 der Anweisung,
+steht noch aus).
+
+| # | Befund | Schwere | Stand |
+|---|---|---|---|
+| 1 | „What others wrote" akzeptierte **jedes** 64-Hex-Memo aus **jeder** Transaktion am Round-Konto, ohne Zeitprüfung. Nach dem Ausgang den Hash posten, dann aufdecken — und man gilt als jemand, der es vorher wusste. Mit PoC gegen den eigenen Code bewiesen | hoch (Kernaussage) | **erledigt** `8321f9d`: Hash muss das **einzige** 64-Hex-Memo in **der Commit-Transaktion** sein. Braucht keine Uhr — das Programm verweigert einen Commit außerhalb des Fensters. 4 neue Tests, PoC sagt jetzt „no hole" |
+| 2 | SECURITY.md behauptete `allowBackup=false` **und** „im Release-APK verifiziert". Das Manifest sagte `true`, und ein Release-APK gibt es nicht | mittel (Ehrlichkeit) | **erledigt** `8321f9d`: `allowBackup: false` steht jetzt wirklich in `app.json`; SECURITY.md nennt den echten Mechanismus (Backup-Regeln von expo-secure-store) und sagt offen, dass die Messung am echten APK mit `aapt` noch aussteht |
+| 3 | Saison-Geheimnis kam aus `Crypto.getRandomBytes` — fällt unter `__DEV__` + Remote-Debugger auf `Math.random` zurück, und dieses Geheimnis bleibt die Saison über in Benutzung | mittel | **erledigt** `8321f9d`: `getRandomBytesAsync`, dazu ein Test, der die App-Quellen liest und nur besteht, solange niemand die synchrone Variante aufruft |
+| 4 | Der Werkzeug-Hook griff nur bei Edit/Write/MultiEdit. Jede Änderung über Bash ging vorbei — auch an der eingefrorenen Spec. Genau so hat Claude Code selbst gearbeitet (offengelegt) | mittel (Prozess) | **teilweise**: `.githooks/pre-commit` **ist scharf** (Spec ohne `.spec-unlock`, Schlüsseldateien, Klartext-Passwörter — vier Proben bestanden), `guard-paths.sh` liest jetzt auch Bash-Kommandos. Die `settings.json` liegt als Diff bereit und **gilt erst nach Freigabe** (Offen 12) |
+| 5 | SECURITY.md kannte den Backup-Code nicht — seit E2 ist das Geheimnis exportierbar | niedrig | **erledigt** `8321f9d`: unter „bekannt und akzeptiert", mit dem UI-Satz |
+| 6 | `spikes/seeker/app/README.md`: „`git log --all -S\"keystorePassword\"` = 0" — heute sind es 3 (unsere eigenen Dokumente nennen das Feld; alle Werte Platzhalter) | niedrig | **offen** — `spikes/seeker/` wird ohne Auftrag nicht angefasst |
+| 7 | `sealing.ts`: nur `unknown` fragt die Kette, `sent` wird blind erneut gesendet | niedrig | offen, bis 26.09. |
+| 8 | `checkFunding` fordert immer Miete für einen neuen Eintrag — auch auf dem reinen Aufdeck-Weg | niedrig | offen, bis 26.09. |
+| 9 | `sgt.ts`: TLV-Schleife ohne Längenprüfung; kaputte Mint-Daten werfen statt „kein Genesis Token" | niedrig | offen, bis 26.09. |
+| 10 | `rpc.ts`: abgeschnittene Reveal-Instruktion las über das Pufferende | niedrig | **erledigt** `8321f9d` (fiel mit Befund 1 an derselben Stelle an) |
+| 11 | RELEASE-BUILD.md ließ das Keystore-Passwort per Heredoc in `~/.bash_history` laufen | niedrig | **erledigt** `8321f9d`: leere Datei mit `chmod 600`, im Editor füllen, zwei Prüfzeilen danach |
+| 12 | Das 72-h-Fenster steht dreimal als `72 * 3600` im Code | niedrig | offen, bis 26.09. |
+
+**Abhängigkeiten.** `cargo audit` ist installiert (Freigabe des Owners) und gelaufen: **0
+Verwundbarkeiten**, 6 Warnungen, alle transitiv aus dem Solana-/Anchor-/Pyth-Baum — fünf
+„unmaintained" (`ansi_term`, `bincode`, `derivative`, `libsecp256k1`, `paste`) und eine
+„unsound" (`borsh 0.9.3` über `pyth-sdk 0.5.0`, betrifft das Parsen von ZST-Typen, die wir nicht
+haben). Nichts davon ist vor dem Deploy zu beheben, und nichts davon liegt in unserem Code.
+`npm audit --omit=dev`: 23 Meldungen (9 hoch), bis auf `jayson`/`stream-json`/`uuid` über
+`@solana/web3.js` alles reines Build-Werkzeug (metro, postcss, image-size, xcode), das nie ins
+APK kommt. Ein Fix verlangt `expo@57` — Breaking Change, vier Tage vor dem Build ausgeschlossen.
+
+**Die Leitplanken, ehrlich beschrieben.** `.githooks/pre-commit` ist eine **Bremsschwelle, keine
+Grenze**: `git commit --no-verify` geht vorbei, und eine Shell hat beliebig viele Schreibweisen
+für denselben Pfad. Der Wert liegt darin, dass Git jede Änderung sieht, egal womit sie
+geschrieben wurde — anders als der Werkzeug-Hook. Zum Aktivieren einmal pro Arbeitskopie:
+`git config core.hooksPath .githooks` (steht in `.githooks/README.md`). Claude Code schreibt
+geschützte Pfade ab sofort nicht mehr über Bash-Skripte.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
@@ -310,7 +348,7 @@ Versäumnis zu 0.250 statt als vollem Fehlschlag.
 | 15 | **Spike 3 am Gerät** mit dem Debug-APK (`C:\\Users\\Admin\\Downloads\\observed-diagnostics-debug.apk`): Wortmarke lang drücken → Diagnose. Drei Knöpfe, Zahlen kopieren, schicken. Davon hängen ab: eine oder zwei Freigaben, und ob `signMessage` deterministisch ist (sonst fällt die Wiederherstellung nach einer Neuinstallation aus) | Dinkelberg | vor dem Build 26.09. |
 | 14 | **Erledigt 21.09.:** alle vier entschieden und in `06b842a` umgesetzt — Zeiten-Sweep, Schwelle 20 Runden, „Too close to call.“ vor „You didn't pick a side.“, versiegelte Antwort wörtlich mit der genauen Zahl | Dinkelberg | erledigt |
 | 13 | `.spec-unlock` für 00-SPEC: Frageart (Richtung statt Bewegung) und Aufdeckfenster (72 h statt 12 h) stehen dort noch alt. Vorschlag 16 ist geschrieben | Dinkelberg | vor der Einreichung |
-| 12 | Berechtigungen der Agenten: `Bash(npm install*)` und `Bash(gh pr create*)` aus der Erlaubnisliste nehmen, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` ergänzen (Begründung im Codex-Abschnitt) | Dinkelberg | vor Do 24.09. |
+| 12 | **Diff liegt vor, gilt noch nicht:** `Bash(npm install*)` und `Bash(gh pr create*)` raus, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` rein, `Bash(cargo audit*)` in die Erlaubnisliste, PreToolUse-Matcher um `Bash` erweitert. Dinkelberg hat die Diff am 22.09. gesehen; **anwenden nach seinem Wort** | Dinkelberg | vor Do 24.09. |
 | 11 | Frage an die Veranstalter: Darf der Resolver (eigenes Repo, nicht Teil der Einreichung) während der Bewertung geändert werden? Bis zur Antwort plant das Drehbuch mit **nein** | Dinkelberg | offen |
 
 ## Bewertung Claude Code, 18.09. (Vorschläge aus dem Chat)

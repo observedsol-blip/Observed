@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+# Die Spec-Sperre, die nicht davon abhaengt, WOMIT jemand geschrieben hat.
+#
+# Der Claude-Hook in .claude/settings.json greift nur bei Edit/Write/MultiEdit. Alles, was ueber
+# eine Shell laeuft — sed -i, ein Python-Skript, ein Editor — geht daran vorbei. Genau das ist im
+# Audit vom 21.09.2026 aufgefallen, und genau so habe ich selbst gearbeitet. Git sieht dagegen
+# jede Aenderung, egal wer sie geschrieben hat.
+#
+# Das hier ist trotzdem kein Schutzwall: Wer `--no-verify` tippt, kommt vorbei. Es ist eine
+# Bremsschwelle gegen Versehen, und als solche ist sie in HANDOFF benannt.
+set -u
+
+fail=0
+
+# 1. Die eingefrorene Spec
+if git diff --cached --name-only | grep -qx "docs/00-SPEC.md"; then
+  if [ ! -f ".spec-unlock" ]; then
+    echo "BLOCKIERT: docs/00-SPEC.md ist eingefroren." >&2
+    echo "  Der Owner legt .spec-unlock an, wenn eine Aenderung freigegeben ist." >&2
+    echo "  Vorschlaege gehoeren bis dahin in docs/spec-changes-*.md." >&2
+    fail=1
+  fi
+fi
+
+# 2. Schluesselmaterial, das nie im Repo landen darf
+keys=$(git diff --cached --name-only | grep -Ei '(^|/)(keys/|.*\.keystore$|.*\.jks$|.*\.pem$|id\.json$|.*keypair.*\.json$|\.env($|\.))' || true)
+if [ -n "$keys" ]; then
+  echo "BLOCKIERT: sieht nach Schluesselmaterial aus:" >&2
+  echo "$keys" | sed 's/^/  /' >&2
+  echo "  Schluessel leben in ~/.config/observed/, nie im Repo." >&2
+  fail=1
+fi
+
+# 3. Ein Passwort im Klartext, das nicht der dokumentierte Platzhalter ist
+pw=$(git diff --cached -U0 -- . \
+      | grep -E '^\+' \
+      | grep -Ei '"(keystorePassword|keyPassword)"[[:space:]]*:[[:space:]]*"[^"]+"' \
+      | grep -vE '"(DEIN-PASSWORT|<[^"]*>|\.\.\.)"' || true)
+if [ -n "$pw" ]; then
+  echo "BLOCKIERT: ein Keystore-Passwort im Klartext in den Aenderungen." >&2
+  fail=1
+fi
+
+exit $fail
