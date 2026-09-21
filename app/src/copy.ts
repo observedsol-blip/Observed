@@ -68,20 +68,27 @@ export const copy = {
   windowClosed: "Window closed · next question 16:00 UTC",
   openReveals: (n: number) => `${n} ${n === 1 ? "call" : "calls"} still open to reveal`,
 
-  /** Backup and restore (E2). Proposed in docs/COPY-NEUE-TEILE.md §D — NOT yet approved by the
-   *  owner, which is why it lives here in one block and nowhere else. */
+  /**
+   * Backup and restore (E2) — approved by the owner, 21.09.2026.
+   *
+   * The word is "backup code", never "key" and never "recovery". A field that asks for a "key"
+   * or a "recovery phrase" is the pattern people are robbed with, and an app that trains it has
+   * no business asking for trust.
+   */
   backup: {
-    heading: "Backup",
-    body: "Your open answers live on this phone. If you uninstall the app, answers you have sealed but not yet revealed are lost. Copy this key and keep it somewhere safe — with it, a new installation can open them again.",
-    copyButton: "Copy backup key",
-    copied: "Copied. It is useless without this wallet.",
-    restoreHeading: "Restore",
-    restoreBody:
-      "Paste the backup key from your old installation. Your sealed answers come back from the chain — the sentences you wrote do not.",
-    placeholder: "64 characters",
-    bad: "That is not a backup key.",
-    restored: (n: number) => `Restored. ${n} open ${n === 1 ? "call is" : "calls are"} yours again.`,
-    lost: (ids: number[]) =>
-      `${ids.length} sealed ${ids.length === 1 ? "call" : "calls"} could not be opened with this key.`,
+    line: "Backup code",
+    sub: "Needed to reveal open calls after reinstalling.",
+    copyButton: "Copy backup code",
+    copied:
+      "Copied. Keep it private — with it, someone could see your sealed answers before you reveal them.",
+    restoreTitle: "Restore your open calls",
+    restoreBody: "Paste the backup code you copied from Observed.",
+    notYourPhrase:
+      "This is not your wallet's recovery phrase. Never paste that here — or anywhere.",
+    restoreButton: "Restore",
+    skip: "Skip — open calls will count as misses",
+    bad: "This code doesn't match your sealed calls.",
+    /** Onboarding, under "Reinstalling can forfeit a pending answer." */
+    onboarding: "You can copy a backup code in Settings.",
   },
 } as const;

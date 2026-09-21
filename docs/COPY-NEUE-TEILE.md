@@ -108,7 +108,11 @@ Aufdeck-Moment → Beispiel-Record mit Kurve → `Tonight's question opens at 16
 Bedingungen: durchgehend als Beispiel gekennzeichnet ("Sample · not your phone"), und mindestens ein
 Explorer-Link auf eine echte versiegelte Runde der laufenden Saison, damit die Kette vorkommt.
 
-## D. Export und Import des Geheimnisses (E2, Fassung 21.09.2026 — **Freigabe offen**)
+## D. Export und Import des Geheimnisses (E2) — **überholt**
+
+> **Ersetzt am 21.09.2026 durch die freigegebene Fassung in 03-SCREEN-MAP §11.8.** Dort heißt es
+> durchgehend „backup code“ statt „key“, es gibt eine Warnung gegen das Einfügen der
+> Wallet-Phrase und einen Überspringen-Weg. Der Vorschlag unten ist nur noch Protokoll.
 
 Hintergrund: Seed Vault Wallet kann keine Nachrichten signieren (am Gerät geprüft, fünf
 Versuche). Das Saison-Geheimnis ist deshalb zufällig und liegt auf dem Gerät. Eine

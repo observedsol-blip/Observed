@@ -57,13 +57,15 @@ export class SeasonSecret {
   }
 
   /**
-   * After a reinstall: paste the secret back. Rejects anything that is not exactly 32 bytes of
-   * hex, so a half-copied string fails here and not silently three days later.
+   * After a reinstall: paste the backup code back. Rejects anything that is not exactly 32 bytes
+   * of hex, so a half-copied string fails here and not silently three days later — and refuses
+   * outright anything that looks like a wallet recovery phrase.
    */
   async importSecret(hex: string, wallet: PublicKey): Promise<Uint8Array> {
+    if (looksLikeSeedPhrase(hex)) throw new SeedPhrasePasted();
     const cleaned = hex.trim().toLowerCase().replace(/\s+/g, "");
     if (!/^[0-9a-f]{64}$/.test(cleaned)) {
-      throw new Error("that is not a secret: 64 hex characters expected");
+      throw new Error("that is not a backup code: 64 hex characters expected");
     }
     const secret = hexToBytes(cleaned);
     await this.write(secret, wallet);
@@ -78,3 +80,23 @@ export class SeasonSecret {
     } satisfies StoredSecret);
   }
 }
+
+/**
+ * A wallet recovery phrase is 12 or 24 words. Our backup code is 64 hex characters and never
+ * contains a space. If somebody pastes the former, the app must stop and say so — not shrug it
+ * off as "wrong format" and let the habit stand.
+ */
+export function looksLikeSeedPhrase(text: string): boolean {
+  const words = text.trim().split(/\s+/).filter(Boolean);
+  if (words.length !== 12 && words.length !== 24) return false;
+  // hex in groups would also split into words; a phrase is letters only
+  return words.every((w) => /^[a-zA-Z]{3,}$/.test(w));
+}
+
+export class SeedPhrasePasted extends Error {
+  constructor() {
+    super("that looks like a wallet recovery phrase");
+    this.name = "SeedPhrasePasted";
+  }
+}
+

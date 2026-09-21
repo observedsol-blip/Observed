@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { SeasonSecret } from "../src/core/secret.ts";
+import { SeasonSecret, looksLikeSeedPhrase } from "../src/core/secret.ts";
 import { recoverAll, recoverAnswer } from "../src/core/recovery.ts";
 import { MemoryStore } from "../src/core/store.ts";
 import { Sealing } from "../src/core/sealing.ts";
@@ -62,7 +62,7 @@ test("the import refuses anything that is not a secret", async () => {
   const store = new MemoryStore();
   const s = new SeasonSecret(deps(store));
   for (const bad of ["", "abc", "zz".repeat(32), "ab".repeat(31), "ab".repeat(33)]) {
-    await assert.rejects(() => s.importSecret(bad, wallet), /not a secret/, `"${bad.slice(0, 8)}"`);
+    await assert.rejects(() => s.importSecret(bad, wallet), /not a backup code/, `"${bad.slice(0, 8)}"`);
   }
   // but it forgives the things a person does while copying
   const clean = "ab".repeat(32);
@@ -161,3 +161,30 @@ test("without the export, an open answer is lost — and the code says so, it do
   assert.deepEqual(recovered, []);
   assert.deepEqual(lost, [11], "the call is named as lost, not silently dropped");
 });
+
+test("a wallet recovery phrase is refused as such, not as a format error", async () => {
+  const store = new MemoryStore();
+  const s = new SeasonSecret(deps(store));
+  const twelve = "ripple almost sunset canvas gather melody pledge orbit shrimp velvet tunnel amber";
+  const twentyFour = `${twelve} ${twelve}`;
+
+  for (const phrase of [twelve, twentyFour, twelve.toUpperCase()]) {
+    assert.equal(looksLikeSeedPhrase(phrase), true, phrase.slice(0, 20));
+    await assert.rejects(
+      () => s.importSecret(phrase, wallet),
+      (e: unknown) => e instanceof Error && e.name === "SeedPhrasePasted",
+      "the app must say what it is, not shrug it off as a format error",
+    );
+  }
+  // and nothing was stored on the way
+  assert.equal(await s.stored(), null);
+});
+
+test("a backup code is never mistaken for a phrase", () => {
+  assert.equal(looksLikeSeedPhrase("ab".repeat(32)), false);
+  assert.equal(looksLikeSeedPhrase(""), false);
+  assert.equal(looksLikeSeedPhrase("four words are not twelve"), false);
+  // eleven or thirteen words is not a phrase either — we only refuse what actually is one
+  assert.equal(looksLikeSeedPhrase("one two three four five six seven eight nine ten eleven"), false);
+});
+

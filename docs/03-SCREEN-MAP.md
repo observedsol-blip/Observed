@@ -241,6 +241,32 @@ Der Brier-Wert steht **nicht** im täglichen Ergebnis, nur im Saison-Record.
 - `{x}` in „Too close to call“ ist `outcome_margin_bps / 100`, auf eine Nachkommastelle.
 - Die Serie zählt **aufgedeckte Abende**, nicht Treffer — eine knappe Runde bricht sie nicht.
 
+### 11.8 Backup-Code (E2) — freigegeben 21.09.2026
+Das Wort ist **„backup code“**, nie „key“ und nie „recovery“: Ein Feld, das nach einem
+„Schlüssel“ fragt, ist das Muster, mit dem Leute um ihre Wallet-Phrase gebracht werden.
+
+**Einstellungen**
+- Zeile: `Backup code`
+- Unterzeile: `Needed to reveal open calls after reinstalling.`
+- Knopf: `Copy backup code`
+- Nach dem Kopieren: `Copied. Keep it private — with it, someone could see your sealed answers
+  before you reveal them.`
+
+**Neuinstallation mit offenen Calls**
+- Titel: `Restore your open calls`
+- Text: `Paste the backup code you copied from Observed.`
+- Warnung: `This is not your wallet's recovery phrase. Never paste that here — or anywhere.`
+- Knopf: `Restore`
+- Überspringen: `Skip — open calls will count as misses`
+- Fehler: `This code doesn't match your sealed calls.`
+
+**Onboarding**, unter `Reinstalling can forfeit a pending answer.`:
+`You can copy a backup code in Settings.`
+
+**Technisch:** Das Einfügefeld lehnt alles ab, was nach einer Wallet-Phrase aussieht (12 oder 24
+Wörter), und zeigt genau die Warnung oben — keinen Formatfehler. Die Regel steht in
+`app/src/core/secret.ts`, nicht im Bildschirm, damit sie einen Umbau überlebt.
+
 ### 11.7 Noch gesperrt
 Die Erinnerungsschätzung vor dem Aufdecken (E12) wird **nicht** gebaut. Erst mündlich mit den
 Testern, dann Freigabe des Owners.
