@@ -20,16 +20,46 @@ Die Kalender-Wurzel dieser Saison lautet
 `66347dd5ad1c4eab1a6ea56decc736f4b76d21c29e6482d776a63430f98ec7fa`.
 Sie steht auch in `tests/fixtures/calendar/season1.json` und wird in Schritt 3 on-chain gesetzt.
 
+## 0b. Endabgleich am Mittwoch — in dieser Reihenfolge
+`cargo test` prüft **nicht** den Quelltext, sondern das gebaute `target/deploy/observed.so`
+(die Tests laden es per `include_bytes!`). Ohne vorherigen Build testet man den alten Stand und
+sieht grüne Tests für eine Änderung, die gar nicht drin ist. Deshalb **immer** so:
+```
+cd ~/observed
+anchor build                      # 1. bauen
+cargo test --test observed        # 2. alle Programmtests (46)
+cargo test --test season          # 3. Saisonlauf (64 Runden, 20 Geräte, ~37 s)
+cargo clippy --all-targets -- -D warnings
+```
+Erst wenn alle vier grün sind, geht es weiter. **Was getestet wurde, wird deployt — dieselbe
+Datei, nicht ein neuer Build.** Mit `--features mainnet` ändert sich das Binary allerdings
+(DEPLOY_AUTHORITY), also gilt: erst 1a, dann bauen, dann testen, dann deployen, ohne noch einmal
+dazwischen zu bauen.
+
 ## 1. Programm bauen und deployen (≈ 20 min)
 ```
 cd ~/observed
 # 1a. Offline-Schlüssel eintragen: DEPLOY_AUTHORITY in programs/observed/src/lib.rs
 #     (der compile_error! darüber wird dabei gelöscht — ohne das baut der Mainnet-Build nicht)
 anchor build -- --features mainnet
+# 1b. Tests gegen GENAU dieses Binary (wie 0b, aber jetzt mit dem Mainnet-Schlüssel darin)
+cargo test --test observed && cargo test --test season
+# 1c. Prüfsumme der Datei, die gleich deployt wird — hier eintragen und aufheben:
+sha256sum target/deploy/observed.so
 solana program deploy target/deploy/observed.so \
   --program-id target/deploy/observed-keypair.json \
   --url mainnet-beta --keypair <offline-key>
 ```
+**Nach dem Deploy: on-chain gegen die Datei prüfen.** Das ist der Beleg, dass genau das getestete
+Binary läuft — `solana program dump` holt die Bytes zurück, die das Netz ausführt:
+```
+solana program dump 48YybyMgkdzPQN5R3V1xsFHkUMxDvBDBDwW48cRTx2ni onchain.so --url mainnet-beta
+truncate -s $(stat -c%s target/deploy/observed.so) onchain.so   # der Dump ist hinten mit Nullen aufgefüllt
+sha256sum onchain.so target/deploy/observed.so                  # beide Zeilen müssen gleich lauten
+```
+**Weichen sie ab:** nicht weitermachen, nichts anlegen — erst klären, was da liegt. Die Prüfsumme
+kommt in dieses Drehbuch, in die Jury-README und ins HANDOFF; sie ist öffentlich und macht
+nachprüfbar, dass der eingereichte Stand das ist, was am 24.09. deployt wurde.
 **Prüfen:** `solana program show <PROGRAM_ID> --url mainnet-beta` zeigt Program-ID, Authority und
 Datenlänge. Program-ID muss `48YybyMgkdzPQN5R3V1xsFHkUMxDvBDBDwW48cRTx2ni` sein, sonst passen IDL
 und Resolver nicht.
@@ -50,7 +80,7 @@ Adressen, `paused` ist false.
 Offline-Schlüssel kompromittiert ist. Dann: nicht weitermachen, neue `game_id` nehmen.
 
 ## 3. Kalender veröffentlichen
-`publish_calendar(season = 1, root = c40a3548…, leaf_count = 64)`.
+`publish_calendar(season = 1, root = 66347dd5…, leaf_count = 64)`.
 **Prüfen:** `Config.calendar_root` ist die Wurzel oben, `first_round_id = 0`, `max_round_id = 63`.
 **Wenn die Wurzel falsch ist:** sofort anhalten. Eine falsche Wurzel lässt sich **nicht** ersetzen,
 solange die Saison läuft. Dann neue `game_id`, Schritte 2–3 wiederholen.
