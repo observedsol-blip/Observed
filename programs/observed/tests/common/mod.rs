@@ -707,6 +707,10 @@ pub fn commitment(env: &Env, round_id: u32, p_bps: u16, salt: [u8; 32]) -> [u8; 
     )
 }
 
+pub fn read_config(env: &Env) -> observed::Config {
+    let acc = env.svm.get_account(&config_pda()).expect("config account");
+    anchor_lang::AccountDeserialize::try_deserialize(&mut acc.data.as_slice()).expect("config")
+}
 pub fn read_round(env: &Env, round_id: u32) -> observed::Round {
     let acc = env
         .svm

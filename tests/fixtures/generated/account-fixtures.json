@@ -1,0 +1,33 @@
+{
+  "config": {
+    "data_base64": "mwyq4B76zIIBAQAAAAAAAACBOXcOqH0XX1ajVGbDTH7My42KkbTuN6Jd9g9bj8mzlIE5dw6ofRdfVqNUZsNMfszLjYqRtO43ol32D1uPybOUAAEAAAABAItqOdddB44dx4ihQjBcEZbfPXV/9+MIrCD9uePPMt7aAAAAAD8AAAD6",
+    "expected": {
+      "calendar_authority": "9hSR6S7WPtxmTojgo6GG3k4yDPecgJY292j7xrsUGWBu",
+      "calendar_root": "8b6a39d75d078e1dc788a142305c1196df3d757ff7e308ac20fdb9e3cf32deda",
+      "first_round_id": 0,
+      "game_id": 1,
+      "max_round_id": 63,
+      "next_round_id": 1,
+      "pause_authority": "9hSR6S7WPtxmTojgo6GG3k4yDPecgJY292j7xrsUGWBu",
+      "paused": false,
+      "season": 1,
+      "size": 129,
+      "version": 1
+    },
+    "pubkey": "7HGAKfsaNyjefca4JeUzFR5wiJ7joHoBHevdHyg5vyJ7"
+  },
+  "note": "Written by programs/observed/tests/vectors.rs. The app decodes these with its own offsets.",
+  "player": {
+    "data_base64": "zd5wB6Wbztpu5SbaJSC7pNreWLHJe1YivoPFD2EfPFxTQaP7JY/yLQEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPw=",
+    "expected": {
+      "commits": 1,
+      "missing_scored": 0,
+      "reveals": 0,
+      "score_sum": 0,
+      "scored_rounds": 0,
+      "sgt_mint": "8TtWZksnan3hTTr9fAk3ouCGXNTG2eKqZX4opwWheF8x",
+      "size": 65
+    },
+    "pubkey": "skpFi2VsfYhdvvpfBsYMsktYmHeyJVNBsdKe9Ud764h"
+  }
+}

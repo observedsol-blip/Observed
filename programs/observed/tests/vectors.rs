@@ -107,3 +107,69 @@ fn the_salt_is_deterministic_and_round_specific() {
     let other = [0x5bu8; 32];
     assert_ne!(salt_for(&secret, 7), salt_for(&other, 7));
 }
+
+/// The other two account types the app decodes. `Round` and `Entry` already have fixtures
+/// (round-layout.json, entry-layout.json); these two complete the set.
+#[test]
+fn write_account_fixtures_for_the_app() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 7_500, [3u8; 32]))]
+    )
+    .expect("commit");
+
+    let config_account = env.svm.get_account(&config_pda()).expect("config");
+    let config = read_config(&env);
+    let player_account = env
+        .svm
+        .get_account(&player_pda(env.sgt_mint))
+        .expect("player account");
+    let player_state = read_player_for(&env, env.sgt_mint);
+
+    let json = serde_json::json!({
+        "note": "Written by programs/observed/tests/vectors.rs. The app decodes these with its own offsets.",
+        "config": {
+            "pubkey": config_pda().to_string(),
+            "data_base64": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &config_account.data),
+            "expected": {
+                "version": config.version,
+                "game_id": config.game_id,
+                "calendar_authority": config.calendar_authority.to_string(),
+                "pause_authority": config.pause_authority.to_string(),
+                "paused": config.paused,
+                "next_round_id": config.next_round_id,
+                "season": config.season,
+                "calendar_root": hex(&config.calendar_root),
+                "first_round_id": config.first_round_id,
+                "max_round_id": config.max_round_id,
+                "size": config_account.data.len(),
+            }
+        },
+        "player": {
+            "pubkey": player_pda(env.sgt_mint).to_string(),
+            "data_base64": base64::Engine::encode(&base64::engine::general_purpose::STANDARD, &player_account.data),
+            "expected": {
+                "sgt_mint": player_state.sgt_mint.to_string(),
+                "commits": player_state.commits,
+                "reveals": player_state.reveals,
+                "missing_scored": player_state.missing_scored,
+                "score_sum": player_state.score_sum,
+                "scored_rounds": player_state.scored_rounds,
+                "size": player_account.data.len(),
+            }
+        },
+    });
+    let dir = format!(
+        "{}/../../tests/fixtures/generated",
+        env!("CARGO_MANIFEST_DIR")
+    );
+    std::fs::write(
+        format!("{dir}/account-fixtures.json"),
+        format!("{}\n", serde_json::to_string_pretty(&json).expect("json")),
+    )
+    .expect("write");
+}
+
