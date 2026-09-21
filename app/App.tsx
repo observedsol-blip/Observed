@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Constants from 'expo-constants';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Header from './src/components/Header';
@@ -13,6 +14,9 @@ import { useObservedFonts } from './src/fonts';
 import { color } from './src/tokens';
 import { RecordState, ResultState, TodayState } from './src/mock';
 
+/** True only in the build made with APP_VARIANT=diagnostics (app.config.js). */
+const IS_DIAGNOSTICS = Constants.expoConfig?.extra?.diagnostics === true;
+
 export default function App() {
   const fontsLoaded = useObservedFonts();
 
@@ -25,6 +29,18 @@ export default function App() {
   /** Default stays the 8-revealed lock; the early read is an opt-in mock state. */
   const [recordState, setRecordState] = useState<RecordState>('default');
   const [showSampleRecord, setShowSampleRecord] = useState(false);
+
+  // The diagnostics build has one job and shows it immediately — no long press, no tabs.
+  if (IS_DIAGNOSTICS) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.ground }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: color.ground }}>
+          <StatusBar barStyle="light-content" backgroundColor={color.ground} />
+          <Diagnostics />
+        </SafeAreaView>
+      </GestureHandlerRootView>
+    );
+  }
 
   if (!fontsLoaded) {
     // Nothing is drawn before Literata / Plex are available: no system-font flash.

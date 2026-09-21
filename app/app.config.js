@@ -9,6 +9,9 @@ module.exports = ({ config }) => {
   return {
     ...config,
     name: "Observed Diag",
+    // Read at runtime through expo-constants. __DEV__ is false in an EAS build, so it cannot be
+    // the switch: the diagnostics screen would be unreachable (found on the device, 21.09.).
+    extra: { ...(config.extra ?? {}), diagnostics: true },
     slug: config.slug,
     android: {
       ...config.android,
