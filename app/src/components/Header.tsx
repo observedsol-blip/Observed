@@ -6,9 +6,12 @@ import { color, font, space } from '../tokens';
 export default function Header({
   onSettings,
   settingsActive,
+  onLongPressWordmark,
 }: {
   onSettings: () => void;
   settingsActive: boolean;
+  /** Debug builds only: the hidden way into the diagnostics screen. */
+  onLongPressWordmark?: () => void;
 }) {
   return (
     <View
@@ -20,17 +23,19 @@ export default function Header({
         height: 56,
       }}
     >
-      <Text
-        style={{
-          fontFamily: font.serif,
-          fontSize: 17,
-          letterSpacing: 2,
-          color: color.ink,
-          textTransform: 'uppercase',
-        }}
-      >
-        Observed
-      </Text>
+      <Pressable onLongPress={onLongPressWordmark} delayLongPress={800}>
+        <Text
+          style={{
+            fontFamily: font.serif,
+            fontSize: 17,
+            letterSpacing: 2,
+            color: color.ink,
+            textTransform: 'uppercase',
+          }}
+        >
+          Observed
+        </Text>
+      </Pressable>
       <Pressable
         onPress={onSettings}
         accessibilityRole="button"

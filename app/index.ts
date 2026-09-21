@@ -1,3 +1,8 @@
+// web3.js needs both of these before anything else imports it.
+import 'react-native-get-random-values';
+import { Buffer } from 'buffer';
+(global as unknown as { Buffer: typeof Buffer }).Buffer ??= Buffer;
+
 import { registerRootComponent } from 'expo';
 
 import App from './App';

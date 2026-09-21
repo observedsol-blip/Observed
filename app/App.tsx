@@ -8,6 +8,7 @@ import Today from './src/screens/Today';
 import Result from './src/screens/Result';
 import Record from './src/screens/Record';
 import Settings from './src/screens/Settings';
+import Diagnostics from './src/screens/Diagnostics';
 import { useObservedFonts } from './src/fonts';
 import { color } from './src/tokens';
 import { RecordState, ResultState, TodayState } from './src/mock';
@@ -17,6 +18,8 @@ export default function App() {
 
   const [area, setArea] = useState<Area>('Today');
   const [onSettings, setOnSettings] = useState(false);
+  /** Debug builds only: long-press the wordmark to open the diagnostics screen. */
+  const [onDiagnostics, setOnDiagnostics] = useState(false);
   const [todayState, setTodayState] = useState<TodayState>('open');
   const [resultState, setResultState] = useState<ResultState>('resolved_final');
   /** Default stays the 8-revealed lock; the early read is an opt-in mock state. */
@@ -32,11 +35,17 @@ export default function App() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.ground }}>
       <SafeAreaView style={{ flex: 1, backgroundColor: color.ground }}>
         <StatusBar barStyle="light-content" backgroundColor={color.ground} />
-        <Header onSettings={() => setOnSettings((v) => !v)} settingsActive={onSettings} />
+        <Header
+          onSettings={() => setOnSettings((v) => !v)}
+          settingsActive={onSettings}
+          onLongPressWordmark={__DEV__ ? () => setOnDiagnostics((v) => !v) : undefined}
+        />
         <Hairline marginVertical={0} />
 
         <View style={{ flex: 1 }}>
-          {onSettings ? (
+          {onDiagnostics ? (
+            <Diagnostics />
+          ) : onSettings ? (
             <Settings
               todayState={todayState}
               onTodayState={setTodayState}
