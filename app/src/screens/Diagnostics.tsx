@@ -120,6 +120,32 @@ export default function Diagnostics() {
       say(`  >>> COUNT THE SHEETS for each signature <<<`);
     });
 
+  /** The replacement for signMessage: sign the SAME transaction twice and compare. A fixed
+   *  blockhash on purpose — the seed must not change with the block. */
+  const signFixedTwice = () =>
+    run("Sign a fixed transaction twice (seed)", async () => {
+      const session = await wallet.connect();
+      const FIXED_BLOCKHASH = "9zqK5BkVLJhPR1o7XxSUrXVQ4rGkrTrJ8Y5HBCRoP4on";
+      const ixs = [memo(`observed-v1-secret:${session.pubkey.toBase58()}`)];
+      const t1 = Date.now();
+      const first = await wallet.signForSeed(ixs, session.pubkey, FIXED_BLOCKHASH);
+      const ms1 = Date.now() - t1;
+      const t2 = Date.now();
+      const second = await wallet.signForSeed(ixs, session.pubkey, FIXED_BLOCKHASH);
+      const ms2 = Date.now() - t2;
+      const same = hex(first) === hex(second);
+      say(`  signature 1: ${short(hex(first))} (${ms1} ms)`);
+      say(`  signature 2: ${short(hex(second))} (${ms2} ms)`);
+      say(`  deterministic: ${same ? "YES" : "NO"}`);
+      say(`  secret would be: ${short(hex(secretFromSignature(first)))}`);
+      say(
+        same
+          ? "  >>> recovery after a reinstall WORKS this way <<<"
+          : "  >>> NOT deterministic: a reinstall loses open answers <<<",
+      );
+      say(`  >>> COUNT THE SHEETS for each signature <<<`);
+    });
+
   const copy = () => Clipboard.setStringAsync(lines.join("\n"));
 
   return (
@@ -130,6 +156,7 @@ export default function Diagnostics() {
         <Button label="2a · Sign 1 memo" onPress={signOne} busy={busy} />
         <Button label="2b · Sign 2 in 1" onPress={signTwoInOne} busy={busy} />
         <Button label="3 · signMessage twice" onPress={signMessageTwice} busy={busy} />
+        <Button label="4 · Fixed tx twice (seed)" onPress={signFixedTwice} busy={busy} />
         <Button label="Copy results" onPress={copy} busy={false} />
       </View>
       {lines.map((l, i) => (

@@ -76,6 +76,28 @@ export class MwaWallet implements Wallet {
     return this.sendRaw(signed.serialize());
   }
 
+  /**
+   * Signs a transaction and returns its signature bytes, without sending anything.
+   *
+   * This exists because Seed Vault Wallet refuses `signMessages` (measured on the Seeker,
+   * 21.09.2026: four attempts, no sheet, "Local association cancelled by user" after ~3 s).
+   * A signature over a FIXED transaction is deterministic in the same way a signed message would
+   * be — same bytes in, same 64 bytes out — so it can carry the season secret instead.
+   */
+  async signForSeed(instructions: TransactionInstruction[], payer: PublicKey, blockhash: Blockhash): Promise<Uint8Array> {
+    const tx = new Transaction({ feePayer: payer, recentBlockhash: blockhash }).add(...instructions);
+    const signed = await transact(async (wallet: Web3MobileWallet) => {
+      await this.reauthorize(wallet);
+      const [result] = await wallet.signTransactions({ transactions: [tx] });
+      return result;
+    }).catch((e) => {
+      throw translate(e);
+    });
+    const signature = signed.signatures[0]?.signature;
+    if (!signature) throw new Error("the wallet returned a transaction without a signature");
+    return Uint8Array.from(signature);
+  }
+
   /** Whether Seed Vault can do this at all is what the diagnostics screen measures. */
   signMessage = async (message: string): Promise<Uint8Array> => {
     const payload = new TextEncoder().encode(message);
