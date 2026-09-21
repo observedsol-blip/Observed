@@ -8,7 +8,7 @@
 import React, { useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import * as Clipboard from "expo-clipboard";
-import { PublicKey, TransactionInstruction } from "@solana/web3.js";
+import { Connection, TransactionInstruction } from "@solana/web3.js";
 import { MwaWallet } from "../platform/mwaWallet.ts";
 import { MEMO_ID, SECRET_MESSAGE_PREFIX } from "../chain/ids.ts";
 import { secretFromSignature, secretMessage } from "../core/secret.ts";
@@ -24,18 +24,36 @@ export default function Diagnostics() {
     "devnet only · nothing is sent · no real seal",
   ]);
   const [busy, setBusy] = useState(false);
+  // A REAL devnet blockhash. The first version used a fixed dummy one, and every signature
+  // ended in "Local association cancelled by user" — a wallet that cannot make sense of a
+  // transaction closes the session by itself (Seeker, 21.09.2026).
+  const [connection] = useState(() => new Connection("https://api.devnet.solana.com", "confirmed"));
   const [wallet] = useState(
     () =>
       new MwaWallet({
         cluster: "solana:devnet",
-        // The diagnostics never send, so a fixed blockhash is enough to build a transaction.
-        getBlockhash: async () => "11111111111111111111111111111111",
+        getBlockhash: async () => (await connection.getLatestBlockhash("finalized")).blockhash,
         sendRaw: async () => {
           throw new Error("diagnostics never send");
         },
       }),
   );
   const say = (line: string) => setLines((l) => [...l, line]);
+
+  const memo = (text: string) =>
+    new TransactionInstruction({
+      programId: MEMO_ID,
+      keys: [],
+      data: Buffer.from(new TextEncoder().encode(text)),
+    });
+
+  /** Signs and swallows only OUR own "never send" — everything else is a real finding. */
+  const sign = async (ixs: TransactionInstruction[], payer: Parameters<typeof wallet.signAndSend>[1]) => {
+    await wallet.signAndSend(ixs, payer).catch((e) => {
+      if (e instanceof Error && e.message.includes("diagnostics never send")) return "";
+      throw e;
+    });
+  };
 
   const run = async (label: string, what: () => Promise<void>) => {
     if (busy) return;
@@ -45,7 +63,8 @@ export default function Diagnostics() {
     try {
       await what();
     } catch (e) {
-      say(`  FAILED after ${Date.now() - started} ms: ${e instanceof Error ? e.message : String(e)}`);
+      const name = e instanceof Error ? e.name : typeof e;
+      say(`  FAILED after ${Date.now() - started} ms [${name}]: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setBusy(false);
     }
@@ -61,25 +80,21 @@ export default function Diagnostics() {
       say(`  auth token: ${session.authToken ? "yes" : "no"}`);
     });
 
+  const signOne = () =>
+    run("Sign 1 memo", async () => {
+      const session = await wallet.connect();
+      const started = Date.now();
+      await sign([memo("observed diagnostics")], session.pubkey);
+      say(`  one instruction, signed and back after ${Date.now() - started} ms`);
+      say(`  >>> COUNT THE SHEETS <<<`);
+    });
+
   const signTwoInOne = () =>
     run("Sign 2 in 1", async () => {
       const session = await wallet.connect();
-      const memo = (text: string) =>
-        new TransactionInstruction({
-          programId: MEMO_ID,
-          keys: [],
-          data: Buffer.from(new TextEncoder().encode(text)),
-        });
       const started = Date.now();
       // Two harmless instructions in ONE transaction — the shape of the real evening.
-      await wallet
-        .signAndSend([memo("observed diagnostics 1"), memo("observed diagnostics 2")], session.pubkey)
-        .catch((e) => {
-          // signAndSend refuses to send in this screen; a throw from OUR sendRaw means the
-          // signing itself worked, which is what we are measuring.
-          if (e instanceof Error && e.message.includes("diagnostics never send")) return "";
-          throw e;
-        });
+      await sign([memo("observed diagnostics 1"), memo("observed diagnostics 2")], session.pubkey);
       say(`  one transaction, two instructions`);
       say(`  signed and back after ${Date.now() - started} ms`);
       say(`  >>> COUNT THE SHEETS: how many approvals did the wallet show? <<<`);
@@ -112,7 +127,8 @@ export default function Diagnostics() {
       <Text style={{ color: color.ink, fontSize: 18, marginBottom: space.md }}>Diagnostics — debug build</Text>
       <View style={{ gap: space.sm, marginBottom: space.lg }}>
         <Button label="1 · Connect" onPress={connect} busy={busy} />
-        <Button label="2 · Sign 2 in 1" onPress={signTwoInOne} busy={busy} />
+        <Button label="2a · Sign 1 memo" onPress={signOne} busy={busy} />
+        <Button label="2b · Sign 2 in 1" onPress={signTwoInOne} busy={busy} />
         <Button label="3 · signMessage twice" onPress={signMessageTwice} busy={busy} />
         <Button label="Copy results" onPress={copy} busy={false} />
       </View>

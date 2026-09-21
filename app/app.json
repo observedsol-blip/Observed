@@ -38,6 +38,12 @@
         "projectId": "69ac1370-17cb-4a7f-82a2-68fb897fc996"
       }
     },
-    "owner": "dinkelbergg"
+    "owner": "dinkelbergg",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/69ac1370-17cb-4a7f-82a2-68fb897fc996"
+    }
   }
 }

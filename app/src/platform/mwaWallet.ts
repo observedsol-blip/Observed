@@ -5,8 +5,7 @@
 import { transact, type Web3MobileWallet } from "@solana-mobile/mobile-wallet-adapter-protocol-web3js";
 import {
   PublicKey,
-  TransactionMessage,
-  VersionedTransaction,
+  Transaction,
   type Blockhash,
   type TransactionInstruction,
 } from "@solana/web3.js";
@@ -57,20 +56,20 @@ export class MwaWallet implements Wallet {
   }
 
   /** Signs the transaction and sends it through our own RPC — not through the wallet, so a
-   *  failure to land is our problem to retry and not a silent wallet error. */
+   *  failure to land is our problem to retry and not a silent wallet error.
+   *
+   *  A LEGACY `Transaction`, deliberately: on the device the versioned one ended every attempt
+   *  with "Local association cancelled by user" after three seconds, without the player touching
+   *  anything (Seeker, 21.09.2026). Not every Android wallet accepts a VersionedTransaction, and
+   *  nothing in the daily transaction needs one — no lookup tables, five accounts at most. */
   async signAndSend(instructions: TransactionInstruction[], payer: PublicKey): Promise<string> {
     const blockhash = await this.getBlockhash();
-    const message = new TransactionMessage({
-      payerKey: payer,
-      recentBlockhash: blockhash,
-      instructions,
-    }).compileToLegacyMessage();
-    const unsigned = new VersionedTransaction(message);
+    const tx = new Transaction({ feePayer: payer, recentBlockhash: blockhash }).add(...instructions);
 
     const signed = await transact(async (wallet: Web3MobileWallet) => {
       await this.reauthorize(wallet);
-      const [tx] = await wallet.signTransactions({ transactions: [unsigned] });
-      return tx;
+      const [result] = await wallet.signTransactions({ transactions: [tx] });
+      return result;
     }).catch((e) => {
       throw translate(e);
     });

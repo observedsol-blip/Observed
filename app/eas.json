@@ -6,15 +6,23 @@
   "build": {
     "diagnostics": {
       "distribution": "internal",
-      "android": { "buildType": "apk" },
-      "env": { "APP_VARIANT": "diagnostics" },
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "APP_VARIANT": "diagnostics"
+      },
       "credentialsSource": "local",
-      "developmentClient": false
+      "developmentClient": false,
+      "channel": "diagnostics"
     },
     "tester": {
       "distribution": "internal",
-      "android": { "buildType": "apk" },
-      "credentialsSource": "local"
+      "android": {
+        "buildType": "apk"
+      },
+      "credentialsSource": "local",
+      "channel": "tester"
     }
   },
   "submit": {}
