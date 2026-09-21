@@ -11,7 +11,8 @@ Ausweg, falls er scheitert.
 | Hot Wallet des Resolvers | **0,5 SOL** (Verbrauch der ganzen Saison < 0,1 SOL, siehe §5) |
 | Cloudflare | Workers Paid aktiv, Zahlungsmittel gültig bis Ende November |
 | Helius | Mainnet-Endpunkt bereit (`RPC_URL`) |
-| Zweiter Anbieter | QuickNode-Endpunkt bereit (`RPC_URL_FALLBACK`). Die Ablese-Läufe wechseln bei 429 oder Timeout dorthin — eine verpasste Lesung ist der einzige Fehler, der sich nicht nachholen lässt |
+| Zweiter Anbieter | QuickNode-Endpunkt bereit (`RPC_URL_FALLBACK`). **Jeder** Lauf wechselt bei 429 oder Timeout dorthin — eine verpasste Lesung ist der einzige Fehler, der sich nicht nachholen lässt |
+| Dritter Anbieter | **nichts zu tun**: `RPC_URL_PUBLIC` ist seit dem 22.09. im Code und steht ohne Eintrag auf `https://api.mainnet-beta.solana.com`. Er läuft nur, wenn die ersten beiden gleichzeitig unbrauchbar sind |
 | healthchecks.io | zwei Checks (RUN, BACKLOG), Telegram verbunden, einmal mit `/fail` getestet |
 | `KICK_TOKEN` | lange Zufallszeichenkette ausgedacht und notiert (für den Hand-Anstoß; ohne sie ist der HTTP-Weg zu) |
 | Repo | `docs/generated/CALENDAR-season1.md` gelesen — das sind die 64 Fragen der Saison |
@@ -113,6 +114,7 @@ cd ~/observed-resolver
 wrangler secret put HOT_WALLET_KEY        # base58, nur Gebührenzahler
 wrangler secret put RPC_URL               # Helius mainnet
 wrangler secret put RPC_URL_FALLBACK      # QuickNode, anderer Anbieter, anderes Netz
+# RPC_URL_PUBLIC ist optional: ohne Eintrag nimmt der Worker api.mainnet-beta.solana.com
 wrangler secret put HEALTHCHECK_RUN_URL
 wrangler secret put HEALTHCHECK_BACKLOG_URL
 wrangler secret put KICK_TOKEN            # frei wählbar, lang, nur für dich
@@ -147,8 +149,8 @@ Nach der Einreichung ist der Stand im Hauptrepo eingefroren. Erlaubt und ohne Co
 | Fall | Was du tust |
 |---|---|
 | Hot Wallet wird leer (BACKLOG-Alarm) | SOL überweisen. Sonst nichts. |
-| RPC zickt (429, Timeouts) | Erst einmal **nichts**: Die Ablese-Läufe wechseln von selbst auf `RPC_URL_FALLBACK` und sagen es im Log. Bleibt es dabei, `wrangler secret put RPC_URL` mit einem anderen Anbieter, dann `npm run deploy` **des unveränderten Stands** — das ist keine Codeänderung |
-| Beide Anbieter zicken | Dritter Endpunkt als `RPC_URL_FALLBACK` (`https://api.mainnet-beta.solana.com`, gedrosselt, aber besser als nichts), erneut deployen |
+| RPC zickt (429, Timeouts) | Erst einmal **nichts**: Jeder Lauf wechselt von selbst auf `RPC_URL_FALLBACK` und sagt es im Log. Bleibt es dabei, `wrangler secret put RPC_URL` mit einem anderen Anbieter, dann `npm run deploy` **des unveränderten Stands** — das ist keine Codeänderung |
+| Beide Anbieter zicken | **Nichts tun** — der dritte Endpunkt ist eingebaut und springt von selbst ein (`RPC_URL_PUBLIC`, Standard `https://api.mainnet-beta.solana.com`, gedrosselt, aber besser als nichts). Im Log steht: switched to the public provider |
 | Pyth-Schlüssel | entfällt, der Resolver hat keinen |
 | Worker hängt | `npm run deploy` erneut (gleicher Code) oder im Dashboard „Redeploy" |
 | Ein Lauf ist ausgefallen | nichts tun. Der nächste Kehrlauf holt Scoring und `cancel_round` nach. Eine **Lesung** ist nicht nachholbar: Die Runde wird NO_RESOLVE, das ist ein vorgesehener Zustand |

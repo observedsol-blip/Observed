@@ -445,11 +445,12 @@ endgültig. Gerendert aus der Literata, die ohnehin im Repo liegt (kein neues Pa
 | `splash-icon.png` | 703 × 688 | **eigenes Asset**: `O.` plus Wortmarke `O B S E R V E D` |
 | `favicon.png` | 48 × 48 | dasselbe Zeichen |
 
-Gemessene Geometrie auf der 108-dp-Fläche: Gruppe **53,0 × 43,0 dp**, größter gesetzter Punkt
-**32,0 dp** von der Mitte — die Sicherheitszone erlaubt 33,0. Entwurfsverhältnisse des Owners (O
-80 pt, Punkt ⌀ 11 dp, Abstand 3 dp) sind erhalten und gemeinsam auf **37 %** skaliert; unskaliert
-hätte die Gruppe eine Diagonale von etwa 94 dp und wäre unter einer runden Maske beschnitten
-worden. Die Feinwerte kommen aus Figma.
+Endwerte aus Figma (108-dp-Fläche): O-Höhe **44,27 dp** ab y 31,87, Punkt **⌀ 8,76 dp**, Lücke
+**0,51 dp**, Unterkanten bündig, Gruppe **50,51 dp** breit, größter gesetzter Punkt **31,77 dp**
+von der Mitte (Grenze 33,0). **Eine Abweichung:** Figma nennt die O-Breite 39,13 dp, der statische
+Literata-Schnitt der App rendert 41,24 dp (Seitenverhältnis 0,931 statt 0,884) — vermutlich zeigt
+Figma die variable Literata. Gestaucht wird nicht; wer die Figma-Breite genau will, stellt den
+Schnitt in Figma auf den statischen 600er um.
 
 ### 5.2 Farbe hart verdrahtet
 

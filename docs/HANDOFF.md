@@ -458,8 +458,8 @@ oder 5xx; fallen beide aus, versucht er es bis zum Fensterende weiter, meldet da
 
 | # | Befund | Schwere | Stand |
 |---|---|---|---|
-| R1 | **Es gibt nur zwei Anbieter, nicht drei.** `Env` kennt `RPC_URL` und `RPC_URL_FALLBACK`; der dritte Rückfall (`api.mainnet-beta.solana.com`), den das Drehbuch und Offen 10 nennen, existiert im Code nicht | mittel | **offen, Entscheidung Owner:** entweder ein dritter Slot (kleine Änderung, aber Codeänderung am Vorabend) oder das Drehbuch auf zwei korrigieren |
-| R2 | **Der stündliche Lauf nutzt den zweiten Anbieter nicht.** `sweep` arbeitet nur mit der primären Verbindung; ist die stundenlang gedrosselt, wird nichts gewertet und nichts geschlossen. Gemeldet wird es (RUN-Ping schlägt fehl), verloren geht nichts — die Arbeit ist aus dem Zustand abgeleitet und holt sich selbst ein | niedrig | **offen** (bewusst so gebaut; Änderung wäre Verhalten, nicht Reparatur) |
+| R1 | **Es gab nur zwei Anbieter, nicht drei** | mittel | **erledigt 22.09.** (`b7b0906`): `RPC_URL_PUBLIC` mit `api.mainnet-beta.solana.com` als Standard — kein Konto nötig, läuft nur, wenn beide bezahlten Anbieter zugleich ausfallen. Drehbuch und Offen 10 stimmen jetzt mit dem Code überein |
+| R2 | **erledigt 22.09.** (`b7b0906`): Der stündliche Lauf nutzt jetzt dieselbe Kette. Vorher: `sweep` arbeitet nur mit der primären Verbindung; ist die stundenlang gedrosselt, wird nichts gewertet und nichts geschlossen. Gemeldet wird es (RUN-Ping schlägt fehl), verloren geht nichts — die Arbeit ist aus dem Zustand abgeleitet und holt sich selbst ein | niedrig | **erledigt** — `providerChain()` gilt für beide Läufe, drei Tests |
 | R3 | **Ein Fehlschlag in einer Zehnergruppe kostet die ganze Gruppe.** Wertet ein zweiter Dienst gleichzeitig, scheitert die Sammel-Transaktion an `AlreadyScored`, und die übrigen neun warten eine Stunde. Nächster Lauf baut die Gruppe ohne den bereits gewerteten Eintrag neu — es heilt sich, kostet aber Zeit | niedrig | offen |
 | R4 | **`withReport` verschluckt deterministische Programmfehler als „skipped".** Ein dauerhaft falscher Aufruf sähe eine Stunde lang aus wie „nichts zu tun"; erst der 12-h-Backlog-Alarm zieht | niedrig | offen |
 | R5 | Der Lese-Lauf prüft den Kontostand **nicht** (nur der stündliche tut das, Boden 0,05 SOL). Eine leere Wallet fällt also frühestens eine Stunde vorher auf | niedrig | akzeptiert, mit Alarm abgedeckt |
@@ -531,39 +531,54 @@ Die Ablehnzeile heißt `Not now` und steht in keinem Dokument. Beides sind zwei 
 andere willst. Die Vorschau selbst (D1) ist weiterhin nicht gebaut, deshalb hängt das Angebot nur
 am ersten Siegel, nicht zusätzlich an ihr.
 
-## Markenzeichen `O.`, 22.09.2026 — endgültig, kein Übergang
+## Markenzeichen `O.` — Endwerte aus Figma, 22.09.2026
 
-Owner-Entscheidung: Das O in **Literata SemiBold** in `#E8E0D4`, der Schlusspunkt als **Kreis** in
-`#5B7CFA`, auf `#1C1F1D`. Gerendert aus der Literata, die ohnehin im Repo liegt — kein neues Paket,
-kein Download.
+Owner-Entscheidung, endgültig. Das O in **Literata SemiBold** in `#E8E0D4`, der Schlusspunkt als
+**Kreis** in `#5B7CFA`, auf `#1C1F1D`. Gerendert aus der Literata, die ohnehin im Repo liegt —
+kein neues Paket.
 
-| Asset | Größe | Inhalt |
+**Gesetzt, wie aus Figma vorgegeben** (108-dp-Fläche):
+
+| Wert | Figma | Gerendert |
 |---|---|---|
-| `icon.png` | 1024 × 1024 | Zeichen auf der Fläche, randvoll |
-| `adaptive-icon.png` | 1024 × 1024 | Vordergrund, transparent |
-| `adaptive-icon-monochrome.png` | 1024 × 1024 | dieselbe Form, eine Farbe (in `app.json` eingetragen) |
-| `splash-icon.png` | 703 × 688 | **eigenes Asset**: Zeichen plus Wortmarke `O B S E R V E D` |
-| `favicon.png` | 48 × 48 | dasselbe Zeichen |
+| O-Höhe | 44,27 dp | **44,27 dp** |
+| O-Oberkante | y 31,87 | **y 31,87** |
+| Punkt ⌀ | 8,76 dp | **8,76 dp** |
+| Lücke O → Punkt | 0,51 dp | **0,51 dp** |
+| Punkt-Unterkante | bündig mit dem O | **bündig** (y 76,14) |
+| **O-Breite** | **39,13 dp** | **41,24 dp — Abweichung 2,11 dp** |
+| Größter gesetzter Punkt | 30,9 dp | **31,77 dp** (Grenze 33,0) |
 
-Der Hintergrund bleibt `backgroundColor: "#1C1F1D"` — eine Farbe, kein Bild; die erzeugte Fläche
-wäre eine ungenutzte Datei gewesen und ist gelöscht. Damit ist auch der Audit-Befund erledigt,
-dass Splash und Adaptive Icon byte-gleich waren.
+**Die eine Abweichung, und warum sie bleibt:** Die Literata SemiBold, die diese App ausliefert
+(`@expo-google-fonts/literata/600SemiBold`, der statische Schnitt), rendert das O mit einem
+Seitenverhältnis von **0,931**. Figma nennt **0,884**. Auf 44,27 dp Höhe sind das 41,24 statt
+39,13 dp. Die Figma-Breite zu erzwingen hieße, das Glyph um 5 % zu stauchen — das sieht man einem
+runden O sofort an, und es wäre außerdem eine andere Form als die Wortmarke im Kopf der App, die
+aus derselben Datei kommt. Wahrscheinlichste Ursache: Figma zeigt die **variable** Literata, deren
+optische Größe das O schmaler macht als der statische Schnitt. **Wenn du die Figma-Breite genau
+willst, ist der richtige Weg der umgekehrte: den Schnitt in Figma auf den statischen 600er
+umstellen und die Werte dort neu nehmen** — dann stimmen Entwurf und Auslieferung überein.
 
-**Gemessen, nicht geschätzt** (108-dp-Fläche): Gruppe **53,0 × 43,0 dp**, größter gesetzter Punkt
-**32,0 dp** von der Mitte bei erlaubten 33,0. Die Entwurfsverhältnisse (O 80 pt, Punkt ⌀ 11 dp,
-Abstand 3 dp, Punktunterkante auf der Grundlinie) sind erhalten und gemeinsam auf **37 %**
-skaliert. Unskaliert hätte die Gruppe eine Diagonale von rund **94 dp** — unter einer runden Maske
-wäre rechts und unten etwas abgeschnitten worden. Die Feinwerte kommen aus Figma; das Skript, das
-die Dateien erzeugt, rechnet die Sicherheitszone jedes Mal neu nach.
+Weil das O breiter ist, rückt der Punkt um dieselben 2,11 dp nach rechts (sonst läge er auf dem
+O), und die Gruppe ist danach wieder mittig gesetzt: O bei x 28,75, Punkt bei x 70,49, Gruppe
+50,51 dp breit. Der äußerste gesetzte Punkt liegt damit bei **31,77 dp** statt 30,9 — beides
+innerhalb der 33.
 
-**Ausrichtung:** Im Repo liegt die Fassung, bei der der **Kasten** der Gruppe mittig sitzt. Zwei
-Alternativen sind gerendert und dem Owner gezeigt (das O mittig, der Punkt hängt über; und der
-Farbschwerpunkt mittig) — die Unterschiede liegen bei zwei bis drei dp.
+**Probe bei 48 dp mit echter runder Maske** (sichtbare 72 von 108 dp, also 32 px von 48):
+**null Pixel des Punktes außerhalb**, der äußerste Punktpixel liegt 14,92 px von der Mitte bei
+einem Maskenradius von 16 px. Der Punkt wird nicht beschnitten.
 
-**Ausnahme, ausdrücklich:** `color.pencil` ist laut `tokens.ts` **nur** für den eigenen Wert, den
-Cursor, den eigenen Balken und den Strich über „pending". Der Punkt des Markenzeichens ist die
-einzige Ausnahme, vom Owner am 22.09.2026 so entschieden. Sie steht jetzt auch im Kommentar in
-`tokens.ts`, damit die Regel nicht später „aufgeweicht" wirkt, ohne dass jemand es beschlossen hat.
+| Asset | Größe |
+|---|---|
+| `icon.png` | 1024 × 1024, Zeichen auf der Fläche |
+| `adaptive-icon.png` | 1024 × 1024, Vordergrund transparent |
+| `adaptive-icon-monochrome.png` | 1024 × 1024, dieselbe Geometrie, eine Farbe |
+| `splash-icon.png` | eigenes Asset: Zeichen plus Wortmarke `O B S E R V E D` |
+| `favicon.png` | 48 × 48 |
+
+**Ausnahme, ausdrücklich:** `color.pencil` gehört laut `tokens.ts` **nur** dem eigenen Wert, dem
+Cursor, dem eigenen Balken und dem Strich über „pending". Der Punkt des Markenzeichens ist die
+einzige Ausnahme, vom Owner am 22.09.2026 entschieden; sie steht im Kommentar in `tokens.ts`.
 
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
@@ -577,7 +592,7 @@ einzige Ausnahme, vom Owner am 22.09.2026 so entschieden. Sie steht jetzt auch i
 | 7 | `.spec-unlock` anlegen, wenn 00-SPEC geändert werden muss | Dinkelberg | bei Bedarf |
 | 8 | Offline-Schlüssel + Hot Wallet erzeugen, Cloudflare/Helius/healthchecks einrichten, **Mainnet-Deploy bis Do 24.09.** (SGT gibt es nur auf Mainnet, fremde Tester ab 27.09. brauchen Mainnet) | Dinkelberg | Do 24.09. |
 | 9 | Expo-Token erneuern (stand im Chat). **Pyth-Key wird nicht mehr gebraucht**: Der Resolver liest nur noch das gesponserte Konto, kein Hermes, kein Schlüssel | Dinkelberg | sofort |
-| 10 | Zweiter RPC-Anbieter für die Ablese-Läufe: Konto anlegen, dann `wrangler secret put RPC_URL_FALLBACK`. Vorschlag **QuickNode** (eigenes Netz, eigene Firma, kostenloser Solana-Endpunkt) als Zweiten; **Helius** bleibt der Erste. Dritter Rückfall ohne Konto ist `api.mainnet-beta.solana.com` — gedrosselt, aber besser als nichts | Dinkelberg | vor Do 24.09. |
+| 10 | Zweiter RPC-Anbieter: Konto anlegen, dann `wrangler secret put RPC_URL_FALLBACK`. Vorschlag **QuickNode**; **Helius** bleibt der Erste. **Der dritte ist seit 22.09. im Code** (`RPC_URL_PUBLIC`, Standard `api.mainnet-beta.solana.com`) und braucht kein Konto | Dinkelberg | vor Do 24.09. |
 | 16 | **Erledigt 21.09.:** Backup-Code-Texte freigegeben, in 03-SCREEN-MAP §11.8 und im Code. Begriff durchgehend „backup code“, Warnung gegen das Einfügen der Wallet-Phrase technisch durchgesetzt | Dinkelberg | erledigt |
 | 15 | **Spike 3 am Gerät** mit dem Debug-APK (`C:\\Users\\Admin\\Downloads\\observed-diagnostics-debug.apk`): Wortmarke lang drücken → Diagnose. Drei Knöpfe, Zahlen kopieren, schicken. Davon hängen ab: eine oder zwei Freigaben, und ob `signMessage` deterministisch ist (sonst fällt die Wiederherstellung nach einer Neuinstallation aus) | Dinkelberg | vor dem Build 26.09. |
 | 14 | **Erledigt 21.09.:** alle vier entschieden und in `06b842a` umgesetzt — Zeiten-Sweep, Schwelle 20 Runden, „Too close to call.“ vor „You didn't pick a side.“, versiegelte Antwort wörtlich mit der genauen Zahl | Dinkelberg | erledigt |
