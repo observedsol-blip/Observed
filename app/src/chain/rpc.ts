@@ -4,7 +4,9 @@
 // is a normal state here (no entry yet, no round today), not an error. Errors are network
 // errors, and those the caller has to be able to see.
 import { Connection, PublicKey, type Blockhash } from "@solana/web3.js";
-import { TOKEN_2022_ID } from "./ids.ts";
+import bs58 from "bs58";
+import { IX, MEMO_ID, PROGRAM_ID, TOKEN_2022_ID } from "./ids.ts";
+import type { MemoTransaction } from "../core/others.ts";
 import {
   type Config,
   type Entry,
@@ -105,4 +107,71 @@ export class Chain {
   }
 
   accountData = (key: PublicKey) => this.data(key);
+
+  /**
+   * Every transaction that touched a round account, reduced to what "What others wrote" needs:
+   * who paid, which memos were in it, and — for a reveal — the salt and the probability out of
+   * the instruction data.
+   *
+   * This is the only place in the app that walks history. It is bounded (`limit`) because a
+   * popular call could have hundreds of entries and the screen shows a handful.
+   */
+  async memoTransactionsOf(round: PublicKey, limit = 200): Promise<MemoTransaction[]> {
+    const signatures = await this.connection.getSignaturesForAddress(round, { limit }, "confirmed");
+    if (signatures.length === 0) return [];
+    const parsed = await this.connection.getParsedTransactions(
+      signatures.map((s) => s.signature),
+      { maxSupportedTransactionVersion: 0, commitment: "confirmed" },
+    );
+
+    const out: MemoTransaction[] = [];
+    parsed.forEach((tx, i) => {
+      if (!tx || tx.meta?.err) return; // a failed transaction proves nothing
+      const message = tx.transaction.message;
+      const payer = message.accountKeys[0]?.pubkey.toBase58();
+      if (!payer) return;
+
+      const memos: string[] = [];
+      let revealed = false;
+      let saltHex: string | undefined;
+      let pBps: number | undefined;
+
+      for (const ix of message.instructions) {
+        const programId = ix.programId.toBase58();
+        if (programId === MEMO_ID.toBase58()) {
+          // the parsed form carries the memo as a string; the raw form as base58 data
+          const parsedMemo = (ix as { parsed?: unknown }).parsed;
+          if (typeof parsedMemo === "string") memos.push(parsedMemo);
+          else if ("data" in ix && typeof ix.data === "string") {
+            memos.push(new TextDecoder().decode(bs58.decode(ix.data)));
+          }
+          continue;
+        }
+        if (programId !== PROGRAM_ID.toBase58()) continue;
+        if (!("data" in ix) || typeof ix.data !== "string") continue;
+        const data = bs58.decode(ix.data);
+        if (data.length < 8) continue;
+        if (!sameBytes(data.subarray(0, 8), IX.reveal)) continue;
+        // reveal: disc(8) + p_bps(2) + salt(32)
+        revealed = true;
+        pBps = new DataView(data.buffer, data.byteOffset + 8, 2).getUint16(0, true);
+        saltHex = [...data.subarray(10, 42)].map((b) => b.toString(16).padStart(2, "0")).join("");
+      }
+
+      out.push({
+        signature: signatures[i].signature,
+        blockTime: tx.blockTime ?? null,
+        payer,
+        memos,
+        revealed,
+        saltHex,
+        pBps,
+      });
+    });
+    // oldest first: a seal memo has to be found before the reveal that verifies against it
+    return out.sort((a, b) => (a.blockTime ?? 0) - (b.blockTime ?? 0));
+  }
 }
+
+const sameBytes = (a: Uint8Array, b: Uint8Array) =>
+  a.length === b.length && a.every((x, i) => x === b[i]);

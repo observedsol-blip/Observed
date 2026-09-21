@@ -10,6 +10,8 @@ import { type CalendarRound, hexToBytes, roundIsInTheCalendar } from "../chain/c
 import { buildDaily } from "../chain/ix.ts";
 import { RoundStatus } from "../chain/ids.ts";
 import { findGenesisToken } from "../chain/sgt.ts";
+import { roundPda } from "../chain/pda.ts";
+import { verifiedSentences } from "./others.ts";
 import type { Entry, Round } from "../chain/layout.ts";
 import { sha256Of } from "./sentence.ts";
 import { Sealing } from "./sealing.ts";
@@ -146,6 +148,15 @@ export class Session {
       sgtMint: this.sgtMint,
       blocked: null,
     };
+  }
+
+  /**
+   * The sentences of the others for one call, already checked against their seal memos. Its own
+   * method because it costs a history walk: the screen asks for it after the result is drawn.
+   */
+  async othersFor(roundId: number, hidden?: Set<string>): Promise<string[]> {
+    const transactions = await this.deps.chain.memoTransactionsOf(roundPda(roundId));
+    return verifiedSentences({ transactions, hidden, self: this.walletKey }).map((o) => o.sentence);
   }
 
   private latestResult(
