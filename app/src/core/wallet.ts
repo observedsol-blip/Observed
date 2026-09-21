@@ -1,8 +1,11 @@
-// The wallet, as the core sees it: four methods and nothing about MWA.
+// The wallet, as the core sees it: three methods and nothing about MWA.
 //
 // The real implementation (app/src/platform/mwaWallet.ts) talks to the Mobile Wallet Adapter;
-// the tests use a fake. Everything above this interface can therefore be tested without a phone,
-// which is the only reason the state machine has tests at all today.
+// the tests use a fake. Everything above this interface can therefore be tested without a phone.
+//
+// There is deliberately NO signMessage here. Seed Vault Wallet refuses it (measured on the
+// Seeker, 21.09.2026: five attempts, no sheet, cancelled after ~3 s), and signing something that
+// is never sent is the pattern wallets warn about — an app must not teach it (owner, 21.09.2026).
 import type { PublicKey, TransactionInstruction } from "@solana/web3.js";
 
 export type WalletSession = {
@@ -18,8 +21,6 @@ export interface Wallet {
   connect(): Promise<WalletSession>;
   /** Signs and sends one transaction. Returns the signature. */
   signAndSend(instructions: TransactionInstruction[], payer: PublicKey): Promise<string>;
-  /** Signs a message. Null if this wallet cannot — Seed Vault may not (open until Spike 3). */
-  signMessage: ((message: string) => Promise<Uint8Array>) | null;
   /** Forgets the session. Called when the auth token is rejected. */
   disconnect(): Promise<void>;
 }

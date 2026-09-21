@@ -1,39 +1,27 @@
 // The season secret: one per wallet, the source of every salt.
 //
-// Why it is derived from a signature and not from randomness: expo-secure-store is wiped when
-// the app is uninstalled. A random secret would be gone with it, and every open answer would
-// become unrevealable — a full miss for something the player did right. A signature over a
-// domain-specific message can be produced again by the same wallet, on the same phone or a new
-// one, and yields the same secret.
+// It is random and it lives on this phone. Not derived from a wallet signature — Seed Vault
+// Wallet cannot sign messages (Seeker, 21.09.2026, five attempts), and the workaround would have
+// been to make players sign a transaction that is never sent. That is the pattern wallets warn
+// about, and an app must not teach it (owner decision, 21.09.2026).
 //
-// The fallback (random) exists only for the case that the wallet cannot sign messages at all.
-// It is recorded as such, because with it a reinstall really does lose open answers, and the
-// app has to say so instead of pretending.
-import { sha256 } from "@noble/hashes/sha256";
+// The consequence is stated honestly instead of hidden: uninstalling the app forfeits answers
+// that are still open — at most three days' worth, since the reveal window is 72 h. Against that
+// there is an export: the player can copy the secret out and paste it back in after a reinstall,
+// and `recoverAnswer` then rebuilds the sealed answers from the chain.
 import type { PublicKey } from "@solana/web3.js";
-import { SECRET_MESSAGE_PREFIX } from "../chain/ids.ts";
 import { bytesToHex, hexToBytes } from "../chain/calendar.ts";
 import { type Store, getJson, setJson } from "./store.ts";
 
-export type SecretOrigin = "signature" | "random";
-export type StoredSecret = { secretHex: string; origin: SecretOrigin; wallet: string; createdAt: number };
+export type StoredSecret = { secretHex: string; wallet: string; createdAt: number };
 
 const KEY = "secret";
-
-/** The message the wallet signs. Domain-specific on purpose: a signature over this string must
- *  be useless anywhere else, and a signature made elsewhere must be useless here. */
-export const secretMessage = (wallet: PublicKey) => `${SECRET_MESSAGE_PREFIX}${wallet.toBase58()}`;
-
-/** secret = sha256(signature over the message). The signature itself never leaves the moment. */
-export const secretFromSignature = (signature: Uint8Array) => sha256(signature);
 
 export type SecretDeps = {
   store: Store;
   now: () => number;
-  /** 32 random bytes — expo-crypto on the phone. Only used for the fallback. */
+  /** 32 random bytes — expo-crypto on the phone. */
   randomBytes: (n: number) => Uint8Array;
-  /** The wallet's message signature, or null if this wallet cannot sign messages. */
-  signMessage: ((message: string) => Promise<Uint8Array>) | null;
 };
 
 export class SeasonSecret {
@@ -46,57 +34,47 @@ export class SeasonSecret {
     return getJson<StoredSecret>(this.deps.store, KEY);
   }
 
-  /**
-   * The secret for this wallet. Derives it on first use — preferably from a signature, which is
-   * the only version a reinstalled app can get back.
-   */
-  async get(wallet: PublicKey): Promise<{ secret: Uint8Array; origin: SecretOrigin; fresh: boolean }> {
+  /** The secret for this wallet, created on first use. */
+  async get(wallet: PublicKey): Promise<{ secret: Uint8Array; fresh: boolean }> {
     const existing = await this.stored();
     if (existing && existing.wallet === wallet.toBase58()) {
-      return { secret: hexToBytes(existing.secretHex), origin: existing.origin, fresh: false };
+      return { secret: hexToBytes(existing.secretHex), fresh: false };
     }
-    // A different wallet means a different record; the old secret stays where it is.
-    const derived = await this.derive(wallet);
-    await setJson(this.deps.store, KEY, {
-      secretHex: bytesToHex(derived.secret),
-      origin: derived.origin,
-      wallet: wallet.toBase58(),
-      createdAt: this.deps.now(),
-    } satisfies StoredSecret);
-    return { ...derived, fresh: true };
+    const secret = this.deps.randomBytes(32);
+    if (secret.length !== 32) throw new Error(`need 32 random bytes, got ${secret.length}`);
+    await this.write(secret, wallet);
+    return { secret, fresh: true };
   }
 
   /**
-   * After a reinstall: sign the message again and get the same secret back. Returns null if the
-   * wallet cannot sign messages — then nothing can be recovered and the app must say so.
+   * What the player can write down or put in a password manager. 64 hex characters, no wallet
+   * address, nothing that identifies anybody — and useless on its own: without the wallet that
+   * sealed the answers, it opens nothing.
    */
-  async recover(wallet: PublicKey): Promise<Uint8Array | null> {
-    if (!this.deps.signMessage) return null;
-    const signature = await this.deps.signMessage(secretMessage(wallet));
-    const secret = secretFromSignature(signature);
-    await setJson(this.deps.store, KEY, {
-      secretHex: bytesToHex(secret),
-      origin: "signature",
-      wallet: wallet.toBase58(),
-      createdAt: this.deps.now(),
-    } satisfies StoredSecret);
+  async exportSecret(): Promise<string | null> {
+    const stored = await this.stored();
+    return stored ? stored.secretHex : null;
+  }
+
+  /**
+   * After a reinstall: paste the secret back. Rejects anything that is not exactly 32 bytes of
+   * hex, so a half-copied string fails here and not silently three days later.
+   */
+  async importSecret(hex: string, wallet: PublicKey): Promise<Uint8Array> {
+    const cleaned = hex.trim().toLowerCase().replace(/\s+/g, "");
+    if (!/^[0-9a-f]{64}$/.test(cleaned)) {
+      throw new Error("that is not a secret: 64 hex characters expected");
+    }
+    const secret = hexToBytes(cleaned);
+    await this.write(secret, wallet);
     return secret;
   }
 
-  private async derive(wallet: PublicKey): Promise<{ secret: Uint8Array; origin: SecretOrigin }> {
-    if (this.deps.signMessage) {
-      try {
-        const signature = await this.deps.signMessage(secretMessage(wallet));
-        return { secret: secretFromSignature(signature), origin: "signature" };
-      } catch {
-        // fall through: a wallet that refuses once must not block sealing today
-      }
-    }
-    return { secret: this.deps.randomBytes(32), origin: "random" };
+  private write(secret: Uint8Array, wallet: PublicKey) {
+    return setJson(this.deps.store, KEY, {
+      secretHex: bytesToHex(secret),
+      wallet: wallet.toBase58(),
+      createdAt: this.deps.now(),
+    } satisfies StoredSecret);
   }
-}
-
-/** What the app may promise the player, given where the secret came from. */
-export function canSurviveReinstall(origin: SecretOrigin): boolean {
-  return origin === "signature";
 }

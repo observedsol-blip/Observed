@@ -107,3 +107,35 @@ Erststart → `See how it works` → Kalibrierungstest → Übergabe-Bildschirm 
 Aufdeck-Moment → Beispiel-Record mit Kurve → `Tonight's question opens at 16:00 UTC`.
 Bedingungen: durchgehend als Beispiel gekennzeichnet ("Sample · not your phone"), und mindestens ein
 Explorer-Link auf eine echte versiegelte Runde der laufenden Saison, damit die Kette vorkommt.
+
+## D. Export und Import des Geheimnisses (E2, Fassung 21.09.2026 — **Freigabe offen**)
+
+Hintergrund: Seed Vault Wallet kann keine Nachrichten signieren (am Gerät geprüft, fünf
+Versuche). Das Saison-Geheimnis ist deshalb zufällig und liegt auf dem Gerät. Eine
+Deinstallation verliert damit die noch offenen Antworten — höchstens drei Tage, weil das
+Aufdeckfenster 72 h dauert. Der Export ist die Gegenmaßnahme, und die Copy muss beides sagen:
+was er nützt, und was ohne ihn passiert.
+
+### Onboarding, Schritt 3 (steht bereits so in 03 §1, bleibt)
+`Keep this installation. Reinstalling can forfeit a pending answer. This is not your seed phrase.`
+
+### Einstellungen — neuer Abschnitt
+Überschrift: `Backup`
+Body: `Your open answers live on this phone. If you uninstall the app, answers you have sealed
+but not yet revealed are lost. Copy this key and keep it somewhere safe — with it, a new
+installation can open them again.`
+Knopf: `Copy backup key`
+Nach dem Kopieren, klein: `Copied. It is useless without this wallet.`
+
+### Einstellungen — Wiederherstellung
+Überschrift: `Restore`
+Body: `Paste the backup key from your old installation. Your sealed answers come back from the
+chain — the sentences you wrote do not.`
+Feld-Platzhalter: `64 characters`
+Fehler bei falscher Eingabe: `That is not a backup key.`
+Erfolg: `Restored. {n} open {n, plural, one {call} other {calls}} are yours again.`
+
+### Warum der Satz nicht zurückkommt
+Der Satz war nie auf der Kette, außer der Spieler hat ihn ausdrücklich geteilt (E8). Das steht
+in der Restore-Copy, damit niemand ihn vermisst und uns für unehrlich hält.
+

@@ -80,6 +80,12 @@ export class Sealing {
     if (existing && existing.status === "confirmed") {
       throw new Error(`call ${round.roundId} is already sealed`);
     }
+    // A record that is on its way must not be overwritten. If the transaction lands after the
+    // player changed their number, the chain holds a commitment for the OLD number while the
+    // phone remembers the new one — and the answer can never be revealed. Ask the chain first.
+    if (existing && (existing.status === "sent" || existing.status === "unknown")) {
+      throw new Error(`call ${round.roundId} is already on its way — reconcile before changing it`);
+    }
     const salt = saltFor(this.deps.secret, round.roundId);
     const commitment = commitmentHash({
       round: roundPda(round.roundId),

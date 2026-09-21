@@ -214,3 +214,27 @@ test("the commitment in the record is the one the program will check", async () 
   });
   assert.equal(bytesToHex(again), record.commitment);
 });
+
+test("an answer on its way is not overwritten by a new one", async () => {
+  // The case: the transaction is out, the player changes their number before it lands. If the
+  // record were overwritten, the chain would hold a commitment for the old number while the
+  // phone remembers the new one — and the answer could never be revealed. Full miss, silently.
+  const store = new MemoryStore();
+  const chain = new FakeChain();
+  chain.behaviour = "lost"; // signature, no confirmation -> "unknown"
+  const { sealing } = machine({ store, chain });
+  await sealing.saveAnswer({ round, pBps: 6_500 });
+  const after = await sealing.seal(round);
+  assert.equal(after.status, "unknown");
+
+  await assert.rejects(
+    () => sealing.saveAnswer({ round, pBps: 9_000 }),
+    /already on its way/,
+    "changing it now would make the sealed answer unrevealable",
+  );
+  assert.equal((await sealing.read(round.roundId))!.pBps, 6_500, "the first answer is untouched");
+
+  // the way out is the chain, not a new answer
+  const reconciled = await sealing.reconcile(round);
+  assert.equal(reconciled.status, "confirmed");
+});

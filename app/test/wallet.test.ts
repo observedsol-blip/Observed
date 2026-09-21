@@ -109,7 +109,6 @@ test("an expired session reconnects once instead of failing in the player's face
       return { pubkey, label: "Seed Vault Wallet", authToken: `t${connects}` } satisfies WalletSession;
     },
     signAndSend: async (_ixs: TransactionInstruction[]) => "sig",
-    signMessage: null,
     disconnect: async () => { disconnects += 1; },
   };
 
@@ -131,7 +130,6 @@ test("a declined approval is not swallowed by the session logic", async () => {
   const wallet: Wallet = {
     connect: async () => ({ pubkey }),
     signAndSend: async () => "sig",
-    signMessage: null,
     disconnect: async () => {},
   };
   await assert.rejects(
