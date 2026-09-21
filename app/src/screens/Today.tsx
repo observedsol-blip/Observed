@@ -115,10 +115,12 @@ export default function Today({
           side={side}
           confidence={confidence}
           confidenceTouched={confidenceTouched}
-          onChange={(nextSide, nextConfidence) => {
-            setSide(nextSide);
-            if (nextConfidence !== confidence) setConfidenceTouched(true);
-            setConfidence(nextConfidence);
+          onSide={setSide}
+          onConfidence={(next) => {
+            // Any touch counts, including one that lands on 50 again: the scale starts there,
+            // and a deliberate 50 must be reachable without moving away and back.
+            setConfidenceTouched(true);
+            setConfidence(next);
           }}
         />
       </Block>

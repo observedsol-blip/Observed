@@ -15,14 +15,21 @@ import { color, space, type } from "../tokens";
 export default function SideConfidence({
   side,
   confidence,
-  /** False until the player has moved the scale — the label depends on it. */
+  /** False until the player has touched the scale — the label and the seal button depend on it. */
   confidenceTouched = false,
-  onChange,
+  onSide,
+  onConfidence,
 }: {
   side: Side;
   confidence: number;
   confidenceTouched?: boolean;
-  onChange: (side: Side, confidence: number) => void;
+  onSide: (side: Side) => void;
+  /**
+   * Fires on **every** touch of the scale, even one that lands on the value it already had.
+   * That is the point: setting the scale to 50 on purpose has to be possible, and the scale
+   * starts at 50 (found while proof-reading the tester guide, 22.09.2026).
+   */
+  onConfidence: (confidence: number) => void;
 }) {
   const pBps = toPBps(side, confidence);
   // Three states, and the last two are not the same thing: a scale nobody has moved must not
@@ -32,8 +39,8 @@ export default function SideConfidence({
   return (
     <View>
       <View style={{ flexDirection: "row", gap: space.sm }}>
-        <SideButton label={copy.side.up} active={side === "up"} onPress={() => onChange("up", confidence)} />
-        <SideButton label={copy.side.down} active={side === "down"} onPress={() => onChange("down", confidence)} />
+        <SideButton label={copy.side.up} active={side === "up"} onPress={() => onSide("up")} />
+        <SideButton label={copy.side.down} active={side === "down"} onPress={() => onSide("down")} />
       </View>
 
       {/* The scale only means something once a side is chosen; until then it is a 50/50. */}
@@ -47,7 +54,7 @@ export default function SideConfidence({
           <Scale
             mode="input"
             value={side === null ? 50 : confidence}
-            onChange={(next) => onChange(side ?? "up", clampToStep(next))}
+            onChange={(next) => onConfidence(clampToStep(next))}
           />
         </View>
       </View>

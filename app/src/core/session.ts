@@ -13,7 +13,7 @@ import { findGenesisToken } from "../chain/sgt.ts";
 import { roundPda } from "../chain/pda.ts";
 import { verifiedSentences } from "./others.ts";
 import type { Entry, Round } from "../chain/layout.ts";
-import { sha256Of } from "./sentence.ts";
+import { sealMemo } from "./sentence.ts";
 import { Sealing } from "./sealing.ts";
 import { SeasonSecret } from "./secret.ts";
 import { type ResultView, type TodayView, resultView, streakOf, todayView } from "./day.ts";
@@ -285,12 +285,14 @@ export class Session {
     shareSentences?: { record: SealRecord }[];
   }) {
     const memos: Uint8Array[] = [];
-    // Sealed: the hash of the sentence, so it is fixed before the outcome. Revealed: the text.
+    const utf8 = (text: string) => new TextEncoder().encode(text);
+    // Sealed: the hash of the sentence as hex TEXT, so it is fixed before the outcome and can be
+    // read back. Revealed: the sentence itself. Raw hash bytes would fail the Memo program.
     if (args.sealRecord?.share && args.sealRecord.sentence) {
-      memos.push(sha256Of(args.sealRecord.salt, args.sealRecord.sentence));
+      memos.push(utf8(sealMemo(args.sealRecord.salt, args.sealRecord.sentence)));
     }
     for (const s of args.shareSentences ?? []) {
-      if (s.record.sentence) memos.push(new TextEncoder().encode(s.record.sentence));
+      if (s.record.sentence) memos.push(utf8(s.record.sentence));
     }
     return buildDaily(
       {

@@ -116,7 +116,7 @@ async function seal() {
   const day = await session.day();
   console.log(`  today: phase=${day.today.phase} openReveals=${day.openReveals}`);
   if (day.today.phase !== "open") throw new Error(`the window is not open (phase ${day.today.phase})`);
-  await session.saveAnswer(plan.rounds[0], 8_000, "the session wrote this", false);
+  await session.saveAnswer(plan.rounds[0], 8_000, "the session wrote this", true);
   const result = await session.evening();
   console.log(`  sealed round ${result.sealed} in ${result.signature}`);
   const entry = decodeEntry(

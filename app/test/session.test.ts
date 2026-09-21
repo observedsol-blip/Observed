@@ -10,8 +10,8 @@ import { MemoryStore } from "../src/core/store.ts";
 import { type Calendar, bytesToHex, hexToBytes } from "../src/chain/calendar.ts";
 import type { Entry, Round } from "../src/chain/layout.ts";
 import { entryPda, roundPda } from "../src/chain/pda.ts";
-import { RoundStatus } from "../src/chain/ids.ts";
-import { checkSentence, sentenceMatches, sha256Of } from "../src/core/sentence.ts";
+import { MEMO_ID, RoundStatus } from "../src/chain/ids.ts";
+import { checkSentence, sealMemo, sentenceMatches, sha256Of } from "../src/core/sentence.ts";
 
 const cal: Calendar = JSON.parse(
   readFileSync(join(import.meta.dirname, "../../tests/fixtures/calendar/season1.json"), "utf8"),
@@ -316,4 +316,28 @@ test("the tap is the only thing that asks, and it schedules what it promised", a
   const scheduled = await session.refreshReminders(second.notifier);
   assert.ok(scheduled > 0);
   assert.equal(second.calls.request, 0, "never again");
+});
+
+test("a shared sentence seals as hex text, and the reader finds it again", async () => {
+  // The bug this pins down (22.09.2026): the seal memo went out as the raw 32 hash bytes. The
+  // SPL Memo program requires valid UTF-8, so the whole daily transaction failed on chain —
+  // after the approval — and every reader looks for 64 hex characters anyway.
+  const fake = new FakeChain();
+  const { session, signed, store } = makeSession(fake, today.commitOpen + 300);
+  await session.connect();
+  await session.saveAnswer(today, 8_000, "Funding flipped negative overnight.", true);
+  await session.evening();
+
+  const memoIx = signed[0].instructions.filter((i) => i.programId.toBase58() === MEMO_ID.toBase58());
+  assert.equal(memoIx.length, 1, "one memo: the hash of the sentence");
+  const text = new TextDecoder().decode(memoIx[0].data);
+  assert.match(text, /^[0-9a-f]{64}$/, "64 hex characters, as text — never raw bytes");
+  assert.ok(
+    [...memoIx[0].data].every((b) => b >= 0x20 && b < 0x7f),
+    "printable ASCII: the Memo program refuses anything that is not valid UTF-8",
+  );
+
+  // and it is the hash the reader will recompute from the revealed salt
+  const stored = JSON.parse((await store.get(`seal:${today.roundId}`)) ?? "{}");
+  assert.equal(text, sealMemo(stored.salt, "Funding flipped negative overnight."));
 });

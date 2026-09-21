@@ -594,6 +594,67 @@ this same signature" — im Code steht nur die neue.
 Vorschau D1 ersetzt ihn), die Publication-Zeile in Settings, und der Evidenzblock auf dem
 Bildschirm — die Belege leben im README. `EvidenceRef.tsx` ist gelöscht, nicht auskommentiert.
 
+## Prüfer, Tester-Heft und README auf den Stand vom 22.09.2026
+
+**`scripts/verify-round.mjs` prüft jetzt, was sein Kopf verspricht.** Die Fassung vom 21.09. hat
+in Abschnitt 4 nur die **Zahl** der Einträge gegen den Zähler gestellt und in Abschnitt 5 nur
+erklärt, wie man einen geteilten Satz prüfen würde — die Überschriften versprachen beides als
+Prüfung. Jetzt:
+
+- Abschnitt 4 **öffnet die Siegel wirklich**: Aus den Reveal-Transaktionen kommen `p_bps` und Salt,
+  aus dem Entry-Konto Mint und Empfänger, und daraus wird das Commitment neu gehasht und mit dem
+  verglichen, das vor dem Ausgang gespeichert wurde. Standardmäßig eine Stichprobe von 20, mit
+  `--deep` alle.
+- Abschnitt 5 **rechnet die geteilten Sätze nach**, nach derselben Regel wie die App: Der Hash muss
+  das **einzige** 64-Hex-Memo in genau der Transaktion gewesen sein, die den Commit dieses Wallets
+  trug.
+- Beide Lesungen werden vollständig ausgeschrieben: Preis, Exponent, Konfidenz, `publish_time` als
+  Zeitstempel **und** als Unixzahl, Slot der Veröffentlichung, Slot und Einreicher der Einreichung.
+- Die Historie kostet wenige Aufrufe statt hundert: `getTransaction` läuft als JSON-RPC-Batch zu je
+  zwanzig.
+- Eine Call-Nummer genügt (`--round 11`); RPC und Kalender haben Voreinstellungen.
+
+**Der Lauf hat einen echten Fehler gefunden — geteilte Sätze haben nie funktioniert.** Das
+Siegel-Memo ging als **rohe 32 Bytes** des Hashes raus. Zwei Dinge daran, und das erste ist tödlich:
+Das SPL-Memo-Programm verlangt gültiges UTF-8, ein Hash ist das nicht — **die ganze
+Tagestransaktion scheitert, nach der Freigabe**. Und jeder Leser dieses Memos (`core/others.ts`,
+`scripts/verify-round.mjs`) sucht nach `/^[0-9a-f]{64}$/`, also hätte es auch dann nicht verifiziert,
+wenn es gelandet wäre. Schreiber und Leser waren sich nie einig.
+
+Warum es niemand gesehen hat: Die Tests bauen die Transaktion, schicken sie aber nicht durch das
+Memo-Programm, und der letzte Validator-Lauf hatte das Teilen ausgeschaltet. Erst als ich es für
+diese Prüfung einschaltete, starb der Siegel-Schritt. Behoben: `sealMemo()` liefert die 64
+Hex-Zeichen als Text; ein Test hält das Format fest und prüft zusätzlich, dass jedes Byte druckbares
+ASCII ist. Der Ende-zu-Ende-Lauf sagt jetzt „1 of 1 shared sentences match their seal memo".
+
+**Zwei Fehler im Prüfer selbst, beide im Lauf aufgefallen:** Er las die Historie mit der
+Standard-Bestätigungsstufe und sah auf einer frischen Kette **keine** Transaktionen — jetzt
+„confirmed", und wenn die Runde Aufdeckungen zählt, aber keine gefunden wird, ist das ein FAIL statt
+einer Notiz. Und eine Runde, die noch **offen** ist, meldete er mit drei Fehlern, weil ihre Lesungen
+noch Nullen sind; jetzt prüft er nur, was es schon gibt.
+
+**Tester-Heft.** Vier Sätze beschrieben etwas, das die App nicht mehr tut:
+1. *„If you truly have no opinion, leave it"* — **falsch seit dem 22.09.**: „Seal today" bleibt
+   inaktiv, bis der Regler berührt wurde. Neu beschrieben, samt dem Grund.
+2. *„go to Settings → Backup first and copy the key"* — **„key" ist verboten**; es heißt Backup-Code,
+   und der Abschnitt nennt jetzt auch die vier Meldungen nach dem Wiederherstellen.
+3. Die Frage selbst kam im Heft **nicht vor** — jetzt steht die Richtungsfrage da, mit der
+   Bewegungsfrage an den fünf Ereignistagen.
+4. Erinnerungen, Tonlosigkeit und das Icon fehlten ganz.
+
+**README-Entwurf.** Drei veraltete Stellen: *„84 app tests"* (jetzt 129), *„Script: TBD, wird bis
+zur Einreichung geschrieben"* (es existiert und läuft), und die Reproduzierbarkeitsstelle, die das
+`truncate` vor dem Vergleich nicht nannte — genau der Schritt, ohne den die Prüfsummen nie
+übereinstimmen. Dazu neu: die 72 h, die Richtungsfrage, dass die App keinen Ton macht, und dass es
+eine interne Prüfung mit zwei verhaltensändernden Befunden gab.
+
+**Ein Fehler, beim Korrekturlesen des Testerhefts gefunden und behoben:** Ein **absichtliches** 50
+war nicht erreichbar. Der Regler startet auf 50, und mein Code zählte nur eine *Wertänderung* als
+Berührung — wer 50 wollte, musste weg und zurück ziehen. Jetzt melden Seitenwahl und Regler
+getrennt, und **jede** Berührung des Reglers zählt. Diese eine Änderung ist durch Lesen geprüft,
+nicht durch einen Test: Sie sitzt in der Verdrahtung zweier Komponenten, und eine
+Oberflächen-Testbibliothek gibt es auf Wunsch des Owners nicht.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|

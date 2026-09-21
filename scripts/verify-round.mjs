@@ -6,8 +6,11 @@
  * repository. Everything it needs is public: the account bytes and a handful of hashes.
  *
  *   node scripts/verify-round.mjs --round 11
- *   node scripts/verify-round.mjs --round 11 --rpc https://api.mainnet-beta.solana.com
- *   node scripts/verify-round.mjs --round 0 --rpc http://127.0.0.1:8899 --calendar path/to/season1.json
+ *   node scripts/verify-round.mjs --round 11 --rpc https://your-endpoint
+ *   node scripts/verify-round.mjs --round 11 --deep          # every revealed answer, not a sample
+ *
+ * A call number is enough: the RPC defaults to the public mainnet endpoint and the calendar to
+ * the one in this repository. Nothing is written, nothing is signed, no key is read.
  *
  * What it proves, in order:
  *   1. The round on chain is the one the owner published before the season started
@@ -37,6 +40,9 @@ const RPC = arg("rpc", "https://api.mainnet-beta.solana.com");
 const CALENDAR = arg("calendar", join(REPO, "tests/fixtures/calendar/season1.json"));
 const PROGRAM_ID = arg("program", "48YybyMgkdzPQN5R3V1xsFHkUMxDvBDBDwW48cRTx2ni");
 const GAME_ID = BigInt(arg("game", "1"));
+/** How many revealed answers to open. `--deep` means all of them. */
+const DEEP = process.argv.includes("--deep");
+const SAMPLE = Number(arg("sample", "20"));
 
 // ---- tiny helpers: base58, hashes, little-endian ---------------------------
 const B58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
@@ -103,6 +109,21 @@ async function rpc(method, params) {
   if (json.error) throw new Error(`${method}: ${json.error.message}`);
   return json.result;
 }
+/** Several calls in one HTTP request — walking a call's history would be 140 round trips else. */
+async function rpcBatch(method, paramsList) {
+  if (paramsList.length === 0) return [];
+  rpcCalls += 1;
+  const body = paramsList.map((params, i) => ({ jsonrpc: "2.0", id: i, method, params }));
+  const response = await fetch(RPC, {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const json = await response.json();
+  if (!Array.isArray(json)) throw new Error(`${method}: the endpoint refused a batch request`);
+  return json.sort((a, b) => a.id - b.id).map((x) => x.result ?? null);
+}
+
 async function accountData(address) {
   const result = await rpc("getAccountInfo", [address, { encoding: "base64", commitment: "confirmed" }]);
   if (!result?.value) return null;
@@ -232,8 +253,14 @@ if (calendar) {
 
 // ---- 2. nobody who sealed could have seen the reference ---------------------
 console.log("\n2. the reference was taken after sealing closed");
+// A call that has not been read yet carries zeroed readings. Checking them would report three
+// failures for a call that is simply still open — the wrong signal from a tool whose job is to
+// say whether something is wrong (found in the end-to-end run, 22.09.2026).
 if (r.status === 4) {
   console.log("  note  this call was cancelled (NO_RESOLVE) — nothing was scored");
+} else if (r.status === 0) {
+  const closes = new Date(r.commitClose * 1000).toISOString().replace(".000Z", "Z");
+  console.log(`  note  no reference yet — this call is still Open, sealing closes ${closes}`);
 } else {
   check(r.reference.publishTime >= r.commitClose,
     `reference published ${r.reference.publishTime - r.commitClose}s after sealing closed`);
@@ -241,12 +268,29 @@ if (r.status === 4) {
     `submitted ${r.reference.submittedAt - r.referenceTime}s into the ${r.windowSecs}s window`);
   check(r.reference.submittedAt - r.reference.publishTime <= r.maxAgeSecs,
     `the reading was ${r.reference.submittedAt - r.reference.publishTime}s old when it was submitted (limit ${r.maxAgeSecs}s)`);
-  check(r.evidence.submittedAt >= r.outcomeTime && r.evidence.submittedAt <= r.outcomeTime + r.windowSecs,
-    `the outcome reading landed ${r.evidence.submittedAt - r.outcomeTime}s into its window`);
+  if (r.status === 3) {
+    check(r.evidence.submittedAt >= r.outcomeTime && r.evidence.submittedAt <= r.outcomeTime + r.windowSecs,
+      `the outcome reading landed ${r.evidence.submittedAt - r.outcomeTime}s into its window`);
+  } else {
+    console.log("  note  no outcome reading yet — this call has its reference and waits for 16:00");
+  }
   const confBps = (r.reference.conf * 10_000n) / (r.reference.price > 0n ? r.reference.price : 1n);
   check(confBps <= BigInt(r.maxConfBps), `reference confidence ${confBps} bps (limit ${r.maxConfBps})`);
   console.log(`  note  both readings come from ${r.priceAccount}`);
-  console.log(`  note  reference posted in slot ${r.reference.postedSlot}, submitted by ${r.reference.submitter}`);
+  const readings = r.status === 3
+    ? [["reference", r.reference], ["outcome", r.evidence]]
+    : [["reference", r.reference]];
+  for (const [name, reading] of readings) {
+    const when = new Date(reading.publishTime * 1000).toISOString().replace(".000Z", "Z");
+    console.log(
+      `  note  ${name}: price ${reading.price} × 10^${reading.expo} ± ${reading.conf}` +
+        `, publish_time ${when} (${reading.publishTime})`,
+    );
+    console.log(
+      `        posted in slot ${reading.postedSlot}, submitted in slot ${reading.submittedSlot}` +
+        ` by ${reading.submitter}`,
+    );
+  }
 }
 
 // ---- 3. the outcome follows from the two readings ---------------------------
@@ -272,7 +316,7 @@ if (r.status === 3) {
   console.log(`  note  status is ${STATUS}, nothing to recompute`);
 }
 
-// ---- 4. every revealed entry opens its own commitment -----------------------
+// ---- 4. every revealed answer opens its own seal ---------------------------
 console.log("\n4. the revealed answers open their own seals");
 const accounts = await rpc("getProgramAccounts", [
   PROGRAM_ID,
@@ -282,20 +326,128 @@ const accounts = await rpc("getProgramAccounts", [
     filters: [{ dataSize: ENTRY.size }, { memcmp: { offset: ENTRY.round, bytes: round } }],
   },
 ]);
-const entries = (accounts ?? []).map((a) => Buffer.from(a.account.data[0], "base64"));
-console.log(`  note  ${entries.length} entries on chain, ${r.commitCount} counted by the program, ${r.revealCount} revealed`);
-check(entries.length === r.commitCount, "the number of entries matches the counter in the call");
+const entries = new Map();
+for (const a of accounts ?? []) {
+  const data = Buffer.from(a.account.data[0], "base64");
+  entries.set(a.pubkey, {
+    pubkey: a.pubkey,
+    sgtMint: data.subarray(ENTRY.sgtMint, ENTRY.sgtMint + 32),
+    beneficiary: data.subarray(ENTRY.beneficiary, ENTRY.beneficiary + 32),
+    commitment: data.subarray(ENTRY.commitment, ENTRY.commitment + 32),
+    revealed: data[ENTRY.revealed] === 1,
+    pBps: data.readUInt16LE(ENTRY.pBps),
+  });
+}
+console.log(`  note  ${entries.size} entries on chain, ${r.commitCount} counted by the program, ${r.revealCount} revealed`);
+check(entries.size === r.commitCount, "the number of entries matches the counter in the call");
 
-// The salt of a revealed answer is public: it is in the reveal transaction. Without walking the
-// history this script can only check the ones whose salt it is given, so it reports what it can.
-const signatures = await rpc("getSignaturesForAddress", [round, { limit: 1000 }]);
-console.log(`  note  ${signatures.length} transactions touched this call — reveal transactions carry salt and answer`);
+// The salt of a revealed answer is public: it rides in the reveal transaction. So every seal can
+// be opened here — sha256 over the same bytes the program hashes — without asking anyone.
+const REVEAL_DISC = Buffer.from([9, 35, 59, 190, 167, 249, 76, 115]);
+const COMMIT_DISC = Buffer.from([223, 140, 142, 165, 229, 208, 156, 74]);
+const MEMO_ID = "MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr";
+
+// "confirmed", not the default: on a fresh chain the newest transactions are not finalised yet,
+// and a verifier that quietly sees an empty history is worse than one that says so.
+const signatures = await rpc("getSignaturesForAddress", [round, { limit: 1000, commitment: "confirmed" }]);
+console.log(`  note  ${signatures.length} transactions touched this call`);
+const wanted = DEEP ? signatures : signatures.slice(0, Math.max(SAMPLE * 2, 40));
+const transactions = [];
+for (let i = 0; i < wanted.length; i += 20) {
+  const slice = wanted.slice(i, i + 20).map((x) => [
+    x.signature,
+    { encoding: "jsonParsed", commitment: "confirmed", maxSupportedTransactionVersion: 0 },
+  ]);
+  transactions.push(...(await rpcBatch("getTransaction", slice)));
+}
+
+/** The reveals and the seal memos in this call's history, as far as we fetched. */
+const reveals = [];
+const sealMemos = new Map(); // payer -> the 64-hex memos in its commit transaction
+for (const tx of transactions) {
+  if (!tx || tx.meta?.err) continue; // a failed transaction proves nothing
+  const message = tx.transaction.message;
+  const payer = message.accountKeys[0]?.pubkey;
+  const memos = [];
+  let revealed = null;
+  let committed = false;
+  for (const ix of message.instructions) {
+    if (ix.programId === MEMO_ID) {
+      memos.push(typeof ix.parsed === "string" ? ix.parsed : Buffer.from(b58decode(ix.data)).toString("utf8"));
+      continue;
+    }
+    if (ix.programId !== PROGRAM_ID || typeof ix.data !== "string") continue;
+    const data = b58decode(ix.data);
+    if (data.length >= 8 && data.subarray(0, 8).equals(COMMIT_DISC)) {
+      if ((ix.accounts ?? []).includes(round)) committed = true;
+      continue;
+    }
+    if (data.length >= 42 && data.subarray(0, 8).equals(REVEAL_DISC)) {
+      const entry = (ix.accounts ?? [])[3];
+      if (entries.has(entry)) {
+        revealed = { entry, pBps: data.readUInt16LE(8), salt: data.subarray(10, 42) };
+      }
+    }
+  }
+  if (committed) {
+    sealMemos.set(payer, memos.map((m) => m.trim().toLowerCase()).filter((m) => /^[0-9a-f]{64}$/.test(m)));
+  }
+  if (revealed) reveals.push({ ...revealed, payer, memos, signature: tx.transaction.signatures[0] });
+}
+
+const toCheck = DEEP ? reveals : reveals.slice(0, SAMPLE);
+let opened = 0;
+for (const reveal of toCheck) {
+  const entry = entries.get(reveal.entry);
+  const commitment = sha256(
+    Buffer.from("observed/commit/v1", "utf8"),
+    b58decode(PROGRAM_ID),
+    b58decode(round),
+    r.termsHash,
+    entry.sgtMint,
+    entry.beneficiary,
+    u16(reveal.pBps),
+    reveal.salt,
+  );
+  if (commitment.equals(entry.commitment) && entry.pBps === reveal.pBps) opened += 1;
+  else bad(`the answer in ${reveal.signature.slice(0, 12)}… does not open the seal it claims`);
+}
+if (toCheck.length > 0) {
+  check(opened === toCheck.length, `${opened} of ${toCheck.length} revealed answers open their own seal`);
+} else if (r.revealCount > 0) {
+  bad(`the call counts ${r.revealCount} reveals, but none was found in ${transactions.length} fetched transactions`);
+} else {
+  console.log("  note  nothing revealed yet — nothing to open");
+}
+if (!DEEP && reveals.length > toCheck.length) {
+  console.log(`  note  checked ${toCheck.length} of ${reveals.length} fetched reveals — pass --deep for all`);
+}
 
 // ---- 5. shared sentences were fixed before the outcome ----------------------
 console.log("\n5. shared sentences were written before the outcome");
-console.log("  note  a sentence counts only if sha256(salt ‖ sentence) was posted as a memo in the");
-console.log("        sealing transaction, which is older than the outcome. The app checks this for");
-console.log("        every sentence it shows; app/src/core/others.ts does it in 40 lines.");
+// The rule the app uses, recomputed here: a sentence counts only if its hash was the single
+// 64-hex memo in the very transaction that carried that wallet's commit. A commit cannot happen
+// outside the sealing window, so such a memo is necessarily older than the outcome.
+let sentencesChecked = 0;
+let sentencesBad = 0;
+for (const reveal of toCheck) {
+  const sealed = sealMemos.get(reveal.payer);
+  for (const memo of reveal.memos) {
+    const text = memo.trim();
+    if (text.length === 0 || /^[0-9a-f]{64}$/.test(text)) continue;
+    sentencesChecked += 1;
+    const hash = sha256(reveal.salt, Buffer.from(text, "utf8")).toString("hex");
+    if (!sealed || sealed.length !== 1 || sealed[0] !== hash) {
+      sentencesBad += 1;
+      bad(`a sentence in ${reveal.signature.slice(0, 12)}… was not the one sealed with the commit`);
+    }
+  }
+}
+if (sentencesChecked === 0) {
+  console.log("  note  no shared sentence in the checked reveals");
+} else {
+  check(sentencesBad === 0, `${sentencesChecked - sentencesBad} of ${sentencesChecked} shared sentences match their seal memo`);
+}
 
 console.log(`\n${failures === 0 ? "PASS" : `FAIL — ${failures} check(s)`} · ${rpcCalls} RPC calls`);
 process.exit(failures === 0 ? 0 : 1);

@@ -12,6 +12,20 @@ import { hexToBytes } from "../chain/calendar.ts";
 /** Max length of a shared sentence, in bytes — the transaction has to stay under 1 232 B. */
 export const SENTENCE_LIMIT = 140;
 
+/**
+ * The memo that goes on chain when a sentence is shared: the hash as **64 hex characters**, as
+ * text.
+ *
+ * Not the raw 32 bytes. Two reasons, and the first one is fatal: the SPL Memo program requires
+ * valid UTF-8, and a hash is not — the whole daily transaction fails, after the approval. The
+ * second: every reader of this memo (`core/others.ts`, `scripts/verify-round.mjs`) matches
+ * `/^[0-9a-f]{64}$/`, so raw bytes would never verify even if they landed. Found on 22.09.2026,
+ * when the end-to-end run finally sealed a *shared* sentence for the first time.
+ */
+export function sealMemo(saltHex: string, sentence: string): string {
+  return [...sha256Of(saltHex, sentence)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
 export function sha256Of(saltHex: string, sentence: string): Uint8Array {
   const salt = hexToBytes(saltHex);
   const text = new TextEncoder().encode(sentence);
