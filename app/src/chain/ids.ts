@@ -32,6 +32,14 @@ export const TERMS_DOMAIN = "observed/terms/v3";
 /** The message signed to recover the season secret (E2). Domain-specific on purpose. */
 export const SECRET_MESSAGE_PREFIX = "observed-v1-secret:";
 
+/**
+ * How long a sealed answer can be revealed after the outcome — the program's REVEAL_WINDOW_SECS
+ * (programs/observed/src/lib.rs). It stood three times as `72 * 3600` in the session before the
+ * audit of 21.09.2026; three places to change is two too many for a number that decides whether
+ * an answer still counts.
+ */
+export const REVEAL_WINDOW_SECS = 72 * 3_600;
+
 export const LEAF_TAG = 0x00;
 export const NODE_TAG = 0x01;
 export const CALENDAR_DEPTH = 6;

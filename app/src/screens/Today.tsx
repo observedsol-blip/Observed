@@ -38,6 +38,8 @@ export default function Today({
   const initial = view.phase === "open" && view.pBps !== null ? fromPBps(view.pBps) : null;
   const [side, setSide] = useState<Side>(initial?.side ?? null);
   const [confidence, setConfidence] = useState<number>(initial?.confidence ?? 50);
+  // A record that already carries a number was touched on an earlier visit.
+  const [confidenceTouched, setConfidenceTouched] = useState(initial !== null);
   const [sentence, setSentence] = useState("");
   const [share, setShare] = useState(false);
 
@@ -97,8 +99,10 @@ export default function Today({
         <SideConfidence
           side={side}
           confidence={confidence}
+          confidenceTouched={confidenceTouched}
           onChange={(nextSide, nextConfidence) => {
             setSide(nextSide);
+            if (nextConfidence !== confidence) setConfidenceTouched(true);
             setConfidence(nextConfidence);
           }}
         />
@@ -133,15 +137,16 @@ export default function Today({
             </Label>
           ) : null}
           <PrimaryButton
-            label={busy ? "Sealing…" : "Seal today"}
+            label="Seal today"
             disabled={!touched || busy}
             onPress={async () => {
               await actions.onSave(pBps, sentence.trim() || undefined, share);
               await actions.onSeal();
             }}
           />
-          {!touched ? (
-            <Label style={{ marginTop: space.sm, color: color.meta }}>Pick a side first.</Label>
+          {/* The wallet sheet is the one moment the app can do nothing but say so. */}
+          {busy ? (
+            <Label style={{ marginTop: space.sm }}>{copy.waitingForWallet}</Label>
           ) : null}
         </>
       )}
@@ -176,12 +181,9 @@ function OpenReveals({
     <Block top={space.xl}>
       <Label>{copy.openReveals(view.openReveals)}</Label>
       <View style={{ marginTop: space.md }}>
-        <PrimaryButton
-          label={busy ? "Revealing…" : "Reveal"}
-          disabled={busy}
-          onPress={() => actions.onSeal()}
-        />
+        <PrimaryButton label="Reveal" disabled={busy} onPress={() => actions.onSeal()} />
       </View>
+      {busy ? <Label style={{ marginTop: space.sm }}>{copy.waitingForWallet}</Label> : null}
     </Block>
   );
 }

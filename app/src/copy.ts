@@ -16,6 +16,17 @@ export const copy = {
     return `Very sure: ${side}`;
   },
 
+  /**
+   * §11.1 — the two states the input has before it has an answer, and the one moment the app
+   * cannot do anything (owner, 22.09.2026).
+   *
+   * `howSure` exists because "Could go either way" is a real answer, not an empty field: a
+   * slider nobody has touched must not read as if the player had deliberately chosen 50.
+   */
+  pickSideFirst: "Pick a side first.",
+  howSure: "How sure?",
+  waitingForWallet: "Waiting for your wallet.",
+
   /** §11.2 — the sentence field. */
   sentence: {
     headingFor: (pBps: number) =>

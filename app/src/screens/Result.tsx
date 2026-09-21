@@ -13,7 +13,7 @@ import Screen from "../components/Screen";
 import Scale from "../components/Scale";
 import Hairline from "../components/Hairline";
 import StrikeMoment from "../components/StrikeMoment";
-import { Block, Body, Kicker, Label, MonoMeta, Reading } from "../components/Type";
+import { Block, Body, Kicker, Label, MonoMeta, Reading, Sentence } from "../components/Type";
 import type { ResultView } from "../core/day.ts";
 import { copy } from "../copy.ts";
 import { color, space } from "../tokens";
@@ -53,7 +53,10 @@ export default function Result({
         {view.sentence ? (
           <>
             <Label>Yesterday you wrote:</Label>
-            <Body style={{ fontStyle: "italic", marginTop: space.xs }}>{view.sentence}</Body>
+            {/* Literata italic, the real cut (03 §3). Until 22.09.2026 this was Plex Sans with a
+                synthetic slant — neither the family nor the italic the document asks for, and
+                the cut was in the font package all along. */}
+            <Sentence style={{ marginTop: space.xs }}>{view.sentence}</Sentence>
           </>
         ) : (
           <Label style={{ color: color.meta }}>No note yesterday.</Label>

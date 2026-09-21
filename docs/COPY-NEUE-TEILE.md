@@ -143,3 +143,17 @@ Erfolg: `Restored. {n} open {n, plural, one {call} other {calls}} are yours agai
 Der Satz war nie auf der Kette, außer der Spieler hat ihn ausdrücklich geteilt (E8). Das steht
 in der Restore-Copy, damit niemand ihn vermisst und uns für unehrlich hält.
 
+
+## E. Eingabe und Warten (freigegeben 22.09.2026)
+
+Wörtlich so im Code (`app/src/copy.ts`) und in 03-SCREEN-MAP §11.1:
+
+| Zustand | Text |
+|---|---|
+| Regler, keine Seite gewählt | `Pick a side first.` |
+| Seite gewählt, Regler unberührt | `How sure?` |
+| Wallet-Blatt offen | `Waiting for your wallet.` |
+
+Damit verschwinden drei Strings, die im Bildschirm entstanden waren und in keinem Dokument
+standen: „Sealing…“, „Revealing…“ und die zweite, doppelte Fassung von „Pick a side first.“
+unter dem Knopf.

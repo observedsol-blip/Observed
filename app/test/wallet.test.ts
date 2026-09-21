@@ -137,3 +137,39 @@ test("a declined approval is not swallowed by the session logic", async () => {
     /declined/,
   );
 });
+
+test("broken account data reads as \"no Genesis Token\", never as an exception", async () => {
+  // The bytes come from an RPC we do not control. Before 21.09.2026 a truncated mint threw out
+  // of new PublicKey() and took the whole wallet connection with it (audit, finding 9).
+  const owner = new PublicKey(Uint8Array.from(Array(32).fill(9)));
+  const mint = new PublicKey(Uint8Array.from(Array(32).fill(8)));
+
+  assert.doesNotThrow(() => readMint(new Uint8Array(10)));
+  assert.equal(readMint(new Uint8Array(10)).group, null);
+  // an extension whose length reaches past the end of the account
+  const lying = new Uint8Array(200);
+  new DataView(lying.buffer).setUint16(166, 23, true);   // TokenGroupMember
+  new DataView(lying.buffer).setUint16(168, 60_000, true); // …with an impossible length
+  assert.doesNotThrow(() => readMint(lying));
+  assert.equal(readMint(lying).group, null);
+
+  const check = checkGenesisToken({
+    mint,
+    mintData: new Uint8Array(10),
+    tokenAccount: mint,
+    tokenAccountData: new Uint8Array(4),
+    owner,
+  });
+  assert.equal(check.ok, false);
+
+  // and one unreadable account does not end the search for the real token
+  const found = await findGenesisToken(
+    {
+      tokenAccountsOf: async () => [{ pubkey: mint, data: new Uint8Array(4) }],
+      accountData: async () => null,
+    },
+    owner,
+  );
+  assert.equal(found.ok, false);
+  assert.equal(found.ok === false && found.reason, "not-a-genesis-token");
+});

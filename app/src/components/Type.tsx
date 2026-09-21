@@ -34,6 +34,13 @@ export const QuestionSmall = ({ children, style, ...rest }: Props) => (
   </Text>
 );
 
+/** Yesterday's own sentence: Literata italic, the real cut — never `fontStyle: 'italic'`. */
+export const Sentence = ({ children, style, ...rest }: Props) => (
+  <Text {...rest} style={[type.sentence, { color: color.ink }, style]}>
+    {children}
+  </Text>
+);
+
 export const Reading = ({ children, style, ...rest }: Props) => (
   <Text {...rest} style={[type.reading, { color: color.ink }, style]}>
     {children}

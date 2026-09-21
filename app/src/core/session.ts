@@ -8,7 +8,7 @@ import type { PublicKey } from "@solana/web3.js";
 import type { Chain } from "../chain/rpc.ts";
 import { type CalendarRound, hexToBytes, roundIsInTheCalendar } from "../chain/calendar.ts";
 import { buildDaily } from "../chain/ix.ts";
-import { RoundStatus } from "../chain/ids.ts";
+import { REVEAL_WINDOW_SECS, RoundStatus } from "../chain/ids.ts";
 import { findGenesisToken } from "../chain/sgt.ts";
 import { roundPda } from "../chain/pda.ts";
 import { verifiedSentences } from "./others.ts";
@@ -112,7 +112,7 @@ export class Session {
     }
 
     const openCalls = this.deps.calendar.filter(
-      (r) => now >= r.commitOpen - 60 && now < r.outcomeTime + 72 * 3600,
+      (r) => now >= r.commitOpen - 60 && now < r.outcomeTime + REVEAL_WINDOW_SECS,
     );
     const ids = openCalls.map((r) => r.roundId);
     const [rounds, entries, balance] = await Promise.all([
@@ -142,6 +142,8 @@ export class Session {
         openReveals: revealables.length,
         hasGenesisToken: true,
         balanceLamports: balance,
+        // Rent is only owed for an entry that does not exist yet.
+        entryExists: sealable ? entries.has(sealable.roundId) : false,
       }),
       result: this.latestResult(rounds, entries, records),
       openReveals: revealables.length,
@@ -218,7 +220,7 @@ export class Session {
     const now = this.deps.now();
     const records = await this.sealing!.all();
     const ids = this.deps.calendar
-      .filter((r) => now >= r.commitOpen - 60 && now < r.outcomeTime + 72 * 3600)
+      .filter((r) => now >= r.commitOpen - 60 && now < r.outcomeTime + REVEAL_WINDOW_SECS)
       .map((r) => r.roundId);
     const [rounds, entries] = await Promise.all([
       this.deps.chain.rounds(ids),
@@ -325,7 +327,7 @@ export class Session {
 
     const now = this.deps.now();
     const open = this.deps.calendar.filter(
-      (r) => now >= r.commitOpen && now < r.outcomeTime + 72 * 3600,
+      (r) => now >= r.commitOpen && now < r.outcomeTime + REVEAL_WINDOW_SECS,
     );
     const entries = await this.deps.chain.entries(open.map((r) => r.roundId), this.sgtMint!);
     const pairs = open

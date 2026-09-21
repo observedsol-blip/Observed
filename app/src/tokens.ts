@@ -24,6 +24,8 @@ export const color = {
 export const font = {
   /** question + reading sentence */
   serif: 'Literata_400Regular',
+  /** the sentence the player wrote yesterday — a real italic cut, never a synthetic slant */
+  serifItalic: 'Literata_400Regular_Italic',
   serifStrong: 'Literata_600SemiBold',
   /** controls and labels */
   sans: 'IBMPlexSans_400Regular',
@@ -63,6 +65,8 @@ export const type = {
   question: { fontFamily: font.serif, fontSize: 24, lineHeight: 32 },
   questionSmall: { fontFamily: font.serif, fontSize: 17, lineHeight: 24 },
   reading: { fontFamily: font.serifStrong, fontSize: 34, lineHeight: 42 },
+  /** yesterday's own sentence (03 §3): Literata, italic, no quotation marks */
+  sentence: { fontFamily: font.serifItalic, fontSize: 17, lineHeight: 26 },
   /** large probability / Brier — Plex Sans, see font.figures */
   hero: { fontFamily: font.figures, fontSize: 64, lineHeight: 70, letterSpacing: -1 },
   numberLarge: { fontFamily: font.figures, fontSize: 40, lineHeight: 46 },

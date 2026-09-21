@@ -266,3 +266,33 @@ test("the record locks its diagnosis until twenty revealed calls", () => {
     "Your side record counts calls. Your season score measures how sure you were.",
   );
 });
+
+test("an evening that only reveals does not ask for rent that was already paid", () => {
+  // The entry for today exists, so the deposit is on chain; the player only reveals and pays a
+  // fee. Telling them to top up 0.003 SOL would be wrong twice: the money is not needed, and the
+  // message blocks the one action of the day (audit 21.09.2026, finding 8).
+  const thin = 400_000; // enough for fees, nowhere near the rent
+  const withoutEntry = todayView({
+    now: round.commitOpen + 300,
+    calendar: cal.rounds,
+    record: null,
+    draftPBps: 8_000,
+    openReveals: 1,
+    hasGenesisToken: true,
+    balanceLamports: thin,
+  });
+  assert.equal(withoutEntry.phase === "open" && withoutEntry.blocked?.kind, "no-sol");
+
+  const withEntry = todayView({
+    now: round.commitOpen + 300,
+    calendar: cal.rounds,
+    record: null,
+    draftPBps: 8_000,
+    openReveals: 1,
+    hasGenesisToken: true,
+    balanceLamports: thin,
+    entryExists: true,
+  });
+  assert.equal(withEntry.phase, "open");
+  assert.equal(withEntry.phase === "open" && withEntry.blocked, undefined, "nothing to top up");
+});

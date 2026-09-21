@@ -279,7 +279,20 @@ export function decodePlayer(data: Uint8Array): Player {
 
 /** A token account of Token-2022: mint, owner, amount — the only three fields the app needs. */
 export const TOKEN_ACCOUNT_OFFSET = { mint: 0, owner: 32, amount: 64 } as const;
+/** The base account is 165 bytes. Anything shorter is not one (audit 21.09.2026, finding 9). */
+export const TOKEN_ACCOUNT_BASE_LEN = 165;
+
+export class NotATokenAccount extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "NotATokenAccount";
+  }
+}
+
 export function decodeTokenAccount(data: Uint8Array) {
+  if (data.length < TOKEN_ACCOUNT_BASE_LEN) {
+    throw new NotATokenAccount(`token account is ${data.length} bytes, expected at least 165`);
+  }
   return {
     mint: key(data, TOKEN_ACCOUNT_OFFSET.mint),
     owner: key(data, TOKEN_ACCOUNT_OFFSET.owner),

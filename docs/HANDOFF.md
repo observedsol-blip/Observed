@@ -307,13 +307,13 @@ steht noch aus).
 | 3 | Saison-Geheimnis kam aus `Crypto.getRandomBytes` — fällt unter `__DEV__` + Remote-Debugger auf `Math.random` zurück, und dieses Geheimnis bleibt die Saison über in Benutzung | mittel | **erledigt** `8321f9d`: `getRandomBytesAsync`, dazu ein Test, der die App-Quellen liest und nur besteht, solange niemand die synchrone Variante aufruft |
 | 4 | Der Werkzeug-Hook griff nur bei Edit/Write/MultiEdit. Jede Änderung über Bash ging vorbei — auch an der eingefrorenen Spec. Genau so hat Claude Code selbst gearbeitet (offengelegt) | mittel (Prozess) | **teilweise**: `.githooks/pre-commit` **ist scharf** (Spec ohne `.spec-unlock`, Schlüsseldateien, Klartext-Passwörter — vier Proben bestanden), `guard-paths.sh` liest jetzt auch Bash-Kommandos. Die `settings.json` liegt als Diff bereit und **gilt erst nach Freigabe** (Offen 12) |
 | 5 | SECURITY.md kannte den Backup-Code nicht — seit E2 ist das Geheimnis exportierbar | niedrig | **erledigt** `8321f9d`: unter „bekannt und akzeptiert", mit dem UI-Satz |
-| 6 | `spikes/seeker/app/README.md`: „`git log --all -S\"keystorePassword\"` = 0" — heute sind es 3 (unsere eigenen Dokumente nennen das Feld; alle Werte Platzhalter) | niedrig | **offen** — `spikes/seeker/` wird ohne Auftrag nicht angefasst |
-| 7 | `sealing.ts`: nur `unknown` fragt die Kette, `sent` wird blind erneut gesendet | niedrig | offen, bis 26.09. |
-| 8 | `checkFunding` fordert immer Miete für einen neuen Eintrag — auch auf dem reinen Aufdeck-Weg | niedrig | offen, bis 26.09. |
-| 9 | `sgt.ts`: TLV-Schleife ohne Längenprüfung; kaputte Mint-Daten werfen statt „kein Genesis Token" | niedrig | offen, bis 26.09. |
+| 6 | **erledigt 22.09.** — `spikes/seeker/app/README.md`: „`git log --all -S\"keystorePassword\"` = 0" — heute sind es 3 (unsere eigenen Dokumente nennen das Feld; alle Werte Platzhalter) | niedrig | **erledigt 22.09.** (Owner hat es freigegeben) |
+| 7 | `sealing.ts`: nur `unknown` fragt die Kette, `sent` wird blind erneut gesendet | niedrig | **erledigt 22.09.** |
+| 8 | `checkFunding` fordert immer Miete für einen neuen Eintrag — auch auf dem reinen Aufdeck-Weg | niedrig | **erledigt 22.09.** |
+| 9 | `sgt.ts`: TLV-Schleife ohne Längenprüfung; kaputte Mint-Daten werfen statt „kein Genesis Token" | niedrig | **erledigt 22.09.** |
 | 10 | `rpc.ts`: abgeschnittene Reveal-Instruktion las über das Pufferende | niedrig | **erledigt** `8321f9d` (fiel mit Befund 1 an derselben Stelle an) |
 | 11 | RELEASE-BUILD.md ließ das Keystore-Passwort per Heredoc in `~/.bash_history` laufen | niedrig | **erledigt** `8321f9d`: leere Datei mit `chmod 600`, im Editor füllen, zwei Prüfzeilen danach |
-| 12 | Das 72-h-Fenster steht dreimal als `72 * 3600` im Code | niedrig | offen, bis 26.09. |
+| 12 | Das 72-h-Fenster steht dreimal als `72 * 3600` im Code | niedrig | **erledigt 22.09.** |
 
 **Abhängigkeiten.** `cargo audit` ist installiert (Freigabe des Owners) und gelaufen: **0
 Verwundbarkeiten**, 6 Warnungen, alle transitiv aus dem Solana-/Anchor-/Pyth-Baum — fünf
@@ -330,6 +330,56 @@ für denselben Pfad. Der Wert liegt darin, dass Git jede Änderung sieht, egal w
 geschrieben wurde — anders als der Werkzeug-Hook. Zum Aktivieren einmal pro Arbeitskopie:
 `git config core.hooksPath .githooks` (steht in `.githooks/README.md`). Claude Code schreibt
 geschützte Pfade ab sofort nicht mehr über Bash-Skripte.
+
+## Owner-Entscheidungen und Nacharbeit, 22.09.2026
+
+**Entscheidungen, überall angewandt:**
+- **Kein Ton in der App.** Kein Siegel-Klang, kein Ton am Strich-Moment, keine Audiodatei im
+  Bündel. Haptik bleibt (D2 wird haptisch, nicht hörbar). Gemessen: Es gab nie Audiocode und nie
+  eine Audiodatei im Repo — die Regel steht jetzt in 03 §11 und verhindert nur, dass es
+  hineinrutscht. **Für D2 fehlt `expo-haptics`; das wäre ein neues Paket und wartet auf Freigabe.**
+- **`Preview · simulated call`** statt „simulated round" — der letzte Widerspruch zur Wortregel
+  ist weg (03 §1 und figma-brief).
+- **Drei neue freigegebene Texte** (03 §11.1, COPY-NEUE-TEILE §E, `app/src/copy.ts`):
+  `Pick a side first.` · `How sure?` · `Waiting for your wallet.` Damit verschwinden die drei im
+  Bildschirm erfundenen Strings „Sealing…", „Revealing…" und die doppelte Zeile unter dem Knopf.
+  `How sure?` löst ein echtes Problem: „Could go either way" ist eine Antwort, kein leeres Feld —
+  ein unberührter Regler darf nicht aussehen wie eine Entscheidung für 50.
+- **`.claude/settings.json` gilt jetzt** (Diff vom Owner gesehen und freigegeben): `npm install`
+  und `gh pr create` raus, `cargo audit` rein, zehn Bash-Verbote für `~/.config/observed/**` und
+  `~/.config/solana/**`, PreToolUse-Matcher um `Bash` erweitert. **Offen 12 ist damit erledigt.**
+- **Befund 6 erledigt:** Der Satz im Spike-README nennt jetzt die Prüfung, die wirklich 0 ergibt
+  (`-S"keystorePassword" -- "*credentials.json"`), und sagt, warum die nackte Form 3 findet.
+
+**Nacharbeit aus dem Audit (Punkt 7 des Owners), alle mit Test:**
+
+| Befund | Was jetzt gilt |
+|---|---|
+| 7 | `sealing.seal()` behandelt `sent` wie `unknown`: erst die Kette fragen, nie blind erneut senden. Test: Datensatz auf `sent`, Eintrag liegt auf der Kette → `confirmed`, **keine zweite Freigabe** |
+| 8 | `todayView` bekommt `entryExists`; wer nur aufdeckt, wird nicht zum Aufladen aufgefordert. Test: dieselbe dünne Bilanz, einmal mit und einmal ohne Eintrag |
+| 9 | `readMint` und `decodeTokenAccount` prüfen jede Länge; kaputte Kontodaten heißen „kein Genesis Token", nicht Ausnahme. Ein unlesbares Konto beendet die Suche nicht mehr |
+| 10 | (schon am 21.09. mit Befund 1 gefallen) abgeschnittene Reveal-Instruktion wird übersprungen |
+| 12 | `REVEAL_WINDOW_SECS` steht einmal in `chain/ids.ts`, dreimal benutzt in `session.ts` |
+
+**Zwei Antworten, die der Owner erfragt hat:**
+1. **Seite + Sicherheit → `p_bps`** (`components/SideConfidence.tsx:16–26`):
+   `Up 80 → 8000`, `Down 80 → 2000`, keine Seite → `5000`. Der Regler **kann nach der Wahl einer
+   Seite nicht unter 50**: `clampToStep` (`SideConfidence.tsx:66–69`) rundet auf 5er-Schritte und
+   klemmt auf 50–100, weil 45 % Up dasselbe wäre wie 55 % Down — zwei Namen für eine Antwort.
+   **Für Figma heißt das:** Der Eingaberegler hat **11 erreichbare Positionen (50…100)**, wird
+   aber auf einer **0–100-Spur mit 21 Ticks** gezeichnet (`Scale.tsx`, `TICKS` aus `mock.ts:27`).
+   Die linke Hälfte ist tot. Die 21 Positionen stammen aus der Wahrscheinlichkeitsskala des
+   Programms (0…10000 in 500er-Schritten) und sind in der **Verteilung** richtig, in der
+   **Eingabe** nicht. Das ist eine offene Gestaltungsfrage, keine Abweichung von E11: die
+   Reglerworte in §11.1 decken genau 50–100 ab.
+2. **Literata Italic** ist im bereits installierten Paket (`400Regular_Italic`). Geladen, als
+   `font.serifItalic` und `type.sentence` (17/26) in den Tokens, und `Result` zeichnet den Satz
+   von gestern damit. Vorher war es Plex Sans mit künstlicher Schräge — weder die Familie noch
+   der Schnitt, den 03 §3 verlangt.
+
+**Noch offen aus der Liste des Owners:** Record/Settings von `mock.ts` lösen, Erinnerungen in die
+Oberfläche (E3), Übergangs-Icon, Resolver-Repo prüfen — alles vor dem Build am 26.09. §0b bleibt
+am Mittwoch das Erste, `cargo audit` läuft vor dem Deploy noch einmal.
 
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
@@ -348,7 +398,7 @@ geschützte Pfade ab sofort nicht mehr über Bash-Skripte.
 | 15 | **Spike 3 am Gerät** mit dem Debug-APK (`C:\\Users\\Admin\\Downloads\\observed-diagnostics-debug.apk`): Wortmarke lang drücken → Diagnose. Drei Knöpfe, Zahlen kopieren, schicken. Davon hängen ab: eine oder zwei Freigaben, und ob `signMessage` deterministisch ist (sonst fällt die Wiederherstellung nach einer Neuinstallation aus) | Dinkelberg | vor dem Build 26.09. |
 | 14 | **Erledigt 21.09.:** alle vier entschieden und in `06b842a` umgesetzt — Zeiten-Sweep, Schwelle 20 Runden, „Too close to call.“ vor „You didn't pick a side.“, versiegelte Antwort wörtlich mit der genauen Zahl | Dinkelberg | erledigt |
 | 13 | `.spec-unlock` für 00-SPEC: Frageart (Richtung statt Bewegung) und Aufdeckfenster (72 h statt 12 h) stehen dort noch alt. Vorschlag 16 ist geschrieben | Dinkelberg | vor der Einreichung |
-| 12 | **Diff liegt vor, gilt noch nicht:** `Bash(npm install*)` und `Bash(gh pr create*)` raus, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` rein, `Bash(cargo audit*)` in die Erlaubnisliste, PreToolUse-Matcher um `Bash` erweitert. Dinkelberg hat die Diff am 22.09. gesehen; **anwenden nach seinem Wort** | Dinkelberg | vor Do 24.09. |
+| 12 | **Erledigt 22.09.** (Diff vom Owner freigegeben, angewandt): `Bash(npm install*)` und `Bash(gh pr create*)` raus, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` rein, `Bash(cargo audit*)` in die Erlaubnisliste, PreToolUse-Matcher um `Bash` erweitert. angewandt am 22.09. | Dinkelberg | erledigt |
 | 11 | Frage an die Veranstalter: Darf der Resolver (eigenes Repo, nicht Teil der Einreichung) während der Bewertung geändert werden? Bis zur Antwort plant das Drehbuch mit **nein** | Dinkelberg | offen |
 
 ## Bewertung Claude Code, 18.09. (Vorschläge aus dem Chat)

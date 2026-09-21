@@ -115,8 +115,12 @@ export class Sealing {
     const record = await this.read(round.roundId);
     if (!record) throw new Error(`nothing saved for call ${round.roundId}`);
     if (record.status === "confirmed") return record;
-    if (record.status === "unknown") {
-      // Never send again without asking the chain first.
+    if (record.status === "unknown" || record.status === "sent") {
+      // Never send again without asking the chain first. "sent" belongs here as much as
+      // "unknown": if the phone died between sending and writing the result down, the record
+      // stays on "sent" while the entry may well be on chain. Re-sending then spends an approval
+      // on a transaction that can only fail, because the Entry PDA already exists — and the
+      // player sees an error for an answer that was sealed correctly (audit 21.09.2026).
       const reconciled = await this.reconcile(round);
       if (reconciled.status !== "failed") return reconciled;
     }

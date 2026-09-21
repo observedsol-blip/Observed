@@ -238,3 +238,21 @@ test("an answer on its way is not overwritten by a new one", async () => {
   const reconciled = await sealing.reconcile(round);
   assert.equal(reconciled.status, "confirmed");
 });
+
+test("a record left on \"sent\" asks the chain instead of sending again", async () => {
+  // The case the audit found (21.09.2026): the transaction went out, the phone died before the
+  // confirmation was written down. The record says "sent" while the entry sits on chain. Sending
+  // again would spend an approval on a transaction that can only fail — the Entry PDA exists.
+  const store = new MemoryStore();
+  const chain = new FakeChain();
+  const { sealing } = machine({ store, chain });
+  await sealing.saveAnswer({ round, pBps: 7_500 });
+  const record = await sealing.read(round.roundId);
+  chain.sealWith(record!.commitment); // it really is on chain
+  await store.set(`seal:${round.roundId}`, JSON.stringify({ ...record!, status: "sent", signature: "sig0" }));
+
+  const sendsBefore = chain.sends;
+  const after = await sealing.seal(round);
+  assert.equal(after.status, "confirmed", "the chain knows better than the phone");
+  assert.equal(chain.sends, sendsBefore, "and no second approval was asked for");
+});

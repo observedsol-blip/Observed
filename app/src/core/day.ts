@@ -37,6 +37,13 @@ export function todayView(args: {
   openReveals: number;
   hasGenesisToken: boolean;
   balanceLamports: number;
+  /**
+   * Whether an Entry for today's call already sits on chain. It decides whether the SOL check
+   * has to cover the rent: an entry that exists was paid for once, and asking somebody to top up
+   * for rent they already paid — on an evening where they only reveal — is simply wrong
+   * (audit 21.09.2026, finding 8).
+   */
+  entryExists?: boolean;
 }): TodayView {
   const round = args.calendar.find((r) => args.now >= r.commitOpen && args.now < r.commitClose);
   if (!round) {
@@ -54,7 +61,10 @@ export function todayView(args: {
     };
   }
   const pBps = args.draftPBps ?? args.record?.pBps ?? null;
-  const funding = checkFunding({ balanceLamports: args.balanceLamports, needsNewEntry: true });
+  const funding = checkFunding({
+    balanceLamports: args.balanceLamports,
+    needsNewEntry: args.entryExists !== true,
+  });
   return {
     phase: "open",
     roundId: round.roundId,

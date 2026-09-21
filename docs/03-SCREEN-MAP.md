@@ -21,11 +21,9 @@ Wallet erst beim ersten Seal.
 
 **Erststart außerhalb des Fensters (zwischen 04:00 und 16:00 UTC):** kein „Window closed“.
 Stattdessen die **Vorschau** (D1/E4, bis 02.10.): eine simulierte Runde in etwa 20 Sekunden, mit
-echtem Regler, ohne Wallet, dauerhaft gekennzeichnet `Preview · simulated round`
-> — **Konflikt mit der Wortregel (offen, Owner):** Dieser String kommt wörtlich aus deiner
-> D1-Vorgabe und sagt „round“. Konsequent wäre `Preview · simulated call`. Ich ändere
-> freigegebene Copy nicht von mir aus. Danach die echte
-nächste Öffnung in Ortszeit und `Remind me when the window opens`.
+echtem Regler, ohne Wallet, dauerhaft gekennzeichnet `Preview · simulated call`
+(Owner, 22.09.2026: vorher „simulated round“ — die Wortregel gilt ohne Ausnahme). Danach die
+echte nächste Öffnung in Ortszeit und `Remind me when the window opens`.
 
 ## 2. Today
 Eingabe und Texte: **§11**. Zeiten: Siegeln 16:00–04:00 UTC, Referenz 04:02, Ausgang 16:00,
@@ -185,6 +183,12 @@ Eine **echte** Runde des Kalenders, damit die Zahlen im Video und im Deck nachpr
 Der Seiten-Record zählt 6 statt 8, weil von den acht aufgedeckten Runden eine ohne Seite (50) und
 eine knapp war.
 
+### Ton (Owner, 22.09.2026)
+**Die App macht keinen Ton.** Kein Siegel-Klang, kein Ton beim Strich-Moment, keine Audiodatei im
+Bündel. Haptik bleibt erlaubt (D2 wird haptisch, nicht hörbar). Gemessen am 22.09.: Im Repo gibt
+es weder Audiocode noch eine Audiodatei — die Regel hält also fest, was ohnehin gilt, und
+verhindert, dass es später hineinrutscht.
+
 ## 11. Eingabe, Ergebnis und Record — Texte vom 21.09.2026
 
 Vom Owner freigegeben (E8, E11, E13). **Wörtlich so in den Code**, App-Sprache Englisch.
@@ -201,6 +205,19 @@ Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihe
   - 90–100: `Very sure: Up` / `Very sure: Down`
 
 `p = 50` heißt „keine Seite“: kein Treffer, kein Fehlschlag. Im Saisonwert zählt die Runde normal.
+
+**Die drei Zustände der Eingabe (Owner, 22.09.2026, freigegeben):**
+- keine Seite gewählt: `Pick a side first.` (steht unter der Zahl, nicht unter dem Knopf)
+- Seite gewählt, Regler noch nicht bewegt: `How sure?`
+- Regler bewegt: die Reglerworte oben
+
+Der Unterschied zwischen den letzten beiden ist der Punkt: „Could go either way“ ist eine
+Antwort, kein leeres Feld. Ein Regler, den niemand angefasst hat, darf nicht aussehen wie eine
+Entscheidung für 50.
+
+**Während das Wallet-Blatt offen ist:** `Waiting for your wallet.` — der eine Moment, in dem die
+App nichts tun kann außer das zu sagen. Ersetzt die erfundenen Zwischenstände „Sealing…“ und
+„Revealing…“.
 
 ### 11.2 Satzfeld (E13)
 - Überschrift: `What tipped you toward Up?` / `What tipped you toward Down?`

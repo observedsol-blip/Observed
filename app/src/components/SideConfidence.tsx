@@ -28,13 +28,20 @@ export function fromPBps(pBps: number): { side: Side; confidence: number } {
 export default function SideConfidence({
   side,
   confidence,
+  /** False until the player has moved the scale — the label depends on it. */
+  confidenceTouched = false,
   onChange,
 }: {
   side: Side;
   confidence: number;
+  confidenceTouched?: boolean;
   onChange: (side: Side, confidence: number) => void;
 }) {
   const pBps = toPBps(side, confidence);
+  // Three states, and the last two are not the same thing: a scale nobody has moved must not
+  // read as if the player had deliberately chosen 50 (owner, 22.09.2026).
+  const label =
+    side === null ? copy.pickSideFirst : confidenceTouched ? copy.confidence(pBps) : copy.howSure;
   return (
     <View>
       <View style={{ flexDirection: "row", gap: space.sm }}>
@@ -48,7 +55,7 @@ export default function SideConfidence({
           {side === null ? "50" : confidence}
           <Text style={{ ...type.numberLarge, color: color.pencil }}>%</Text>
         </Text>
-        <Label style={{ marginTop: space.xs }}>{copy.confidence(pBps)}</Label>
+        <Label style={{ marginTop: space.xs }}>{label}</Label>
         <View style={{ marginTop: space.lg }}>
           <Scale
             mode="input"

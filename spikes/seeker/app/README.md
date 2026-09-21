@@ -7,5 +7,5 @@ keystore path and passwords (0600). Before an EAS build:
     npx eas build --platform android --profile spike3
     rm credentials.json
 
-`credentials.json` is gitignored and was never committed (`git log --all -S"keystorePassword"` = 0).
+`credentials.json` is gitignored and was never committed. The check that showed it: `git log --all -S"keystorePassword" -- "*credentials.json"` = 0. (The bare `-S"keystorePassword"` now finds 3 commits — our own release documentation names the field, with placeholders. Corrected 22.09.2026 after the audit found the old claim false.)
 The keystore itself is `~/.config/observed/spike3.jks` — test-only, never for a store release.

@@ -62,9 +62,13 @@ Ink auf Ground mit Haarlinien-Rand.
 
 ### 1.3 Schrift — `app/src/tokens.ts:24–45`, geladen in `app/src/fonts.ts`
 
-Sechs statische TTF-Schnitte, keine Variable Fonts (`fonts.ts:4–15`, mit Begründung):
+**Sieben** statische TTF-Schnitte (seit 22.09.2026 mit `Literata_400Regular_Italic`, siehe unten), keine Variable Fonts (`fonts.ts:4–15`, mit Begründung):
 `Literata_400Regular`, `Literata_600SemiBold`, `IBMPlexSans_400Regular`, `IBMPlexSans_500Medium`,
-`IBMPlexMono_400Regular`, `IBMPlexMono_500Medium`.
+`IBMPlexMono_400Regular`, `IBMPlexMono_500Medium`, `Literata_400Regular_Italic`.
+
+Der Kursivschnitt kam am 22.09.2026 dazu: 03 §3 verlangt den Satz von gestern in Literata kursiv,
+gezeichnet wurde bis dahin Plex Sans mit künstlicher Schräge. Der Schnitt lag im bereits
+installierten Paket — kein neues Paket.
 
 Rollen (`tokens.ts:24–45`): Serif = Frage und Lesungssatz · Sans = Bedienelemente und Labels ·
 Mono = Ticks, Zeiten, Preise, Feed-IDs, Signaturen · **`font.figures` = Plex Sans**, nicht Mono:
@@ -81,6 +85,7 @@ Schnitt ohne ihn; Plex Sans hat tabulare Ziffern (`tokens.ts:34–44`).
 | `type.question` | Literata 400 | 24 / 32 | |
 | `type.questionSmall` | Literata 400 | 17 / 24 | |
 | `type.reading` | Literata 600 | 34 / 42 | die Ergebniszeile |
+| `type.sentence` | **Literata 400 kursiv** | 17 / 26 | der eigene Satz von gestern (seit 22.09.) |
 | `type.hero` | Plex Sans 500 | 64 / 70 | `letterSpacing −1`, die eigene Prozentzahl |
 | `type.numberLarge` | Plex Sans 500 | 40 / 46 | |
 | `type.figures` | Plex Sans 400 | 13 / 18 | |
@@ -127,6 +132,9 @@ Platzhalter sind markiert: `{n}` Anzahl, `{x}` Prozentwert mit einer Nachkommast
 ### 2.1 Eingabe (§11.1, `copy.ts:6–17`)
 
 - Seiten: `Up` · `Down`
+- keine Seite gewählt: `Pick a side first.` · Seite gewählt, Regler unberührt: `How sure?`
+  (freigegeben 22.09.2026)
+- Wallet-Blatt offen: `Waiting for your wallet.`
 - Reglerworte, symmetrisch:
   - 50: `Could go either way`
   - 55–65: `Leaning Up` / `Leaning Down`
@@ -229,9 +237,8 @@ Der Brier-Wert steht hier **nicht**.
    `You can copy a backup code in Settings.` (`copy.ts:92`)
 
 Erststart außerhalb des Fensters: **Vorschau**, dauerhaft gekennzeichnet `Preview · simulated
-round`, danach die nächste Öffnung in Ortszeit und `Remind me when the window opens`.
-> Dieser eine String sagt „round“ und widerspricht damit der Wortregel. Er steht wörtlich so in
-> der Owner-Vorgabe; die Entscheidung ist offen (`03-SCREEN-MAP.md:26–29`). Im Entwurf so lassen.
+call`, danach die nächste Öffnung in Ortszeit und `Remind me when the window opens`.
+(Owner, 22.09.2026: vorher „simulated round“ — die Wortregel gilt jetzt ausnahmslos.)
 
 ### 2.8 Push (§8, `core/reminders.ts:26–34`)
 
@@ -356,7 +363,7 @@ Kopf (`App.tsx:72,76`). Der Diagnose-Build zeigt **nur** den Diagnose-Screen (`A
 
 1. **Onboarding** (§1, drei Schritte): kein Screen, keine Komponente. Nur der eine Satz
    `You can copy a backup code in Settings.` liegt in `copy.ts:92`.
-2. **Vorschau / `Preview · simulated round`** (§1, D1): nicht gebaut.
+2. **Vorschau / `Preview · simulated call`** (§1, D1): nicht gebaut. (Der String hieß bis zum 22.09.2026 „simulated round“; der Owner hat ihn auf die Wortregel gezogen.)
 3. **Widget** (§Widget, sechs Zustände): kein Android-Widget im Repo.
 4. **Today-Zustand `pending`** (§2, nach 04:00, vor 16:00, mit `reference 04:02 $150.00`):
    `TodayView` kennt nur `open`, `sealed`, `closed`, `no-call` (`core/day.ts:14–30`).
@@ -380,9 +387,11 @@ Kopf (`App.tsx:72,76`). Der Diagnose-Build zeigt **nur** den Diagnose-Screen (`A
 
 **GAP — Zustand im Code, kein freigegebener Text:**
 
-15. `Sealing…`, `Revealing…`, `Pick a side first.`, `— they go out with this signature`,
+15. `— they go out with this signature`,
     `Nothing revealed yet.`, `{n} restored, {m} could not be opened.`, Platzhalter
-    `64 characters` — alle im Screen entstanden, **keiner steht in 03-SCREEN-MAP**.
+    `64 characters` — im Screen entstanden, **keiner steht in 03-SCREEN-MAP**.
+    (`Sealing…`, `Revealing…` und die doppelte Zeile unter dem Knopf sind am 22.09.2026 durch
+    die freigegebenen Texte ersetzt.)
 16. Die Seal-Status `sent`, `unknown`, `failed` (§3.3) haben **keinen** Text: der Spieler sieht
     nur die rohe Fehlerzeile. Was „unbekannt“ dem Nutzer sagt, ist offen.
 17. Netzfehler-Zeile `No connection. Your answer is saved on this phone.` (`useDay.ts:125`) —
