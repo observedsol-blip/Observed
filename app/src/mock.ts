@@ -10,39 +10,13 @@
 /* Mock states (driven from the Settings stub, never from Today/Result) */
 /* ------------------------------------------------------------------ */
 
-export type TodayState =
-  | 'open'
-  | 'open_busy'
-  | 'sealed'
-  | 'pending'
-  | 'missed'
-  | 'not_eligible'
-  | 'no_round';
 
-export type ResultState = 'resolved_partial' | 'resolved_final' | 'no_resolve' | 'sample';
-
-export const TODAY_STATES: { key: TodayState; label: string }[] = [
-  { key: 'open', label: 'Open, unanswered' },
-  { key: 'open_busy', label: 'Open, after 11:50 UTC' },
-  { key: 'sealed', label: 'Sealed' },
-  { key: 'pending', label: 'Pending' },
-  { key: 'missed', label: 'Window closed' },
-  { key: 'not_eligible', label: 'Not eligible' },
-  { key: 'no_round', label: 'No round today' },
-];
 
 export type RecordState = 'default' | 'early_read';
 
 export const RECORD_STATES: { key: RecordState; label: string }[] = [
   { key: 'default', label: 'Record · lock at 8 revealed' },
   { key: 'early_read', label: 'Record · early read at 12 revealed' },
-];
-
-export const RESULT_STATES: { key: ResultState; label: string }[] = [
-  { key: 'resolved_partial', label: 'Resolved, partial' },
-  { key: 'resolved_final', label: 'Resolved, final' },
-  { key: 'no_resolve', label: 'NO_RESOLVE' },
-  { key: 'sample', label: 'Sample round' },
 ];
 
 /* ------------------------------------------------------------------ */

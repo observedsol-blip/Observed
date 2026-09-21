@@ -84,6 +84,12 @@ export type ResultView = {
   verdictSubline: string | null;
   streak: string;
   crowd: { mean: number | null; revealed: number };
+  /** The 21 buckets the program counts, for the distribution. */
+  crowdBuckets: number[];
+  /** The player's own answer as a percentage, for the cursor in the distribution. */
+  ownPercent: number;
+  /** Sentences of others, already checked against their seal memos (E8). Empty until then. */
+  others: string[];
 };
 
 export function resultView(args: {
@@ -92,6 +98,8 @@ export function resultView(args: {
   entry: Entry;
   record: SealRecord | null;
   streak: number;
+  /** Already verified against their seal memos — this function does not check them. */
+  others?: string[];
 }): ResultView {
   const { kind, movedBps } = outcomeFor(args.entry, args.round);
   const moved = (Math.abs(movedBps) / 100).toFixed(2);
@@ -118,6 +126,9 @@ export function resultView(args: {
     verdictSubline: kind === "too-close" && noSide ? copy.verdict.noSide : null,
     streak: copy.streak(args.streak),
     crowd: { mean: crowdMean(args.round), revealed: args.round.revealCount },
+    crowdBuckets: args.round.histogram,
+    ownPercent: args.entry.pBps / 100,
+    others: args.others ?? [],
   };
 }
 

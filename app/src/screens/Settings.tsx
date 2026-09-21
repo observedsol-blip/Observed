@@ -5,13 +5,15 @@ import Hairline from '../components/Hairline';
 import { Block, Body, Kicker, Label, MonoMeta } from '../components/Type';
 import { color, space } from '../tokens';
 import {
+  RESULT_STATES,
+  TODAY_STATES,
+  type DesignState,
+  type ResultDesignState,
+} from '../mockViews';
+import {
   RECORD_STATES,
   RecordState,
-  RESULT_STATES,
-  ResultState,
   settings,
-  TODAY_STATES,
-  TodayState,
 } from '../mock';
 
 function Choice({
@@ -51,10 +53,10 @@ export default function Settings({
   recordState,
   onRecordState,
 }: {
-  todayState: TodayState;
-  onTodayState: (s: TodayState) => void;
-  resultState: ResultState;
-  onResultState: (s: ResultState) => void;
+  todayState: DesignState;
+  onTodayState: (s: DesignState) => void;
+  resultState: ResultDesignState;
+  onResultState: (s: ResultDesignState) => void;
   recordState: RecordState;
   onRecordState: (s: RecordState) => void;
 }) {

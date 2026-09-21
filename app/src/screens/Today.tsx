@@ -1,144 +1,187 @@
-import React, { useState } from 'react';
-import { Text, View } from 'react-native';
-import Screen from '../components/Screen';
-import Scale from '../components/Scale';
-import Hairline from '../components/Hairline';
-import PrimaryButton from '../components/PrimaryButton';
-import SealMoment from '../components/SealMoment';
-import { Block, Body, Kicker, Label, Mono, MonoMeta, Question } from '../components/Type';
-import { color, space, type } from '../tokens';
-import { today, TodayState } from '../mock';
+// Today — draws what the session says, decides nothing itself.
+//
+// Every string comes from docs/03-SCREEN-MAP.md (§2 for the states, §11 for the input), and
+// every state comes from `TodayView`, which is derived from the chain plus the local record.
+// The screen has exactly one job beyond drawing: it must not let a seal start before the player
+// has touched the side, because a 50/50 nobody chose is not an answer.
+import React, { useState } from "react";
+import { Text, View } from "react-native";
+import Screen from "../components/Screen";
+import Hairline from "../components/Hairline";
+import PrimaryButton from "../components/PrimaryButton";
+import SentenceField from "../components/SentenceField";
+import SideConfidence, { type Side, fromPBps, toPBps } from "../components/SideConfidence";
+import { Block, Body, Kicker, Label, Mono, MonoMeta, Question } from "../components/Type";
+import type { TodayView } from "../core/day.ts";
+import { copy } from "../copy.ts";
+import { color, space, type } from "../tokens";
 
-/**
- * Today — all six states from 03 §2. Which state is shown is chosen on the
- * Settings stub; no state-switching copy appears on this screen.
- */
-export default function Today({ state }: { state: TodayState }) {
-  const [probability, setProbability] = useState<number>(today.defaultProbability);
-  const [sealed, setSealed] = useState(false);
+export type TodayActions = {
+  /** Writes the answer down. No wallet, no network. */
+  onSave: (pBps: number, sentence?: string, share?: boolean) => Promise<void> | void;
+  /** The one approval of the day: reveal everything open, seal today. */
+  onSeal: () => Promise<void> | void;
+  onConnect?: () => Promise<void> | void;
+};
 
-  const isOpen = state === 'open' || state === 'open_busy';
+export default function Today({
+  view,
+  actions,
+  busy = false,
+  error = null,
+}: {
+  view: TodayView;
+  actions: TodayActions;
+  busy?: boolean;
+  error?: string | null;
+}) {
+  const initial = view.phase === "open" && view.pBps !== null ? fromPBps(view.pBps) : null;
+  const [side, setSide] = useState<Side>(initial?.side ?? null);
+  const [confidence, setConfidence] = useState<number>(initial?.confidence ?? 50);
+  const [sentence, setSentence] = useState("");
+  const [share, setShare] = useState(false);
 
-  if (state === 'no_round') {
+  if (view.phase === "no-call") {
     return (
       <Screen>
-        <Kicker>{today.roundLine}</Kicker>
         <Block>
-          <Question>{today.noRound}</Question>
+          <Question>No question today. Open calls can still be revealed.</Question>
         </Block>
+        <OpenReveals view={view} actions={actions} busy={busy} />
       </Screen>
     );
   }
 
-  if (state === 'not_eligible') {
+  if (view.phase === "closed") {
     return (
       <Screen>
-        <Kicker>{today.roundLine}</Kicker>
         <Block>
-          <Question>{today.notEligible}</Question>
+          <Mono style={{ color: color.meta }}>{view.text}</Mono>
         </Block>
-        <Block top={space.lg}>
-          <Body>{today.notEligibleDetail}</Body>
-        </Block>
-        <Block top={space.lg}>
-          <Label style={{ color: color.ink, textDecorationLine: 'underline' }}>
-            {today.notEligibleLink}
-          </Label>
-        </Block>
+        <OpenReveals view={view} actions={actions} busy={busy} />
       </Screen>
     );
   }
 
-  if (state === 'missed') {
+  if (view.phase === "sealed") {
     return (
       <Screen>
-        <Kicker>{today.roundLine}</Kicker>
-        <Block>
-          <Question>{today.question}</Question>
+        <Kicker>{`CALL ${view.roundId}`}</Kicker>
+        <Block top={space.lg}>
+          <Question>{view.question}</Question>
         </Block>
         <Hairline />
-        <Mono style={{ color: color.meta }}>{today.missed}</Mono>
+        <Mono>Sealed</Mono>
+        <Block top={space.md}>
+          <Label>Hidden until you reveal.</Label>
+        </Block>
+        <OpenReveals view={view} actions={actions} busy={busy} />
       </Screen>
     );
   }
 
-  if (state === 'pending') {
-    // Pending, afternoon: the question is small and now carries the number.
-    // The user's own value is deliberately NOT repeated here.
-    return (
-      <Screen>
-        <Kicker>{today.roundLine}</Kicker>
-        <Block top={space.md}>
-          <Body>{today.question}</Body>
-          <MonoMeta style={{ marginTop: space.xs }}>{today.questionResolvedDetail}</MonoMeta>
-        </Block>
-        <Hairline />
-        <Mono style={{ color: color.meta }}>{today.pendingStatus}</Mono>
-        <Block top={space.lg}>
-          <MonoMeta>{today.pendingNextWindow}</MonoMeta>
-        </Block>
-        <SealMoment />
-      </Screen>
-    );
-  }
+  // --- open for sealing
+  const pBps = toPBps(side, confidence);
+  const touched = side !== null;
+  const blocked = view.blocked;
 
-  if (state === 'sealed' || sealed) {
-    return (
-      <Screen>
-        <Kicker>{today.roundLine}</Kicker>
-        <Block top={space.md}>
-          <MonoMeta>{today.genesis}</MonoMeta>
-        </Block>
-        <Block top={space.lg}>
-          <Question>{today.question}</Question>
-        </Block>
-        <Hairline />
-        <Mono>{today.sealedStatus}</Mono>
-        <Block top={space.md}>
-          <Label>{today.sealedHint}</Label>
-        </Block>
-        <SealMoment />
-      </Screen>
-    );
-  }
-
-  // Open, unanswered (and the 11:50 UTC variant).
   return (
     <Screen>
-      <Mono style={{ color: state === 'open_busy' ? color.ink : color.meta }}>
-        {state === 'open_busy' ? today.windowLineBusy : today.windowLine}
-      </Mono>
-      <Block top={space.lg}>
-        <Kicker>{today.roundLine}</Kicker>
-        <MonoMeta style={{ marginTop: space.xs }}>{today.genesis}</MonoMeta>
+      <Kicker>{`CALL ${view.roundId}`}</Kicker>
+      <Block top={space.md}>
+        <Question>{view.question}</Question>
+        {view.context ? <MonoMeta style={{ marginTop: space.sm }}>{view.context}</MonoMeta> : null}
       </Block>
 
       <Block>
-        <Question>{today.question}</Question>
+        <SideConfidence
+          side={side}
+          confidence={confidence}
+          onChange={(nextSide, nextConfidence) => {
+            setSide(nextSide);
+            setConfidence(nextConfidence);
+          }}
+        />
       </Block>
 
-      <Block>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: space.md }}>
-          <Text style={{ ...type.hero, color: color.pencil }}>{probability}</Text>
-          <Text style={{ ...type.numberLarge, color: color.pencil, marginBottom: 6 }}>%</Text>
-        </View>
-        <Label style={{ marginTop: space.xs }}>{today.chanceLabel}</Label>
-      </Block>
-
-      <Block>
-        <Scale mode="input" value={probability} onChange={setProbability} />
+      <Block top={space.xl}>
+        <SentenceField
+          pBps={pBps}
+          sentence={sentence}
+          share={share}
+          onSentence={setSentence}
+          onShare={setShare}
+        />
       </Block>
 
       <Hairline />
 
-      {isOpen ? (
-        <Label style={{ marginBottom: space.md }}>{today.sameSignature}</Label>
+      {blocked ? (
+        <Block>
+          <Body style={{ color: color.ink }}>
+            {blocked.kind === "no-sgt" ? blocked.text : blocked.title}
+          </Body>
+          {blocked.kind === "no-sol" ? (
+            <Label style={{ marginTop: space.sm }}>{blocked.body}</Label>
+          ) : null}
+        </Block>
+      ) : (
+        <>
+          {view.openReveals > 0 ? (
+            <Label style={{ marginBottom: space.md }}>
+              {`${copy.openReveals(view.openReveals)} — they go out with this signature`}
+            </Label>
+          ) : null}
+          <PrimaryButton
+            label={busy ? "Sealing…" : "Seal today"}
+            disabled={!touched || busy}
+            onPress={async () => {
+              await actions.onSave(pBps, sentence.trim() || undefined, share);
+              await actions.onSeal();
+            }}
+          />
+          {!touched ? (
+            <Label style={{ marginTop: space.sm, color: color.meta }}>Pick a side first.</Label>
+          ) : null}
+        </>
+      )}
+
+      {error ? (
+        <Block top={space.lg}>
+          <Text style={[type.monoSmall, { color: color.pencil }]}>{error}</Text>
+        </Block>
       ) : null}
-      <PrimaryButton label={today.primary} onPress={() => setSealed(true)} />
 
       <Block top={space.xl}>
-        <MonoMeta>{today.cost}</MonoMeta>
+        <MonoMeta>
+          No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the call
+          closes.
+        </MonoMeta>
       </Block>
     </Screen>
+  );
+}
+
+function OpenReveals({
+  view,
+  actions,
+  busy,
+}: {
+  view: TodayView;
+  actions: TodayActions;
+  busy: boolean;
+}) {
+  if (view.openReveals === 0) return null;
+  return (
+    <Block top={space.xl}>
+      <Label>{copy.openReveals(view.openReveals)}</Label>
+      <View style={{ marginTop: space.md }}>
+        <PrimaryButton
+          label={busy ? "Revealing…" : "Reveal"}
+          disabled={busy}
+          onPress={() => actions.onSeal()}
+        />
+      </View>
+    </Block>
   );
 }
