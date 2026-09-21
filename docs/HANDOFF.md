@@ -385,6 +385,39 @@ geschützte Pfade ab sofort nicht mehr über Bash-Skripte.
 Oberfläche (E3), Übergangs-Icon, Resolver-Repo prüfen — alles vor dem Build am 26.09. §0b bleibt
 am Mittwoch das Erste, `cargo audit` läuft vor dem Deploy noch einmal.
 
+## §0b als Generalprobe, 22.09.2026 — Commit `41ce049`
+
+Der Mittwoch soll eine **Wiederholung** sein, kein erster Versuch. Deshalb einmal die ganze
+Reihenfolge auf dem aktuellen Stand, mit gemessenen Werten:
+
+| Schritt | Ergebnis |
+|---|---|
+| Arbeitsbaum | sauber, 0 geänderte Dateien, Commit `41ce04970ac19724bcda7814466826750f0cd90e` |
+| `anchor build` | OK, 6 s |
+| `cargo test --test observed` | **50 Tests**, 0 Fehler, 1,84 s |
+| `cargo test --test season` | **1 Test** (64 Runden, 20 Geräte), 0 Fehler, 29,6 s |
+| `cargo test --test capacity` / `vectors` | 2 + 3 Tests, 0 Fehler |
+| `cargo clippy --all-targets -- -D warnings` | leer |
+| App: `tsc --noEmit` + `npm test` | sauber, **109 Tests**, 0 Fehler |
+| Merkle-Wurzel neu gerechnet | `5ae91bda…0d08c89` — **unverändert** gegenüber dem Drehbuch |
+| Fixtures (`tests/fixtures`, `docs/generated`) | nach dem Neuerzeugen **byte-gleich** mit den eingecheckten: `git status` leer |
+| Prüfsumme des Binaries | `fbcd1b7c85423db3bdcdf737c064a122fe696fc96e069acc1447eb02a251ec99`, 345 296 Bytes |
+| Deploy + `program dump` + `truncate` + Vergleich | **identische Prüfsumme** — gegen einen lokalen Validator, Program-ID `48Yy…x2ni` |
+
+**Was die Probe wert ist:** Der Teil, der am Mittwoch am ehesten schiefgeht, ist nicht der Build,
+sondern der Beleg danach — `solana program dump` liefert eine hinten mit Nullen aufgefüllte Datei,
+und ohne `truncate` auf die Originalgröße weichen die Prüfsummen immer ab. Genau dieser Ablauf ist
+jetzt einmal gelaufen und stimmt. Am Mittwoch ändern sich nur das Netz, der Schlüssel und die
+Tatsache, dass `--features mainnet` ein anderes Binary erzeugt — die Prüfsumme oben gilt also
+**nicht** für den Mainnet-Build, sie ist der Beweis, dass das Verfahren funktioniert.
+
+**Eigener Fehler in der Probe, benannt:** Mein Skript hat sich für den lokalen Validator mit
+`solana-keygen new` einen Wegwerf-Schlüssel erzeugt — und dessen Seed-Phrase landete damit in
+einer Logdatei. Der Schlüssel hat nie etwas anderes gehalten als Airdrop-SOL einer Kette, die es
+nicht mehr gibt; Verzeichnis und Zeilen sind gelöscht. Trotzdem falsch: Ein Skript von mir darf
+keine Schlüssel erzeugen, die irgendwo hingeschrieben werden. Am Mittwoch wird der vorhandene
+Validator-Payer wiederverwendet, kein neuer erzeugt.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|

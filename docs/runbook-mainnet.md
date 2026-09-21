@@ -36,6 +36,12 @@ Datei, nicht ein neuer Build.** Mit `--features mainnet` ändert sich das Binary
 (DEPLOY_AUTHORITY), also gilt: erst 1a, dann bauen, dann testen, dann deployen, ohne noch einmal
 dazwischen zu bauen.
 
+**Einmal geprobt am 22.09.2026** (Commit `41ce049`, gegen einen lokalen Validator): Bauen,
+alle Tests, Saisonlauf, Clippy, Kalenderwurzel, Fixtures, Prüfsumme und der Vergleich
+`deploy → dump → truncate → sha256sum` liefen durch, die Prüfsummen stimmten überein. Am
+Mittwoch ist das eine Wiederholung. **Achtung:** `--features mainnet` erzeugt ein anderes
+Binary als die Probe — die Prüfsumme wird dort neu genommen.
+
 ## 1. Programm bauen und deployen (≈ 20 min)
 ```
 cd ~/observed
