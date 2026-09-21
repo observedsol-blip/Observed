@@ -2,7 +2,7 @@
 // reinstall is the export — and these tests are what make that promise safe to print.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { SeasonSecret, looksLikeSeedPhrase } from "../src/core/secret.ts";
@@ -25,7 +25,7 @@ const sgtMint = new PublicKey(Uint8Array.from(Array(32).fill(0x11)));
 const deps = (store: MemoryStore, seed = 7) => ({
   store,
   now: () => 1_790_000_000,
-  randomBytes: (n: number) => Uint8Array.from({ length: n }, (_, i) => (i * seed + 3) % 256),
+  randomBytes: async (n: number) => Uint8Array.from({ length: n }, (_, i) => (i * seed + 3) % 256),
 });
 
 test("the secret is created once and read back after that", async () => {
@@ -188,3 +188,52 @@ test("a backup code is never mistaken for a phrase", () => {
   assert.equal(looksLikeSeedPhrase("one two three four five six seven eight nine ten eleven"), false);
 });
 
+
+/**
+ * The weak path must stay unreachable, and "unreachable" is a property of the source, not of one
+ * run: expo-crypto's synchronous `getRandomBytes` fills the array from `Math.random()` when
+ * `__DEV__` is set and a remote debugger is attached, and a secret born there is kept for the
+ * season. So this test reads the app sources and insists that nobody calls it.
+ */
+test("the secret is never filled from the synchronous random source", () => {
+  const src = join(import.meta.dirname, "../src");
+  const offenders: string[] = [];
+  const walk = (dir: string) => {
+    for (const item of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, item.name);
+      if (item.isDirectory()) {
+        walk(path);
+        continue;
+      }
+      if (!/\.tsx?$/.test(item.name)) continue;
+      const text = readFileSync(path, "utf8");
+      // getRandomBytes( but not getRandomBytesAsync(
+      if (/getRandomBytes\s*\(/.test(text)) offenders.push(path);
+    }
+  };
+  walk(src);
+  assert.deepEqual(offenders, [], "use Crypto.getRandomBytesAsync — see core/secret.ts");
+});
+
+test("the season secret comes from the provider, asynchronously", async () => {
+  let asked = 0;
+  const store = new MemoryStore();
+  const s = new SeasonSecret({
+    store,
+    now: () => 1,
+    randomBytes: async (n) => {
+      asked += 1;
+      return Uint8Array.from({ length: n }, (_, i) => (i * 5 + 9) % 256);
+    },
+  });
+  const wallet = Keypair.generate().publicKey;
+  const first = await s.get(wallet);
+  assert.equal(first.fresh, true);
+  assert.equal(first.secret.length, 32);
+  assert.equal(asked, 1);
+  // second time it comes out of the store, not out of the provider
+  const again = await s.get(wallet);
+  assert.equal(again.fresh, false);
+  assert.equal(asked, 1);
+  assert.equal(bytesToHex(again.secret), bytesToHex(first.secret));
+});

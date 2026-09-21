@@ -103,7 +103,7 @@ async function makeSession() {
     store: new FileStore(),
     calendar: plan.rounds,
     now: () => now,
-    randomBytes: (n) => Uint8Array.from({ length: n }, (_, i) => (i * 11 + 5) % 256),
+    randomBytes: async (n) => Uint8Array.from({ length: n }, (_, i) => (i * 11 + 5) % 256),
   });
   const connected = await session.connect();
   if (!connected.ok) throw new Error(`connect: ${connected.reason}`);

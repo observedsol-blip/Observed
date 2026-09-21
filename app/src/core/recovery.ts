@@ -1,9 +1,10 @@
 // Getting an open answer back after a reinstall.
 //
 // After an uninstall the phone has nothing: no salt, no number, no record. What it can get back
-// is the secret (from the wallet signature) — and with it everything else, because the chain
-// still holds the commitment: try all 21 possible answers, and the one whose commitment matches
-// is the answer that was sealed. 21 hashes, no guessing, no trust.
+// is the secret — from the backup code the player copied out of Settings, never from the wallet
+// (Seed Vault cannot sign messages) — and with it everything else, because the chain still holds
+// the commitment: try all 21 possible answers, and the one whose commitment matches is the
+// answer that was sealed. 21 hashes, no guessing, no trust.
 import type { PublicKey } from "@solana/web3.js";
 import { commitmentHash, saltFor } from "../chain/commitment.ts";
 import { bytesToHex } from "../chain/calendar.ts";

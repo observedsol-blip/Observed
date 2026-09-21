@@ -31,23 +31,41 @@ App nie wieder aktualisieren.
 
 ## 2. Die Zugangsdatei daneben legen (machst du)
 
+**Das Passwort wird nicht in die Shell getippt.** Erst die leere Datei mit den richtigen Rechten
+anlegen, dann im Editor füllen — ein Heredoc oder ein `echo` landet mitsamt Passwort in
+`~/.bash_history` und steht dort noch, wenn der Keystore längst wichtig ist. (Stand bis zum
+21.09.2026 anders auf dieser Seite; im eigenen Audit gefunden und geändert.)
+
 ```
-cat > ~/.config/observed/release-credentials.json <<'EOF'
+umask 077
+: > ~/.config/observed/release-credentials.json
+chmod 600 ~/.config/observed/release-credentials.json
+nano ~/.config/observed/release-credentials.json     # oder vim, egal
+```
+
+Inhalt, mit deinem Passwort an den zwei Stellen:
+
+```json
 {
   "android": {
     "keystore": {
       "keystorePath": "/home/observed/.config/observed/observed-release.jks",
-      "keystorePassword": "DEIN-PASSWORT",
+      "keystorePassword": "",
       "keyAlias": "observed",
-      "keyPassword": "DEIN-PASSWORT"
+      "keyPassword": ""
     }
   }
 }
-EOF
-chmod 600 ~/.config/observed/release-credentials.json
 ```
 
 **Absoluter Pfad, kein `~`** — EAS löst die Tilde nicht auf.
+
+Danach einmal prüfen, dass nichts davon in der Historie steht:
+
+```
+grep -c "keystorePassword" ~/.bash_history   # muss 0 sein
+ls -l ~/.config/observed/release-credentials.json   # muss -rw------- sein
+```
 
 ## 3. Was die Konfiguration im Repo tut
 

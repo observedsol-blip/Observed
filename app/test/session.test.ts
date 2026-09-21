@@ -128,7 +128,7 @@ function makeSession(fake: FakeChain, now: number) {
     store,
     calendar: cal.rounds,
     now: () => now,
-    randomBytes: (n) => Uint8Array.from({ length: n }, (_, i) => (i * 7 + 1) % 256),
+    randomBytes: async (n) => Uint8Array.from({ length: n }, (_, i) => (i * 7 + 1) % 256),
   });
   return { session, store, signed, wallet };
 }

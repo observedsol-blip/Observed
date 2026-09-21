@@ -19,6 +19,7 @@
     },
     "android": {
       "package": "day.observed.app",
+      "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1C1F1D"

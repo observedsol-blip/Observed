@@ -29,7 +29,8 @@ export type SessionDeps = {
   store: Store;
   calendar: CalendarRound[];
   now: () => number;
-  randomBytes: (n: number) => Uint8Array;
+  /** Asynchronous on purpose — see the note in core/secret.ts. */
+  randomBytes: (n: number) => Promise<Uint8Array>;
 };
 
 export type DayState = {
@@ -295,8 +296,9 @@ export class Session {
   }
 
   /**
-   * The backup key (E2). 64 hex characters, useless without this wallet — it opens nothing on
-   * its own, it only rebuilds the salts that this phone would have derived anyway.
+   * The backup code (E2) — the word is "backup code", never "key" and never "recovery" (owner,
+   * 21.09.2026). 64 hex characters, useless without this wallet: it opens nothing on its own, it
+   * only rebuilds the salts that this phone would have derived anyway.
    */
   async exportSecret(): Promise<string | null> {
     return new SeasonSecret({
@@ -307,7 +309,7 @@ export class Session {
   }
 
   /**
-   * After a reinstall: paste the key back, then rebuild every open answer from the chain.
+   * After a reinstall: paste the backup code back, then rebuild every open answer from the chain.
    * Returns how many came back and which ones could not — a call that cannot be opened is named,
    * never silently dropped.
    */

@@ -132,6 +132,7 @@ export class Chain {
       if (!payer) return;
 
       const memos: string[] = [];
+      let committed = false;
       let revealed = false;
       let saltHex: string | undefined;
       let pBps: number | undefined;
@@ -151,8 +152,19 @@ export class Chain {
         if (!("data" in ix) || typeof ix.data !== "string") continue;
         const data = bs58.decode(ix.data);
         if (data.length < 8) continue;
+
+        // A commit — but only one that names THIS round. A transaction may carry more than one
+        // instruction, and a seal memo is worth something only next to the commit it belongs to.
+        if (sameBytes(data.subarray(0, 8), IX.commit)) {
+          const accounts = (ix as { accounts?: PublicKey[] }).accounts ?? [];
+          if (accounts.some((a) => a.equals(round))) committed = true;
+          continue;
+        }
+
         if (!sameBytes(data.subarray(0, 8), IX.reveal)) continue;
-        // reveal: disc(8) + p_bps(2) + salt(32)
+        // reveal: disc(8) + p_bps(2) + salt(32). A truncated one is not ours: ignore it rather
+        // than read past the end of the buffer.
+        if (data.length < 42) continue;
         revealed = true;
         pBps = new DataView(data.buffer, data.byteOffset + 8, 2).getUint16(0, true);
         saltHex = [...data.subarray(10, 42)].map((b) => b.toString(16).padStart(2, "0")).join("");
@@ -163,6 +175,7 @@ export class Chain {
         blockTime: tx.blockTime ?? null,
         payer,
         memos,
+        committed,
         revealed,
         saltHex,
         pBps,

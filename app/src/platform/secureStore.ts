@@ -1,8 +1,12 @@
 // The real store: Android keystore via expo-secure-store.
 //
-// Two things to know about it. It cannot list keys, so the index is kept by hand. And it is
-// wiped when the app is uninstalled — which is exactly why the season secret is derived from a
-// wallet signature and can be fetched back (app/src/core/secret.ts).
+// Three things to know about it. It cannot list keys, so the index is kept by hand. It is wiped
+// when the app is uninstalled — the season secret is random and local since 21.09.2026 (Seed
+// Vault cannot sign messages), so the only way back is the backup code the player copies out
+// (app/src/core/secret.ts). And `keychainAccessible` is an iOS option: on Android the values sit
+// in SharedPreferences, encrypted with a key in the Android keystore, and are kept out of cloud
+// backup and device transfer by expo-secure-store's own backup rules plus `allowBackup: false`
+// in app.json.
 import * as SecureStore from "expo-secure-store";
 import type { Store } from "../core/store.ts";
 

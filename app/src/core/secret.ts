@@ -20,8 +20,15 @@ const KEY = "secret";
 export type SecretDeps = {
   store: Store;
   now: () => number;
-  /** 32 random bytes — expo-crypto on the phone. */
-  randomBytes: (n: number) => Uint8Array;
+  /**
+   * 32 random bytes — `Crypto.getRandomBytesAsync` on the phone, and asynchronous for exactly
+   * that reason. expo-crypto's synchronous `getRandomBytes` carries a fallback that fills the
+   * array with `Math.random()` when `__DEV__` is set and a remote debugger is attached. In a
+   * shipped build that branch is dead, but a secret born once under a debugger is written to the
+   * keystore and used for the rest of the season. The async variant has no such branch
+   * (node_modules/expo-crypto/src/Crypto.ts), so the weak path cannot be reached by accident.
+   */
+  randomBytes: (n: number) => Promise<Uint8Array>;
 };
 
 export class SeasonSecret {
@@ -40,7 +47,7 @@ export class SeasonSecret {
     if (existing && existing.wallet === wallet.toBase58()) {
       return { secret: hexToBytes(existing.secretHex), fresh: false };
     }
-    const secret = this.deps.randomBytes(32);
+    const secret = await this.deps.randomBytes(32);
     if (secret.length !== 32) throw new Error(`need 32 random bytes, got ${secret.length}`);
     await this.write(secret, wallet);
     return { secret, fresh: true };

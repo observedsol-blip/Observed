@@ -41,7 +41,9 @@ export function useDay(config: LiveConfig | null) {
         store,
         calendar: config.calendar,
         now: () => Math.floor(Date.now() / 1000),
-        randomBytes: (n) => Crypto.getRandomBytes(n),
+        // Never the synchronous getRandomBytes: it falls back to Math.random under a
+        // remote debugger, and that secret would then be kept for the season.
+        randomBytes: (n) => Crypto.getRandomBytesAsync(n),
       }),
     );
   }, [config]);
