@@ -22,7 +22,7 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 6. Keine Schlüssel, keine Wallet-Adressen von Dinkelberg, keine Secrets — auch nicht als Beispiel.
 
 ## Stand
-- Letzte Aktualisierung: 21.09.2026 (nachts), von Claude Code (**Teil B 1–7 gebaut**: Chain-Schicht, Zustandsmaschine, Geheimnis mit Wiederherstellung, Wallet/SGT/SOL, Ende-zu-Ende aus App-Code, Diagnose-APK, Texte — 63 App-Tests, vorher null; davor: **E1 + E10 umgesetzt**: Richtungsfrage als Standard, Aufdeckfenster 72 h, neuer Kalender-Root `5ae91bda…`, Saisonlauf auf Tagesmechanik umgebaut; davor: Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
+- Letzte Aktualisierung: 21.09.2026 (spät), von Claude Code (**Kernablauf in der Oberfläche**, Export/Import des Geheimnisses, Erinnerungen, Release-Konfiguration, Tester-Anleitung, Sätze der anderen, README-Entwurf — **84 App-Tests**; davor: **Teil B 1–7 gebaut**: Chain-Schicht, Zustandsmaschine, Geheimnis mit Wiederherstellung, Wallet/SGT/SOL, Ende-zu-Ende aus App-Code, Diagnose-APK, Texte — 63 App-Tests, vorher null; davor: **E1 + E10 umgesetzt**: Richtungsfrage als Standard, Aufdeckfenster 72 h, neuer Kalender-Root `5ae91bda…`, Saisonlauf auf Tagesmechanik umgebaut; davor: Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
 - **Entschieden am 21.09. (Dinkelberg):** `Player` wird **nicht** erweitert (Option 1, Bänder-Zähler erst nach dem 10.11.); `close_entry` rollierend — schließbar 30 Tage nach dem Aufdeckfenster, aber nie vor dem 09.11.2026, beide Werte in den Rundenbedingungen und im Hash; der Resolver schließt täglich, die Miete geht an die Wallet des Spielers, die Gebühr zahlt die Hot Wallet. Bis die Veranstalter antworten gilt: **der Resolver darf während der Bewertung nicht angefasst werden** — das Drehbuch plant so.
 - Davor: 19.09.2026, von Claude Code (O1 entschieden: W = A = 60 s, `posted_slot` für beide Lesungen; Basisraten-Linie (c); Schwellen ≥ 1,0 %, BTC nicht am Wochenende; zweiter Cron für 04:00 und 16:00; Schnitt am Do 24.09. aus gemessenen Zahlen).
 - **Arbeitsreihenfolge (Dinkelberg, 20.09.).** Zuerst 1–7: Flag für knappe Runden (erledigt, d1b32ce) · Resolver auf O1 (erledigt, Resolver-Repo `4aa25a8`, jetzt auf GitHub) · Devnet von Ende zu Ende · App-Kernablauf mit Attrappen · Release-Build-Konfiguration · Drehbuch für den Mainnet-Deploy am 24.09. · Tester-Anleitung.
@@ -250,6 +250,40 @@ möglichen Moment. Jetzt linear geschätzt (10 000 + 160 je Byte) plus 20 % Rese
 **Noch nicht erledigt (ehrlich):** Today und Result zeichnen weiter aus `mock.ts`; die Eingabe ist
 noch der alte Regler, nicht Seite + Sicherheit. Die Logik dafür steht und ist getestet, die
 Verdrahtung der Bildschirme fehlt. Auf einem echten Gerät ist **nichts** davon gelaufen.
+
+## Teil B, zweite Hälfte — Stand 21.09.2026 spätabends
+
+**84 App-Tests** (morgens: null), Typecheck sauber, ein Abend-Durchlauf aus dem App-Code gegen
+einen lokalen Validator.
+
+| Punkt | Stand | Commit |
+|---|---|---|
+| 1 Kernablauf in der Oberfläche | **steht**; Today und Result lesen aus `session.ts`, Attrappen nur noch für die Gestaltung | `f94db27`, `9589255` |
+| 2 Geheimnis Export/Import | **steht**, mit Wiederherstellung offener Antworten aus dem Commitment | `0a4749d` |
+| 3 Erinnerungen | **steht**, lokal, ungenau geplant, Berechtigung erst nach dem Tap | `7752d3c` |
+| 4 Release-Konfiguration | **steht** — `docs/RELEASE-BUILD.md`, keytool-Befehl für Dinkelberg | `41c8d0a` |
+| 5 Tester-Anleitung | **steht** — `docs/TESTER-GUIDE.md`, eine Seite Englisch | `41c8d0a` |
+| 6 Sätze der anderen | **steht**, jeder Satz gegen sein Siegel-Memo geprüft | `859cfe3` |
+| 7 README-Entwurf | **steht** — `docs/README-DRAFT.md` | `e5d1b07` |
+
+**Drei Fehler, die nur der Validator-Lauf zeigen konnte** (alle behoben, alle mit Test):
+1. Nach dem Abend blieben die Datensätze auf `saved`, obwohl der Eintrag on-chain stand — der
+   nächste Start hätte erneut siegeln wollen.
+2. Die Serie zählte immer null: Der neueste Datensatz ist das Siegel von heute, und das kann noch
+   gar nicht aufgedeckt sein. Jetzt zählen nur Runden mit, die ein Ergebnis haben.
+3. Der Testläufer hielt den Validator für bereit, sobald die RPC antwortete — der Deploy lief in
+   einen startenden Validator, und der Fehler zeigte sich erst viel später.
+
+**Was nur am Gerät geht (nicht erledigt, bewusst übersprungen):** Die Oberfläche selbst gegen den
+lokalen Validator zu bedienen braucht Emulator oder Gerät. Stattdessen fährt `drive-session.mjs`
+**genau den Weg, den die Knöpfe aufrufen** — `saveAnswer` und `evening()` — gegen das echte
+Programm. Was dabei ungeprüft bleibt: das Zeichnen selbst und die Gesten.
+
+**Was von Dinkelberg gebraucht wird:**
+- Release-Schlüssel erzeugen (`docs/RELEASE-BUILD.md`, Abschnitt 1 und 2) — vor dem 26.09.
+- Freigabe der Backup-Texte (Offen 16) und der vier Copy-Fragen (Offen 14).
+- Entscheidung, ob der Onboarding-Satz „One Seed Vault approval a day“ bleibt — er ist jetzt
+  belegt, also kann er.
 
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
