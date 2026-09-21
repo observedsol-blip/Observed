@@ -46,6 +46,11 @@ const MAX_AGE_SECS = 60; // A
 /** Reference 04:02: two minutes after sealing closes, so every admissible reference (at most
  *  A = 60 s old) was published after 04:01. The program refuses anything closer. */
 const REFERENCE_DELAY_SECS = 120;
+/** Rolling close: an entry may be closed 30 days after its reveal window — but never before
+ *  EARLIEST_CLOSE. Judging runs to 8 Nov; with 30 days alone the first entries would vanish on
+ *  26 Oct, including the ones in the video and the evidence table (owner decision 21.09.2026). */
+const CLOSE_AFTER_SECS = 30 * 24 * 3600;
+const EARLIEST_CLOSE_UNIX = Date.parse("2026-11-09T00:00:00Z") / 1000;
 const TERMS_DOMAIN = Buffer.from("observed/terms/v3", "utf8");
 const LEAF_TAG = 0x00;
 const NODE_TAG = 0x01;
@@ -82,6 +87,8 @@ function termsHash(t) {
     u16(t.bandBps),
     u16(t.windowSecs),
     u16(t.maxAgeSecs),
+    u32(t.closeAfterSecs),
+    i64(t.earliestCloseUnix),
     i64(t.commitOpen),
     i64(t.commitClose),
     i64(t.referenceTime),
@@ -150,8 +157,12 @@ for (let i = 0; i < leafCount; i++) {
     offsetBps,
     maxConfBps: MAX_CONF_BPS,
     bandBps: BAND_BPS,
+    closeAfterSecs: CLOSE_AFTER_SECS,
+    earliestCloseUtc: new Date(EARLIEST_CLOSE_UNIX * 1000).toISOString(),
     windowSecs: WINDOW_SECS,
     maxAgeSecs: MAX_AGE_SECS,
+    closeAfterSecs: CLOSE_AFTER_SECS,
+    earliestCloseUnix: EARLIEST_CLOSE_UNIX,
     commitOpen,
     commitClose,
     referenceTime,

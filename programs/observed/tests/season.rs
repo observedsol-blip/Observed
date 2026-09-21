@@ -66,6 +66,8 @@ fn terms_from(r: &serde_json::Value) -> RoundTerms {
         band_bps: r["bandBps"].as_u64().expect("bandBps") as u16,
         window_secs: r["windowSecs"].as_u64().expect("windowSecs") as u16,
         max_age_secs: r["maxAgeSecs"].as_u64().expect("maxAgeSecs") as u16,
+        close_after_secs: r["closeAfterSecs"].as_u64().expect("closeAfterSecs") as u32,
+        earliest_close_unix: r["earliestCloseUnix"].as_i64().expect("earliestCloseUnix"),
         commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
         commit_close: r["commitClose"].as_i64().expect("commitClose"),
         reference_time: r["referenceTime"].as_i64().expect("referenceTime"),
@@ -142,6 +144,23 @@ fn ix_score_for(p: &Player, round_id: u32) -> Instruction {
             round,
             entry: entry_pda(round, p.mint),
             player: player_pda(p.mint),
+        }
+        .to_account_metas(None),
+    )
+}
+
+/// Closing is permissionless: the resolver pays the fee, the deposit goes to the player.
+fn ix_close_for(p: &Player, round_id: u32, payer: Pubkey) -> Instruction {
+    let round = round_pda(round_id);
+    Instruction::new_with_bytes(
+        observed::id(),
+        &observed::instruction::CloseEntry {}.data(),
+        observed::accounts::CloseEntry {
+            payer,
+            rent_refund_to: p.wallet.pubkey(),
+            config: config_pda(),
+            round,
+            entry: entry_pda(round, p.mint),
         }
         .to_account_metas(None),
     )
@@ -373,9 +392,35 @@ fn whole_season_in_fast_forward() {
     assert!(close_calls >= 1, "the scripted close round is marked close");
 
     let mut total_entries = 0u32;
+    let mut revealed_only_checked = 0usize;
     for (i, p) in players.iter().enumerate() {
         let want = expected.get(&i).copied().unwrap_or_default();
         let player = read_player_for(&env, p.mint);
+
+        // What the Record needs must come out of `Player` alone — that account is never closed,
+        // so the record survives a reinstall, a new device and (later) a closed Entry.
+        // Season value including penalties:
+        let season_value = player.score_sum as f64 / player.scored_rounds.max(1) as f64;
+        // Diagnosis from revealed rounds only: every missing entry scores exactly 10 000, so it
+        // can be taken back out without knowing any single Entry.
+        let missing_cost =
+            u64::from(player.missing_scored) * u64::from(observed::MISSING_SCORE_BPS);
+        let revealed_rounds = player.scored_rounds - player.missing_scored;
+        if revealed_rounds > 0 {
+            let revealed_only = (player.score_sum - missing_cost) as f64 / revealed_rounds as f64;
+            assert!(
+                revealed_only <= season_value + f64::EPSILON,
+                "p{i}: the diagnosis can never be worse than the season value"
+            );
+            // cross-check against the scores the test summed itself for revealed rounds only
+            let expected_revealed: u64 = want.3 - u64::from(want.2) * 10_000;
+            assert_eq!(
+                player.score_sum - missing_cost,
+                expected_revealed,
+                "p{i}: revealed-only sum is derivable from Player alone"
+            );
+            revealed_only_checked += 1;
+        }
         assert_eq!(player.commits, want.0, "commits p{i}");
         assert_eq!(player.reveals, want.1, "reveals p{i}");
         assert_eq!(player.missing_scored, want.2, "missing p{i}");
@@ -388,16 +433,69 @@ fn whole_season_in_fast_forward() {
         total_entries += player.commits;
     }
 
+    // ---- the rolling close: deposits come back, the record does not move
+    let first = terms_from(&rounds[0]);
+    let floor = first.earliest_close_unix;
+    let rolling = |t: &RoundTerms| {
+        (t.outcome_time + REVEAL_WINDOW + i64::from(t.close_after_secs)).max(t.earliest_close_unix)
+    };
+    // one second before the floor nothing may close, although the 30 days are long past
+    set_time(&mut env.svm, floor - 1);
+    let sample = &players[2]; // a diligent player, sealed in every round
+    expect_err(
+        sendx!(env, &payer, [ix_close_for(sample, 0, payer_pk)]),
+        "TooEarly",
+    );
+
+    // from the round's own date on, the resolver closes them for the player
+    let mut refunded = 0u64;
+    let mut closed = 0usize;
+    for (index, round_json) in rounds.iter().enumerate() {
+        let round_id = round_json["roundId"].as_u64().expect("roundId") as u32;
+        let terms = terms_from(round_json);
+        set_time(&mut env.svm, rolling(&terms));
+        for p in players.iter() {
+            if read_entry_for(&env, round_id, p.mint).is_none() {
+                continue;
+            }
+            let before = env.svm.get_balance(&p.wallet.pubkey()).expect("balance");
+            sendx!(env, &payer, [ix_close_for(p, round_id, payer_pk)])
+                .unwrap_or_else(|e| panic!("close r{round_id}: {e}"));
+            refunded += env.svm.get_balance(&p.wallet.pubkey()).expect("balance") - before;
+            closed += 1;
+        }
+        if index == 0 {
+            assert!(
+                read_entry_for(&env, round_id, sample.mint).is_none(),
+                "round 0 is empty once its date has passed"
+            );
+        }
+    }
+    assert_eq!(closed, total_entries as usize, "every entry came back");
+
+    // the record is untouched by all that closing
+    for (i, p) in players.iter().enumerate() {
+        let want = expected.get(&i).copied().unwrap_or_default();
+        let player = read_player_for(&env, p.mint);
+        assert_eq!(
+            (player.commits, player.reveals, player.score_sum),
+            (want.0, want.1, want.3),
+            "p{i}: the record survives closed entries"
+        );
+    }
+
     // ---- rent that stays bound (Round and Player are never closable)
-    let round_rent = (486 + 128) * RENT_PER_BYTE_YEAR_X2 * 64;
+    let round_rent = (498 + 128) * RENT_PER_BYTE_YEAR_X2 * 64;
     let player_rent = (8 + 65 + 128) * RENT_PER_BYTE_YEAR_X2 * PLAYERS as u64;
     let entry_rent = (184 + 128) * RENT_PER_BYTE_YEAR_X2 * u64::from(total_entries);
     println!(
         "season: {resolved} resolved, {cancelled} NO_RESOLVE, {close_calls} close; \
          {total_entries} entries, {PLAYERS} players; CU total {cu_total}; \
-         rent bound: rounds {:.3} SOL + players {:.4} SOL (entries {:.3} SOL are refundable)",
+         rent bound: rounds {:.3} SOL + players {:.4} SOL; \
+         {closed} entries closed rolling, {:.3} SOL back to the players (expected {:.3})",
         round_rent as f64 / 1e9,
         player_rent as f64 / 1e9,
+        refunded as f64 / 1e9,
         entry_rent as f64 / 1e9,
     );
 }

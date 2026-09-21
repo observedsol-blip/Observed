@@ -48,6 +48,10 @@ pub const KIND_ABOVE: u8 = 0;
 pub const KIND_MOVE: u8 = 1;
 /// Upper bound for the submission window W and the maximum age A.
 pub const MAX_WINDOW_SECS: u16 = 3_600;
+/// Upper bound for the rolling close delay: one year after the reveal window.
+pub const MAX_CLOSE_AFTER_SECS: u32 = 365 * 24 * 3_600;
+/// Sanity bound for the earliest close date (1 Jan 2100), so a typo cannot lock rent forever.
+pub const MAX_EARLIEST_CLOSE_UNIX: i64 = 4_102_444_800;
 pub const LEAF_TAG: u8 = 0x00;
 pub const NODE_TAG: u8 = 0x01;
 /// One season is a fixed 64-leaf tree (depth 6), docs/01-PROGRAM.md §3.
@@ -161,6 +165,8 @@ pub mod observed {
         r.band_bps = terms.band_bps;
         r.window_secs = terms.window_secs;
         r.max_age_secs = terms.max_age_secs;
+        r.close_after_secs = terms.close_after_secs;
+        r.earliest_close_unix = terms.earliest_close_unix;
         r.commit_open = terms.commit_open;
         r.commit_close = terms.commit_close;
         r.reference_time = terms.reference_time;
@@ -416,12 +422,23 @@ pub mod observed {
         Ok(())
     }
 
-    /// Rent back, but only after the entry can no longer change the record.
+    /// Rent back, permissionless, and never before the round's own closing date.
+    ///
+    /// Two conditions, both from the round terms and therefore in the calendar hash:
+    /// `reveal_close + close_after_secs` (rolling, so rent comes back during the season) and
+    /// `earliest_close_unix` (a floor, so no entry disappears while judging is still running).
+    /// Anyone may call it — the rent always goes to the wallet the entry recorded when it was
+    /// sealed, so this can be done for players rather than by them.
     pub fn close_entry(ctx: Context<CloseEntry>) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         let round = &ctx.accounts.round;
         let entry = &ctx.accounts.entry;
-        require!(now >= round.reveal_close, ObservedError::TooEarly);
+        let closable_at = round
+            .reveal_close
+            .checked_add(i64::from(round.close_after_secs))
+            .ok_or(ObservedError::MathOverflow)?
+            .max(round.earliest_close_unix);
+        require!(now >= closable_at, ObservedError::TooEarly);
         let closable = (round.status == RoundStatus::Resolved as u8 && entry.scored)
             || round.status == RoundStatus::Cancelled as u8;
         require!(closable, ObservedError::EntryNotClosable);
@@ -691,6 +708,11 @@ pub struct RoundTerms {
     pub window_secs: u16,
     /// A: the reading may be at most this old at the moment of submission.
     pub max_age_secs: u16,
+    /// How long after the reveal window an entry may be closed (rolling, per round).
+    pub close_after_secs: u32,
+    /// …but never before this date. Season 1 sets it after judging, so no entry from the video
+    /// or the evidence table can disappear while anyone is still looking (owner decision 21.09.).
+    pub earliest_close_unix: i64,
     pub commit_open: i64,
     pub commit_close: i64,
     /// When the reference is read. Must be more than A after `commit_close`, so every
@@ -715,6 +737,8 @@ impl RoundTerms {
             &self.band_bps.to_le_bytes(),
             &self.window_secs.to_le_bytes(),
             &self.max_age_secs.to_le_bytes(),
+            &self.close_after_secs.to_le_bytes(),
+            &self.earliest_close_unix.to_le_bytes(),
             &self.commit_open.to_le_bytes(),
             &self.commit_close.to_le_bytes(),
             &self.reference_time.to_le_bytes(),
@@ -751,6 +775,14 @@ impl RoundTerms {
             (1..=MAX_WINDOW_SECS).contains(&self.window_secs)
                 && (1..=MAX_WINDOW_SECS).contains(&self.max_age_secs),
             ObservedError::BadWindowParams
+        );
+        require!(
+            self.close_after_secs > 0 && self.close_after_secs <= MAX_CLOSE_AFTER_SECS,
+            ObservedError::BadCloseParams
+        );
+        require!(
+            self.earliest_close_unix >= 0 && self.earliest_close_unix < MAX_EARLIEST_CLOSE_UNIX,
+            ObservedError::BadCloseParams
         );
         // No reference may be visible while sealing is still possible: the oldest admissible
         // reading (reference_time − A) must lie strictly after commit_close.
@@ -835,6 +867,8 @@ pub struct Round {
     pub band_bps: u16,
     pub window_secs: u16,
     pub max_age_secs: u16,
+    pub close_after_secs: u32,
+    pub earliest_close_unix: i64,
     pub commit_open: i64,
     pub commit_close: i64,
     pub reference_time: i64,
@@ -1102,8 +1136,12 @@ pub struct CancelRound<'info> {
 
 #[derive(Accounts)]
 pub struct CloseEntry<'info> {
-    #[account(mut)]
-    pub rent_refund_to: Signer<'info>,
+    /// Pays the transaction. Anyone may do this; it buys no influence.
+    pub payer: Signer<'info>,
+    /// Where the rent goes: fixed in the entry at seal time, so a stranger closing an entry
+    /// can only hand the player their own deposit back.
+    #[account(mut, address = entry.rent_refund_to @ ObservedError::WrongRentRefund)]
+    pub rent_refund_to: SystemAccount<'info>,
     #[account(
         seeds = [b"config", config.game_id.to_le_bytes().as_ref()],
         bump = config.bump,
@@ -1119,7 +1157,6 @@ pub struct CloseEntry<'info> {
         close = rent_refund_to,
         seeds = [b"entry", round.key().as_ref(), entry.sgt_mint.as_ref()],
         bump = entry.bump,
-        has_one = rent_refund_to @ ObservedError::WrongRentRefund,
         constraint = entry.round == round.key() @ ObservedError::EntryRoundMismatch,
     )]
     pub entry: Account<'info, Entry>,
@@ -1215,6 +1252,8 @@ pub enum ObservedError {
     ReferenceBeforeSealCloses,
     #[msg("band_bps must be > 0 and smaller than the threshold")]
     BadBand,
+    #[msg("close delay must be 1..=1 year and the earliest close date must be sane")]
+    BadCloseParams,
     #[msg("price must be > 0")]
     NonPositivePrice,
     #[msg("confidence interval too wide")]

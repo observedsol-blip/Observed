@@ -2,7 +2,7 @@
   "note": "written by programs/observed/tests/observed.rs::entry_layout_fixture — do not edit by hand",
   "pubkey": "9j6eDqiapj1GUDJQtQB5fjN5r2ehxTMNCu2T5kXz31Fo",
   "owner": "48YybyMgkdzPQN5R3V1xsFHkUMxDvBDBDwW48cRTx2ni",
-  "data_base64": "PxKYcdf23foFAXjIHHxDuaiqWM678vQvItqJzl0nOFe/xDhjk2psI27lJtolILuk2t5Yscl7ViK+g8UPYR88XFNBo/slj/It7UkoxijRwsbq6QM4kFmVYSlZJzpcY/k2NsFGFKyHN9HtSSjGKNHCxurpAziQWZVhKVknOlxj+TY2wUYUrIc30TMJMXMJjaLOO6AXn2W8NvhAEPJxrKEdVN9CIHNGnBX6vC2ragAAAAABZBkBAMkE/w==",
+  "data_base64": "PxKYcdf23foFAXjIHHxDuaiqWM678vQvItqJzl0nOFe/xDhjk2psI27lJtolILuk2t5Yscl7ViK+g8UPYR88XFNBo/slj/It7UkoxijRwsbq6QM4kFmVYSlZJzpcY/k2NsFGFKyHN9HtSSjGKNHCxurpAziQWZVhKVknOlxj+TY2wUYUrIc30bp1RfDhbY4oE2hMYHmPKQvVQd74hbGrq7c4/bn8DJvXvC2ragAAAAABZBkBAMkE/w==",
   "expected": {
     "round": "LYLjJ9iiWRw3m1h6ZU6VzjgTgqXb8d7yW8tX4o9qEHp",
     "sgt_mint": "8TtWZksnan3hTTr9fAk3ouCGXNTG2eKqZX4opwWheF8x",

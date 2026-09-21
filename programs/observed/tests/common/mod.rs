@@ -46,6 +46,13 @@ pub const OFFSET_BPS: i32 = 100; // +1 %
 /// Measurement band: p90 of the measured spread per timestamp was 22.7 bps (SOL, W = A = 60 s),
 /// rounded up to 25 (docs/spikes/baserate.md, HANDOFF 18.09.2026).
 pub const BAND_BPS: u16 = 25;
+/// Rolling close: 30 days after the reveal window, but never before the floor.
+pub const CLOSE_AFTER_SECS: u32 = 30 * 24 * 3600;
+/// Test floor, far enough out that the harness has to respect it (like 09.11. in season 1).
+pub const EARLIEST_CLOSE_UNIX: i64 = DAY0 + 60 * 86_400;
+/// When round 0's entry may be closed: the floor wins over the rolling delay here, exactly as
+/// it does for the first rounds of season 1.
+pub const CLOSABLE_TIME: i64 = EARLIEST_CLOSE_UNIX;
 pub const SEASON: u16 = 1;
 
 pub struct Env {
@@ -150,6 +157,8 @@ pub fn terms_rule(
         band_bps: BAND_BPS,
         window_secs: WINDOW_SECS,
         max_age_secs: MAX_AGE_SECS,
+        close_after_secs: CLOSE_AFTER_SECS,
+        earliest_close_unix: EARLIEST_CLOSE_UNIX,
         commit_open: open,
         commit_close: open + 12 * 3600,
         reference_time: open + 12 * 3600 + REFERENCE_DELAY,
@@ -495,12 +504,35 @@ pub fn ix_cancel(round_id: u32) -> Instruction {
     )
 }
 
+/// Closing is permissionless; `payer` may be anyone, the rent always goes to the entry's wallet.
+pub fn ix_close_entry_by(
+    env: &Env,
+    round_id: u32,
+    payer: Pubkey,
+    refund_to: Pubkey,
+) -> Instruction {
+    let round = round_pda(round_id);
+    Instruction::new_with_bytes(
+        observed::id(),
+        &observed::instruction::CloseEntry {}.data(),
+        observed::accounts::CloseEntry {
+            payer,
+            rent_refund_to: refund_to,
+            config: config_pda(),
+            round,
+            entry: entry_pda(round, env.sgt_mint),
+        }
+        .to_account_metas(None),
+    )
+}
+
 pub fn ix_close_entry(env: &Env, round_id: u32) -> Instruction {
     let round = round_pda(round_id);
     Instruction::new_with_bytes(
         observed::id(),
         &observed::instruction::CloseEntry {}.data(),
         observed::accounts::CloseEntry {
+            payer: env.player.pubkey(),
             rent_refund_to: env.player.pubkey(),
             config: config_pda(),
             round,

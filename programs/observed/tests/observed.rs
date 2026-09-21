@@ -145,7 +145,10 @@ fn no_resolve_leaves_commits_unscored() {
     );
 
     // rent can still be reclaimed
-    sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry");
+    {
+        set_time(&mut env.svm, CLOSABLE_TIME);
+        sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry");
+    }
     assert!(read_entry(&env, 0).is_none());
     println!("CU cancel_round={cu}");
 }
@@ -904,8 +907,8 @@ fn account_sizes_are_pinned() {
     );
     assert_eq!(
         8 + observed::Round::INIT_SPACE,
-        486,
-        "Round (terms v3 with reference_time and band, two readings, reserve)"
+        498,
+        "Round (terms v3: reference time, band, closing dates, two readings, reserve)"
     );
     assert_eq!(observed::Reading::INIT_SPACE, 84, "one reading");
 }
@@ -1045,7 +1048,7 @@ fn score_entry_is_idempotent_and_respects_the_window() {
     sendx!(env, &payer, [ix_score(&env, 0)]).expect("score");
     expect_err(sendx!(env, &payer, [ix_score(&env, 0)]), "AlreadyScored");
 
-    set_time(&mut env.svm, REVEAL_CLOSE + 1);
+    set_time(&mut env.svm, CLOSABLE_TIME);
     let cu = sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry");
     println!("CU close_entry={cu}");
 }
@@ -1067,7 +1070,7 @@ fn unscored_entry_cannot_be_closed_in_a_resolved_round() {
     set_time(&mut env.svm, OUTCOME_TIME + 5);
     let out = outcome_update(&mut env, 15_200_000_000);
     sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
-    set_time(&mut env.svm, REVEAL_CLOSE + 1);
+    set_time(&mut env.svm, CLOSABLE_TIME);
     // the missing penalty must not be escapable by closing the entry first
     expect_err(
         sendx!(env, &player, [ix_close_entry(&env, 0)]),
@@ -1075,6 +1078,88 @@ fn unscored_entry_cannot_be_closed_in_a_resolved_round() {
     );
     sendx!(env, &payer, [ix_score(&env, 0)]).expect("score missing");
     sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close after scoring");
+}
+
+/// Entries come back rolling — but not while anyone is still looking. Both dates are in the
+/// round terms and therefore in the calendar hash (owner decision 21.09.2026).
+#[test]
+fn entries_close_rolling_but_never_before_the_floor() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]).expect("reveal");
+    sendx!(env, &payer, [ix_score(&env, 0)]).expect("score");
+
+    // the rolling delay alone is not enough while the floor is still ahead
+    assert!(
+        REVEAL_CLOSE + CLOSE_AFTER_SECS as i64 + 1 < EARLIEST_CLOSE_UNIX,
+        "for this round the floor is the binding date"
+    );
+    set_time(&mut env.svm, REVEAL_CLOSE + CLOSE_AFTER_SECS as i64 + 1);
+    expect_err(sendx!(env, &player, [ix_close_entry(&env, 0)]), "TooEarly");
+
+    // from the floor on, anyone may close it — and the deposit goes to the player, not the caller
+    set_time(&mut env.svm, CLOSABLE_TIME);
+    let stranger = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&stranger.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+    let before = env.svm.get_balance(&player.pubkey()).expect("balance");
+    let ix = ix_close_entry_by(&env, 0, stranger.pubkey(), player.pubkey());
+    sendx!(env, &stranger, [ix]).expect("a stranger may close it for the player");
+    assert!(
+        env.svm.get_balance(&player.pubkey()).expect("balance") > before,
+        "the deposit went back to the player"
+    );
+    assert!(read_entry(&env, 0).is_none(), "entry is gone");
+
+    // and the record does not care: the totals live in Player, which is never closed
+    let p = read_player(&env);
+    assert_eq!((p.commits, p.reveals, p.scored_rounds), (1, 1, 1));
+    assert_eq!(p.score_sum, 3_600, "the score survives the closed entry");
+}
+
+/// Closing cannot be redirected: the refund address is the one the entry recorded when sealed.
+#[test]
+fn closing_cannot_redirect_the_deposit() {
+    let mut env = setup();
+    let player = env.player.insecure_clone();
+    let payer = env.payer.insecure_clone();
+    sendx!(
+        env,
+        &player,
+        [ix_commit(&env, 0, commitment(&env, 0, 4_000, SALT))]
+    )
+    .expect("commit");
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+    sendx!(env, &player, [ix_reveal(&env, 0, 4_000, SALT)]).expect("reveal");
+    sendx!(env, &payer, [ix_score(&env, 0)]).expect("score");
+    set_time(&mut env.svm, CLOSABLE_TIME);
+
+    let thief = solana_keypair::Keypair::new();
+    env.svm
+        .airdrop(&thief.pubkey(), 1_000_000_000)
+        .expect("airdrop");
+    let ix = ix_close_entry_by(&env, 0, thief.pubkey(), thief.pubkey());
+    expect_err(sendx!(env, &thief, [ix]), "WrongRentRefund");
+    assert!(read_entry(&env, 0).is_some(), "the entry is still there");
 }
 
 // ---------------------------------------------------------------- calendar
@@ -1237,6 +1322,8 @@ fn calendar_fixture_matches_program() {
         band_bps: r["bandBps"].as_u64().expect("bandBps") as u16,
         window_secs: r["windowSecs"].as_u64().expect("windowSecs") as u16,
         max_age_secs: r["maxAgeSecs"].as_u64().expect("maxAgeSecs") as u16,
+        close_after_secs: r["closeAfterSecs"].as_u64().expect("closeAfterSecs") as u32,
+        earliest_close_unix: r["earliestCloseUnix"].as_i64().expect("earliestCloseUnix"),
         commit_open: r["commitOpen"].as_i64().expect("commitOpen"),
         commit_close: r["commitClose"].as_i64().expect("commitClose"),
         reference_time: r["referenceTime"].as_i64().expect("referenceTime"),
@@ -1288,6 +1375,15 @@ fn calendar_fixture_matches_program() {
             terms.reference_time - terms.commit_close,
             120,
             "reference 04:02 UTC, two minutes after sealing closes"
+        );
+        assert_eq!(
+            terms.close_after_secs,
+            30 * 24 * 3600,
+            "entries come back 30 days after their reveal window"
+        );
+        assert_eq!(
+            terms.earliest_close_unix, 1_794_182_400,
+            "…but never before 9 Nov 2026 00:00 UTC, after judging ends"
         );
         assert_eq!(
             terms.outcome_time - terms.commit_close,
@@ -1443,7 +1539,10 @@ fn cancelled_round_scores_nobody() {
     assert!(!entry.scored && !entry.scored_as_missing && entry.score_bps == 0);
 
     // rent still comes back, without a scoring precondition
-    sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry on cancelled round");
+    {
+        set_time(&mut env.svm, CLOSABLE_TIME);
+        sendx!(env, &player, [ix_close_entry(&env, 0)]).expect("close_entry on cancelled round");
+    }
     assert!(read_entry(&env, 0).is_none());
 }
 
