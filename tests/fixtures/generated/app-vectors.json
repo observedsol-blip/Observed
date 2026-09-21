@@ -1,0 +1,84 @@
+{
+  "commit_domain": "observed/commit/v1",
+  "commitments": [
+    {
+      "beneficiary": "3JF3sEqM796hk5WFqA6EtmEwJQ9quALszsfJyvXNQKy3",
+      "brier_bps_if_no": 0,
+      "brier_bps_if_yes": 10000,
+      "commitment": "c98e4d27c1eaf6237efc763e7bcef48eae93ea73c9dc4c7e7ba5d5b6cc7bba7d",
+      "p_bps": 0,
+      "round_id": 0,
+      "round_pda": "LYLjJ9iiWRw3m1h6ZU6VzjgTgqXb8d7yW8tX4o9qEHp",
+      "salt": "ded7c0b0245fb985091f9e76d06365069d1db184e4c47e051b790101efde92e4",
+      "sgt_mint": "29d2S7vB453rNYFdR5Ycwt7y9haRT5fwVwL9zTmBhfV2",
+      "terms_hash": "32fdb802a2ac6e612a9f0d3b9ee3b0051e472c8ef23c2f34882d4834848c1426"
+    },
+    {
+      "beneficiary": "3JF3sEqM796hk5WFqA6EtmEwJQ9quALszsfJyvXNQKy3",
+      "brier_bps_if_no": 6400,
+      "brier_bps_if_yes": 400,
+      "commitment": "9ab06747029e223610b0896a8dd38ffb523c868b44b91805a46b9a6ec7048841",
+      "p_bps": 8000,
+      "round_id": 11,
+      "round_pda": "5q9ZmW4dWt6nuDVfKSEMey8UcPB1CBQL6BQFoCfiF6Az",
+      "salt": "a339b86fdd517ecfc9ad1348044cbc34d57931808ce15dda5210e8bf2ce157d2",
+      "sgt_mint": "29d2S7vB453rNYFdR5Ycwt7y9haRT5fwVwL9zTmBhfV2",
+      "terms_hash": "b0625d10dae10521c662c0b50c2fb1c51225c5f1badc78695e26a99b61f83918"
+    },
+    {
+      "beneficiary": "3JF3sEqM796hk5WFqA6EtmEwJQ9quALszsfJyvXNQKy3",
+      "brier_bps_if_no": 2500,
+      "brier_bps_if_yes": 2500,
+      "commitment": "0d049a70a556cc064e538e7fe9c60aec9d96e22b1ff94d04e4651830398da773",
+      "p_bps": 5000,
+      "round_id": 41,
+      "round_pda": "GmWbgjwrBTcq3pagvkyqSJDGNVykVKFm4nkGLLEaqThh",
+      "salt": "76f71b1f9ac0c67892647fdaac0551fc1f4fbd91cef27cfa9465415cc7255ba6",
+      "sgt_mint": "29d2S7vB453rNYFdR5Ycwt7y9haRT5fwVwL9zTmBhfV2",
+      "terms_hash": "778588788cdffa61c369a2c926f57cb6e7f9062d98ca8da164746660057eac29"
+    },
+    {
+      "beneficiary": "3JF3sEqM796hk5WFqA6EtmEwJQ9quALszsfJyvXNQKy3",
+      "brier_bps_if_no": 10000,
+      "brier_bps_if_yes": 0,
+      "commitment": "8d5532611f31b16a00aedde0b03b71e59bf29bded60171abbea3abb718665685",
+      "p_bps": 10000,
+      "round_id": 63,
+      "round_pda": "BAbzUfV7hd5YTRt6SPVbXJitovyRwjmULGYEERpSRBCo",
+      "salt": "ce2a79b17af550d82a9e02d28035af5a208f1a5d91010b47a23d75b50bdcbd20",
+      "sgt_mint": "29d2S7vB453rNYFdR5Ycwt7y9haRT5fwVwL9zTmBhfV2",
+      "terms_hash": "2e9ccc93d092d50990e4dea2982fed01458c44ce586702dc77f5aa2c452e0cdb"
+    }
+  ],
+  "game_id": 1,
+  "note": "Written by programs/observed/tests/vectors.rs. The app decodes and recomputes these.",
+  "pdas": {
+    "config": "7HGAKfsaNyjefca4JeUzFR5wiJ7joHoBHevdHyg5vyJ7",
+    "entry_round_11": "FP1GGUD5UThAz97aJcXUyymcvjJ2neFnzn6nQM3xdLh1",
+    "player": "FdqUBfMXiPskpjodiXiGPhgnudEwCjfJHK8bqKYgd4Dh",
+    "round_0": "LYLjJ9iiWRw3m1h6ZU6VzjgTgqXb8d7yW8tX4o9qEHp",
+    "round_11": "5q9ZmW4dWt6nuDVfKSEMey8UcPB1CBQL6BQFoCfiF6Az"
+  },
+  "program_id": "48YybyMgkdzPQN5R3V1xsFHkUMxDvBDBDwW48cRTx2ni",
+  "salt_domain": "observed/salt/v1",
+  "salts": [
+    {
+      "round_id": 0,
+      "salt": "ded7c0b0245fb985091f9e76d06365069d1db184e4c47e051b790101efde92e4"
+    },
+    {
+      "round_id": 1,
+      "salt": "efb9eeb098eadd1f2d6d629ebac17e24930d1585834d3c4564b18b125fcd0f05"
+    },
+    {
+      "round_id": 2,
+      "salt": "ccc666466c2c064dfbb0209cc6406fa17e00ff2bc9487144e23f31996980abb3"
+    },
+    {
+      "round_id": 3,
+      "salt": "cd8b27d4a9b79a42ef85d9407cac0e860fcf81792fd5bb9eff68c8fb48dd8761"
+    }
+  ],
+  "season": 1,
+  "secret_hex": "5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a5a"
+}
