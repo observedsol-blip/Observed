@@ -531,6 +531,40 @@ Die Ablehnzeile heißt `Not now` und steht in keinem Dokument. Beides sind zwei 
 andere willst. Die Vorschau selbst (D1) ist weiterhin nicht gebaut, deshalb hängt das Angebot nur
 am ersten Siegel, nicht zusätzlich an ihr.
 
+## Markenzeichen `O.`, 22.09.2026 — endgültig, kein Übergang
+
+Owner-Entscheidung: Das O in **Literata SemiBold** in `#E8E0D4`, der Schlusspunkt als **Kreis** in
+`#5B7CFA`, auf `#1C1F1D`. Gerendert aus der Literata, die ohnehin im Repo liegt — kein neues Paket,
+kein Download.
+
+| Asset | Größe | Inhalt |
+|---|---|---|
+| `icon.png` | 1024 × 1024 | Zeichen auf der Fläche, randvoll |
+| `adaptive-icon.png` | 1024 × 1024 | Vordergrund, transparent |
+| `adaptive-icon-monochrome.png` | 1024 × 1024 | dieselbe Form, eine Farbe (in `app.json` eingetragen) |
+| `splash-icon.png` | 703 × 688 | **eigenes Asset**: Zeichen plus Wortmarke `O B S E R V E D` |
+| `favicon.png` | 48 × 48 | dasselbe Zeichen |
+
+Der Hintergrund bleibt `backgroundColor: "#1C1F1D"` — eine Farbe, kein Bild; die erzeugte Fläche
+wäre eine ungenutzte Datei gewesen und ist gelöscht. Damit ist auch der Audit-Befund erledigt,
+dass Splash und Adaptive Icon byte-gleich waren.
+
+**Gemessen, nicht geschätzt** (108-dp-Fläche): Gruppe **53,0 × 43,0 dp**, größter gesetzter Punkt
+**32,0 dp** von der Mitte bei erlaubten 33,0. Die Entwurfsverhältnisse (O 80 pt, Punkt ⌀ 11 dp,
+Abstand 3 dp, Punktunterkante auf der Grundlinie) sind erhalten und gemeinsam auf **37 %**
+skaliert. Unskaliert hätte die Gruppe eine Diagonale von rund **94 dp** — unter einer runden Maske
+wäre rechts und unten etwas abgeschnitten worden. Die Feinwerte kommen aus Figma; das Skript, das
+die Dateien erzeugt, rechnet die Sicherheitszone jedes Mal neu nach.
+
+**Ausrichtung:** Im Repo liegt die Fassung, bei der der **Kasten** der Gruppe mittig sitzt. Zwei
+Alternativen sind gerendert und dem Owner gezeigt (das O mittig, der Punkt hängt über; und der
+Farbschwerpunkt mittig) — die Unterschiede liegen bei zwei bis drei dp.
+
+**Ausnahme, ausdrücklich:** `color.pencil` ist laut `tokens.ts` **nur** für den eigenen Wert, den
+Cursor, den eigenen Balken und den Strich über „pending". Der Punkt des Markenzeichens ist die
+einzige Ausnahme, vom Owner am 22.09.2026 so entschieden. Sie steht jetzt auch im Kommentar in
+`tokens.ts`, damit die Regel nicht später „aufgeweicht" wirkt, ohne dass jemand es beschlossen hat.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|

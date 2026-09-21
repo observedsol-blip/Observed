@@ -433,18 +433,23 @@ Kopf (`App.tsx:72,76`). Der Diagnose-Build zeigt **nur** den Diagnose-Screen (`A
 
 Gemessene Dateien in `app/assets/`:
 
-| Datei | Größe | Format | Dominante Farbe |
-|---|---|---|---|
-| `icon.png` | 1024 × 1024 | PNG, Palette | `#F5F5F7` auf 87 % der Fläche, dazu `#DDDDE1` / `#CFCFD5` |
-| `adaptive-icon.png` | 1024 × 1024 | PNG, Palette mit Transparenz | 89 % transparent, Motiv in `#DDDDE1` / `#CFCFD5` |
-| `splash-icon.png` | 1024 × 1024 | **byte-identisch mit `adaptive-icon.png`** (gleicher SHA-256) | |
-| `favicon.png` | 48 × 48 | PNG mit Alpha | |
+**Seit dem 22.09.2026 gibt es ein Markenzeichen: `O.`** — das O in Literata SemiBold in
+`color.ink`, der Punkt als Kreis in `color.pencil`, auf `color.ground`. Owner-Entscheidung,
+endgültig. Gerendert aus der Literata, die ohnehin im Repo liegt (kein neues Paket).
 
-**Befund:** Das sind die **Vorlagen-Assets von Expo**, grau auf Weiß. Kein Observed-Motiv, keine
-Token-Farbe — nur die Hintergründe wurden auf `#1C1F1D` gesetzt. Ein Icon zu entwerfen ist damit
-offen; nichts im Repo gibt vor, wie es aussehen soll. `adaptive-icon.png` hat außerdem keine
-eigene Sicherheitszone, weil es dasselbe Bild wie der Splash ist — Android beschneidet davon je
-nach Maske bis zu 33 %.
+| Datei | Größe | Inhalt |
+|---|---|---|
+| `icon.png` | 1024 × 1024 | `O.` auf `#1C1F1D`, randvoll |
+| `adaptive-icon.png` | 1024 × 1024 | Vordergrund, transparent, `O.` in der Sicherheitszone |
+| `adaptive-icon-monochrome.png` | 1024 × 1024 | dieselbe Form, eine Farbe (Android färbt selbst) |
+| `splash-icon.png` | 703 × 688 | **eigenes Asset**: `O.` plus Wortmarke `O B S E R V E D` |
+| `favicon.png` | 48 × 48 | dasselbe Zeichen |
+
+Gemessene Geometrie auf der 108-dp-Fläche: Gruppe **53,0 × 43,0 dp**, größter gesetzter Punkt
+**32,0 dp** von der Mitte — die Sicherheitszone erlaubt 33,0. Entwurfsverhältnisse des Owners (O
+80 pt, Punkt ⌀ 11 dp, Abstand 3 dp) sind erhalten und gemeinsam auf **37 %** skaliert; unskaliert
+hätte die Gruppe eine Diagonale von etwa 94 dp und wäre unter einer runden Maske beschnitten
+worden. Die Feinwerte kommen aus Figma.
 
 ### 5.2 Farbe hart verdrahtet
 

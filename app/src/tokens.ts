@@ -15,7 +15,13 @@ export const color = {
   ink: '#E8E0D4',
   /** secondary / graphite */
   meta: '#8B8680',
-  /** ONLY: the user's own value + cursor, the user's bucket, the strike over "pending" */
+  /**
+   * ONLY: the user's own value + cursor, the user's bucket, the strike over "pending".
+   *
+   * One exception, by owner decision on 22.09.2026: the full stop of the brand mark "O." in the
+   * launcher icon and on the splash. The accent is the one colour that means "you", and putting
+   * it in the mark says what the app is about before it is opened.
+   */
   pencil: '#5B7CFA',
   /** ink at 18% */
   hairline: 'rgba(232, 224, 212, 0.18)',
