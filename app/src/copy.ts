@@ -124,5 +124,27 @@ export const copy = {
     onboarding: "You can copy a backup code in Settings.",
     /** The paste field, approved 22.09.2026 — it says what a backup code looks like. */
     placeholder: "64 characters",
+
+    /**
+     * What the player is told after pasting a code (owner, 22.09.2026). Four cases, and the
+     * fourth is the one the old template got wrong: a code that opens nothing read as
+     * "0 restored." — which looks like success. Now it says which of the two reasons it was.
+     *
+     * `recovered` are the calls whose commitment this code could rebuild; `lost` are entries
+     * that sit on chain but cannot be opened with it — a different code, a different phone, or
+     * a typo that still happened to be 64 hex characters.
+     */
+    restored(recovered: number, lost: number): string {
+      const calls = (n: number) => `${n} ${n === 1 ? "call" : "calls"}`;
+      if (recovered === 0) {
+        return lost > 0 ? this.bad : "No open calls to restore.";
+      }
+      if (lost === 0) return `${calls(recovered)} restored.`;
+      const rest =
+        lost === 1
+          ? "1 call can't be opened with this code — it will count as a miss."
+          : `${lost} calls can't be opened with this code — they will count as misses.`;
+      return `${calls(recovered)} restored. ${rest}`;
+    },
   },
 } as const;

@@ -37,7 +37,7 @@ Zustände:
   (z. B. „US jobs report at 12:30 UTC.“); Seitenwahl `Up`/`Down`, darunter der Sicherheitsregler
   mit **11 Positionen (50…100 in Fünferschritten, Beschriftung 50 · 75 · 100)** und den
   Reglerworten aus §11.1; darunter das Satzfeld (§11.2); ein Primary
-  „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday reveals in this same signature“);
+  „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday’s call opens in the same approval.“ (freigegeben 22.09.2026));
   Kostenzeile (identisch mit Spec §11): „No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL
   deposit, refunded when the call closes.“
 - **Versiegelt (Abend/Nacht):** Frage bleibt, Status „Sealed · 21:12 UTC“, kein zweites Hero.
@@ -289,10 +289,24 @@ Damit steht auf keinem Bildschirm mehr ein Satz, der in keinem Dokument steht.
   — ersetzt den erfundenen Halbsatz „— they go out with this signature“. Steht als eigene
   Zeile unter `{n} calls still open to reveal`.
 
-> **Doppelung, die dir auffällt, bevor sie jemand anderem auffällt:** §2 nennt für denselben
-> Moment die ältere Zeile „Yesterday reveals in this same signature“. Beide sagen dasselbe, die
-> neue in der Wortregel („call“, „approval“). Im Code steht nur die neue. Soll die alte Zeile in
-> §2 ersetzt werden, ist es eine Zeile — offen, deine Entscheidung.
+> **Doppelung aufgelöst (Owner, 22.09.2026):** §2 nannte für denselben Moment die ältere Zeile
+> „Yesterday reveals in this same signature“. Sie ist durch die neue ersetzt; die alte steht nur
+> noch im Archiv §12.
+
+### 11.11 Nach einer Wiederherstellung — freigegeben 22.09.2026
+
+Vier Fälle. `n` sind die zurückgeholten Calls, `m` die Einträge, die sich mit diesem Code nicht
+öffnen lassen.
+
+- **alles zurück:** `{n} calls restored.` — bei 1: `1 call restored.`
+- **teilweise:** `{n} calls restored. {m} can't be opened with this code — they will count as
+  misses.` — bei m = 1: `1 call can't be opened with this code — it will count as a miss.`
+- **nichts zurück, aber offene Calls liegen on-chain:** `This code doesn't match your sealed
+  calls.` (derselbe Satz wie der Fehlerfall — es ist derselbe Befund)
+- **nichts zurück, keine offenen Calls:** `No open calls to restore.`
+
+Der letzte Fall ist der Grund für die Änderung: Die alte Vorlage sagte dort `0 restored.`, und das
+liest sich wie ein Erfolg.
 
 ### 11.8 Backup-Code (E2) — freigegeben 21.09.2026
 Das Wort ist **„backup code“**, nie „key“ und nie „recovery“: Ein Feld, das nach einem

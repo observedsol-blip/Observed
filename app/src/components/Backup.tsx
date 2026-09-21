@@ -63,9 +63,7 @@ export default function Backup({
     try {
       const { recovered, lost } = await actions.onImport(paste);
       setPaste("");
-      setNote(
-        `${recovered.length} restored${lost.length > 0 ? `, ${lost.length} could not be opened` : ""}.`,
-      );
+      setNote(copy.backup.restored(recovered.length, lost.length));
     } catch (e) {
       setNote(e instanceof Error && e.name === "SeedPhrasePasted" ? null : copy.backup.bad);
       if (e instanceof Error && e.name === "SeedPhrasePasted") setWarning(copy.backup.notYourPhrase);

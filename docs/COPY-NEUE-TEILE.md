@@ -186,8 +186,21 @@ Evidenzblock auf dem Bildschirm; die Belege leben im README.
 | Backup-Feld, Platzhalter | `64 characters` |
 | Today, offene Aufdeckungen gehen mit | `Yesterday's call opens in the same approval.` |
 
-Der letzte ersetzt „— they go out with this signature“. **Offen:** §2 nennt für denselben Moment
-noch die ältere Zeile „Yesterday reveals in this same signature“; im Code steht nur die neue.
+Der letzte ersetzt „— they go out with this signature“ **und** die ältere Zeile aus §2
+(„Yesterday reveals in this same signature“) — beide Stellen sagen jetzt denselben Satz.
 
-**Noch nicht entschieden:** die Meldung nach einer Wiederherstellung (`Backup.tsx`). Sie steht dem
-Owner zur Entscheidung vor.
+## H. Nach einer Wiederherstellung (freigegeben 22.09.2026)
+
+Vier Fälle, wörtlich. `n` sind die zurückgeholten Calls, `m` die Einträge, die sich mit diesem
+Code nicht öffnen lassen.
+
+| Fall | Text |
+|---|---|
+| alles zurück | `{n} calls restored.` · bei 1: `1 call restored.` |
+| teilweise | `{n} calls restored. {m} can't be opened with this code — they will count as misses.` |
+| teilweise, m = 1 | `… 1 call can't be opened with this code — it will count as a miss.` |
+| nichts zurück, aber offene Calls liegen on-chain | `This code doesn't match your sealed calls.` |
+| nichts zurück, keine offenen Calls | `No open calls to restore.` |
+
+Der vierte Fall ist der Grund für die Änderung: Die alte Vorlage sagte dort `0 restored.` — das
+liest sich wie ein Erfolg, obwohl entweder der Code falsch war oder es nichts zu holen gab.

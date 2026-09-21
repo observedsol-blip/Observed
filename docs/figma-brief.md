@@ -158,7 +158,7 @@ Platzhalter sind markiert: `{n}` Anzahl, `{x}` Prozentwert mit einer Nachkommast
 - Eligibility: `Genesis · verified`
 - Frage (Standard, Richtungsfrage): `Will SOL be higher at 16:00 than at 04:02 UTC?`
 - Kontextzeile nur an Ereignistagen, klein, z. B.: `US jobs report at 12:30 UTC.`
-- Primär: `Seal today` · Zeile darüber nur wenn nötig: `Yesterday reveals in this same signature`
+- Primär: `Seal today` · Zeile darüber nur wenn nötig: `Yesterday’s call opens in the same approval.`
 - Kosten: `No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the call
   closes.`
 - versiegelt: `Sealed · 21:12 UTC` · `Hidden until you reveal.`
