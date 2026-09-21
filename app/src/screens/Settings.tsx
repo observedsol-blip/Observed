@@ -17,6 +17,7 @@ import {
   type ResultDesignState,
 } from '../mockViews';
 import { type SettingsView, settingsCopy, shortAddress } from '../core/settings.ts';
+import { copy } from '../copy.ts';
 
 function Choice({
   label,
@@ -100,7 +101,7 @@ export default function Settings({
 
       {view ? (
         <Block>
-          <Kicker>Push</Kicker>
+          <Kicker>{copy.headings.reminders}</Kicker>
           <MonoMeta style={{ marginTop: space.xs }}>
             {`${view.push.outcome} · ${view.push.lastHour}`}
           </MonoMeta>

@@ -266,6 +266,19 @@ Der Brier-Wert steht **nicht** im täglichen Ergebnis, nur im Saison-Record.
 - `{x}` in „Too close to call“ ist `outcome_margin_bps / 100`, auf eine Nachkommastelle.
 - Die Serie zählt **aufgedeckte Abende**, nicht Treffer — eine knappe Runde bricht sie nicht.
 
+### 11.9 Überschriften und Erinnerungen — freigegeben 22.09.2026
+
+**Record (§4):** `Side record` · `Season score` · `Calls`
+**Settings (§7):** `Reminders` — **nicht** „Push“, weil die Erinnerungen lokal geplant werden und
+nichts mit einem Push-Dienst zu tun haben.
+
+**Angebot nach dem ersten Siegel (E3):**
+- Knopf: `Remind me each evening`
+- Zweite Zeile: `Not now`
+
+Damit sind die vier Strukturüberschriften und die zwei Knopftexte belegt, die bis zum 22.09. im
+Bildschirm entstanden waren.
+
 ### 11.8 Backup-Code (E2) — freigegeben 21.09.2026
 Das Wort ist **„backup code“**, nie „key“ und nie „recovery“: Ein Feld, das nach einem
 „Schlüssel“ fragt, ist das Muster, mit dem Leute um ihre Wallet-Phrase gebracht werden.

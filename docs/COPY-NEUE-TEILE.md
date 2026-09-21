@@ -157,3 +157,23 @@ Wörtlich so im Code (`app/src/copy.ts`) und in 03-SCREEN-MAP §11.1:
 Damit verschwinden drei Strings, die im Bildschirm entstanden waren und in keinem Dokument
 standen: „Sealing…“, „Revealing…“ und die zweite, doppelte Fassung von „Pick a side first.“
 unter dem Knopf.
+
+## F. Überschriften und Erinnerungen (freigegeben 22.09.2026)
+
+Wörtlich so in `app/src/copy.ts` und in 03-SCREEN-MAP §11.9:
+
+| Ort | Text |
+|---|---|
+| Record, große Zahl | `Side record` |
+| Record, Saisonwert | `Season score` |
+| Record, Liste | `Calls` |
+| Settings, Erinnerungszeiten | `Reminders` (nicht „Push“) |
+| Angebot nach dem ersten Siegel | `Remind me each evening` |
+| Ablehnen | `Not now` |
+
+Damit ist auch der geliehene Satz aus §1 wieder frei: `Remind me when the window opens` gehört
+zur Vorschau (D1) und wird dort gebraucht, nicht hier.
+
+Drei Dinge sind **ersatzlos gestrichen** (Owner, 22.09.2026): der Demo-Schalter mit den 36
+Beispiel-Calls — die Vorschau ersetzt ihn —, die Publication-Zeile in Settings, und der
+Evidenzblock auf dem Bildschirm; die Belege leben im README.

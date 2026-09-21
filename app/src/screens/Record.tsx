@@ -50,7 +50,7 @@ export default function Record({ view }: { view: RecordView }) {
   return (
     <Screen>
       {/* the side record, big — calls with a side, without the close ones */}
-      <Kicker>Side record</Kicker>
+      <Kicker>{copy.headings.sideRecord}</Kicker>
       <Text style={{ ...type.hero, color: color.ink, marginTop: space.sm }}>
         {copy.record.sideRecord(view.sideRecord.hits, view.sideRecord.calls)}
       </Text>
@@ -60,7 +60,7 @@ export default function Record({ view }: { view: RecordView }) {
 
       {/* the season score: the program's own number, including what was never revealed */}
       <Block>
-        <Kicker>Season score</Kicker>
+        <Kicker>{copy.headings.seasonScore}</Kicker>
         <Text style={{ ...type.numberLarge, color: color.ink, marginTop: space.xs }}>
           {view.seasonScore ? `${view.seasonScore.value} · ${view.seasonScore.scored} scored` : "—"}
         </Text>
@@ -89,7 +89,7 @@ export default function Record({ view }: { view: RecordView }) {
       {view.calibration.unlocked ? null : <Body>{view.calibration.locked}</Body>}
 
       <Block>
-        <Kicker>Calls</Kicker>
+        <Kicker>{copy.headings.calls}</Kicker>
         <View style={{ marginTop: space.sm }}>
           {view.calls.map((call) => (
             <CallRow key={call.roundId} call={call} />

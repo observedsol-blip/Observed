@@ -191,7 +191,7 @@ function RemindOffer({ reminders }: { reminders: ReminderOffer }) {
         onPress={() => void reminders.onDecline()}
         style={{ marginTop: space.md, color: color.meta, textDecorationLine: "underline" }}
       >
-        Not now
+        {copy.notNow}
       </Label>
     </Block>
   );

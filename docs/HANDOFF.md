@@ -498,9 +498,9 @@ also **inklusive** der vollen 1,000 pro Versäumnis.
 2. **Publication-Zeile in Settings** (§6): entfernt. §6 ist ungebaut und die Zeile war erfunden.
 3. **`EvidenceRef.tsx` gelöscht.** Die Komponente war von keinem Bildschirm benutzt und zeichnete
    ausgedachte Belegzeilen. Der Evidenzblock aus §3.10 bleibt damit ein GAP, aber ein sichtbarer.
-4. **Vier Strukturüberschriften ohne Vorlage in 03:** `Side record`, `Season score`, `Calls`,
-   `Push`. Sie benennen Felder, die §4 und §7 inhaltlich verlangen, aber nicht benennen. Wenn du
-   andere Wörter willst, sind es vier Zeilen in `Record.tsx` und `Settings.tsx`.
+4. **Erledigt 22.09.:** Die vier Strukturüberschriften sind freigegeben (03 §11.9) — `Side
+   record`, `Season score`, `Calls` und in Settings **`Reminders`** statt „Push", weil lokal
+   geplante Erinnerungen mit einem Push-Dienst nichts zu tun haben.
 
 **Neu geprüft:** 11 Tests für die beiden Views (leere Saison, Saisonwert des Programms,
 Seiten-Record mit einer knappen Runde, `open` vs. `missing` vor und nach Fensterschluss,
@@ -525,10 +525,9 @@ ohne Upgrade-Autorität, Push-Zeiten eine Stunde vor Schluss). **120 App-Tests g
 nach dem ersten bestätigten Siegel und verschwindet nach einem Nein, und der Tipp fragt **genau
 einmal**, löscht den alten Plan und legt den neuen an — ein späterer Kaltstart fragt nie wieder.
 
-**GAP:** Der Knopftext ist `Remind me when the window opens` — der freigegebene Satz aus §1, der
-dort zur **Vorschau** gehört. Er passt hier wörtlich, aber er ist für diesen Ort nicht freigegeben.
-Die Ablehnzeile heißt `Not now` und steht in keinem Dokument. Beides sind zwei Wörter, wenn du
-andere willst. Die Vorschau selbst (D1) ist weiterhin nicht gebaut, deshalb hängt das Angebot nur
+**Erledigt 22.09.:** Die beiden Texte sind freigegeben (03 §11.9) — Knopf `Remind me each
+evening`, zweite Zeile `Not now`. Damit ist auch der geliehene Satz aus §1 wieder frei: `Remind me
+when the window opens` gehört zur Vorschau (D1). Die Vorschau selbst (D1) ist weiterhin nicht gebaut, deshalb hängt das Angebot nur
 am ersten Siegel, nicht zusätzlich an ihr.
 
 ## Markenzeichen `O.` — Endwerte aus Figma, 22.09.2026
@@ -579,6 +578,18 @@ einem Maskenradius von 16 px. Der Punkt wird nicht beschnitten.
 **Ausnahme, ausdrücklich:** `color.pencil` gehört laut `tokens.ts` **nur** dem eigenen Wert, dem
 Cursor, dem eigenen Balken und dem Strich über „pending". Der Punkt des Markenzeichens ist die
 einzige Ausnahme, vom Owner am 22.09.2026 entschieden; sie steht im Kommentar in `tokens.ts`.
+
+## Copy vom 22.09.2026 und die drei Streichungen
+
+Freigegeben und wörtlich im Code (`app/src/copy.ts`), in 03 §11.9 und in COPY-NEUE-TEILE §F:
+`Side record` · `Season score` · `Calls` · `Reminders` · `Remind me each evening` · `Not now`.
+Damit ist **kein** Text mehr im Bildschirm entstanden, der in keinem Dokument steht — bis auf die
+in §4 genannten Reste (`— they go out with this signature`, `Nothing revealed yet.`, die
+Wiederherstellungsmeldung, der Platzhalter `64 characters`).
+
+**Ersatzlos gestrichen, vom Owner bestätigt:** der Demo-Schalter mit den 36 Beispiel-Calls (die
+Vorschau D1 ersetzt ihn), die Publication-Zeile in Settings, und der Evidenzblock auf dem
+Bildschirm — die Belege leben im README. `EvidenceRef.tsx` ist gelöscht, nicht auskommentiert.
 
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
