@@ -22,7 +22,7 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 6. Keine Schlüssel, keine Wallet-Adressen von Dinkelberg, keine Secrets — auch nicht als Beispiel.
 
 ## Stand
-- Letzte Aktualisierung: 21.09.2026 (abends), von Claude Code (**E1 + E10 umgesetzt**: Richtungsfrage als Standard, Aufdeckfenster 72 h, neuer Kalender-Root `5ae91bda…`, Saisonlauf auf Tagesmechanik umgebaut; davor: Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
+- Letzte Aktualisierung: 21.09.2026 (nachts), von Claude Code (**Teil B 1–7 gebaut**: Chain-Schicht, Zustandsmaschine, Geheimnis mit Wiederherstellung, Wallet/SGT/SOL, Ende-zu-Ende aus App-Code, Diagnose-APK, Texte — 63 App-Tests, vorher null; davor: **E1 + E10 umgesetzt**: Richtungsfrage als Standard, Aufdeckfenster 72 h, neuer Kalender-Root `5ae91bda…`, Saisonlauf auf Tagesmechanik umgebaut; davor: Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
 - **Entschieden am 21.09. (Dinkelberg):** `Player` wird **nicht** erweitert (Option 1, Bänder-Zähler erst nach dem 10.11.); `close_entry` rollierend — schließbar 30 Tage nach dem Aufdeckfenster, aber nie vor dem 09.11.2026, beide Werte in den Rundenbedingungen und im Hash; der Resolver schließt täglich, die Miete geht an die Wallet des Spielers, die Gebühr zahlt die Hot Wallet. Bis die Veranstalter antworten gilt: **der Resolver darf während der Bewertung nicht angefasst werden** — das Drehbuch plant so.
 - Davor: 19.09.2026, von Claude Code (O1 entschieden: W = A = 60 s, `posted_slot` für beide Lesungen; Basisraten-Linie (c); Schwellen ≥ 1,0 %, BTC nicht am Wochenende; zweiter Cron für 04:00 und 16:00; Schnitt am Do 24.09. aus gemessenen Zahlen).
 - **Arbeitsreihenfolge (Dinkelberg, 20.09.).** Zuerst 1–7: Flag für knappe Runden (erledigt, d1b32ce) · Resolver auf O1 (erledigt, Resolver-Repo `4aa25a8`, jetzt auf GitHub) · Devnet von Ende zu Ende · App-Kernablauf mit Attrappen · Release-Build-Konfiguration · Drehbuch für den Mainnet-Deploy am 24.09. · Tester-Anleitung.
@@ -223,6 +223,31 @@ und dann nicht aufdeckt. „Serie statt Pflicht“ trägt.
 Die Datei ist gesperrt — Vorschlag 16 liegt in `docs/spec-changes-2026-09-17.md`, geändert wird sie
 erst mit `.spec-unlock`.
 
+## Teil B — App-Kernablauf, Stand 21.09.2026 nachts
+
+**63 App-Tests** (heute Morgen: null), Typecheck sauber, ein Ende-zu-Ende-Lauf aus App-Code gegen
+einen lokalen Validator, ein Debug-APK für Spike 3.
+
+| Schritt | Stand | Commit |
+|---|---|---|
+| 0 Pakete | erledigt, genau der Satz aus der Spike-3-APK | — |
+| 1 Chain-Schicht | **steht, 24 Tests** gegen Fixtures des Programms | `d06dd6d` |
+| 2 Zustandsmaschine | **steht, 12 Tests**, jeder Absturzpunkt | `f2bab19` |
+| 3 Geheimnis + Wiederherstellung | **steht, 7 Tests**, inkl. Neuinstallation | `ecbd1c6` |
+| 4 Wallet, SGT, SOL | **steht, 8 Tests** gegen echte Mainnet-Fixtures | `42228c1` |
+| 5 Ende zu Ende aus App-Code | **grün** auf lokalem Validator | `02b9f74` |
+| 6 Diagnose-Bildschirm + APK | **gebaut**, APK in Downloads | `c019507` |
+| 7 Texte + Bildschirmzustände | Logik **steht, 12 Tests**; die Bildschirme selbst hängen noch an den Attrappen | `1e88219` |
+
+**Was Schritt 5 gefunden hat und kein Unit-Test finden konnte:** Ich hatte das Memo-Programm mit
+1 000 CU veranschlagt. Gemessen sind **14 918 CU für 42 Bytes**. Das Compute-Budget der
+Abendtransaktion war damit zu klein — sie wäre **nach** der Freigabe gescheitert, im schlechtest
+möglichen Moment. Jetzt linear geschätzt (10 000 + 160 je Byte) plus 20 % Reserve.
+
+**Noch nicht erledigt (ehrlich):** Today und Result zeichnen weiter aus `mock.ts`; die Eingabe ist
+noch der alte Regler, nicht Seite + Sicherheit. Die Logik dafür steht und ist getestet, die
+Verdrahtung der Bildschirme fehlt. Auf einem echten Gerät ist **nichts** davon gelaufen.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
@@ -236,6 +261,7 @@ erst mit `.spec-unlock`.
 | 8 | Offline-Schlüssel + Hot Wallet erzeugen, Cloudflare/Helius/healthchecks einrichten, **Mainnet-Deploy bis Do 24.09.** (SGT gibt es nur auf Mainnet, fremde Tester ab 27.09. brauchen Mainnet) | Dinkelberg | Do 24.09. |
 | 9 | Expo-Token erneuern (stand im Chat). **Pyth-Key wird nicht mehr gebraucht**: Der Resolver liest nur noch das gesponserte Konto, kein Hermes, kein Schlüssel | Dinkelberg | sofort |
 | 10 | Zweiter RPC-Anbieter für die Ablese-Läufe: Konto anlegen, dann `wrangler secret put RPC_URL_FALLBACK`. Vorschlag **QuickNode** (eigenes Netz, eigene Firma, kostenloser Solana-Endpunkt) als Zweiten; **Helius** bleibt der Erste. Dritter Rückfall ohne Konto ist `api.mainnet-beta.solana.com` — gedrosselt, aber besser als nichts | Dinkelberg | vor Do 24.09. |
+| 15 | **Spike 3 am Gerät** mit dem Debug-APK (`C:\\Users\\Admin\\Downloads\\observed-diagnostics-debug.apk`): Wortmarke lang drücken → Diagnose. Drei Knöpfe, Zahlen kopieren, schicken. Davon hängen ab: eine oder zwei Freigaben, und ob `signMessage` deterministisch ist (sonst fällt die Wiederherstellung nach einer Neuinstallation aus) | Dinkelberg | vor dem Build 26.09. |
 | 14 | Vier Copy-Fragen aus dem Einarbeiten der freigegebenen Texte (Zeiten-Sweep, 20 statt 21 Runden, Vorrang bei knapp + keine Seite, Rückgabe der eigenen versiegelten Antwort im Aufdeck-Moment) — siehe Korrekturtabelle 21.09. | Dinkelberg | vor dem Build 26.09. |
 | 13 | `.spec-unlock` für 00-SPEC: Frageart (Richtung statt Bewegung) und Aufdeckfenster (72 h statt 12 h) stehen dort noch alt. Vorschlag 16 ist geschrieben | Dinkelberg | vor der Einreichung |
 | 12 | Berechtigungen der Agenten: `Bash(npm install*)` und `Bash(gh pr create*)` aus der Erlaubnisliste nehmen, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` ergänzen (Begründung im Codex-Abschnitt) | Dinkelberg | vor Do 24.09. |
