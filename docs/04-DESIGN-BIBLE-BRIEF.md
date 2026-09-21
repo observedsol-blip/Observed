@@ -35,7 +35,11 @@ Pencil ist **#5B7CFA**, nicht #3A6EA5. Grund: Auf dem Grund #1C1F1D erreicht #3A
 ## Abnahme (Claude prüft gegen diese Liste)
 - Blau kommt nur an den drei erlaubten Stellen vor.
 - Kein Wort aus der Verbotsliste in Copy-Beispielen.
-- Scale-Komponente ist für Eingabe und Verteilung dieselbe Geometrie (21 Positionen).
+- ~~Scale-Komponente ist für Eingabe und Verteilung dieselbe Geometrie (21 Positionen).~~
+  **Ersetzt am 22.09.2026 durch E11 (Owner):** Eingabe 50…100 mit **11** Positionen (Beschriftung
+  50 · 75 · 100), Verteilung 0…100 mit **21**. Grund: Nach der Seitenwahl kann die Eingabe nicht
+  unter 50 — 45 % Up ist 55 % Down. Auf einer 0–100-Spur war die linke Hälfte tot und lud zu
+  einer Geste ein, die der Code danach still zurückgenommen hat.
 - Hero auf Result ist „It happened.“ / „It did not happen.“, nicht die Zahl.
 - Missing Reveals und NO_RESOLVE haben definierte Darstellung.
 - Keine Radien, keine Schatten, keine Verläufe, keine Textur auf dem dunklen Grund.

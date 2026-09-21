@@ -35,7 +35,8 @@ Zustände:
   Standard die Richtungsfrage: „Will SOL be higher at 16:00 than at 04:02 UTC?“; an den fünf
   Ereignistagen stattdessen die Bewegungsfrage plus **Kontextzeile** darunter, klein
   (z. B. „US jobs report at 12:30 UTC.“); Seitenwahl `Up`/`Down`, darunter der Sicherheitsregler
-  mit 21 Positionen und den Reglerworten aus §11.1; darunter das Satzfeld (§11.2); ein Primary
+  mit **11 Positionen (50…100 in Fünferschritten, Beschriftung 50 · 75 · 100)** und den
+  Reglerworten aus §11.1; darunter das Satzfeld (§11.2); ein Primary
   „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday reveals in this same signature“);
   Kostenzeile (identisch mit Spec §11): „No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL
   deposit, refunded when the call closes.“
@@ -68,7 +69,9 @@ Fassung vom 21.09. (E11/E13), sie ersetzen die alte Brier-Zeile**:
    `Too close to call.` / `You didn't pick a side.` Bei **knapp und keine Seite gewinnt
    „Too close to call.“**, `You didn't pick a side.` steht als Unterzeile darunter.
 6. Serie: `3 evenings in a row.` (bei 1: `First evening.`)
-7. Maßstab wird Verteilung: dieselben 21 Positionen, Menge in Graphit, dein Bucket in Blau, Mean
+7. Maßstab wird Verteilung: **21 Positionen, 0…100** — nicht dieselbe Geometrie wie die Eingabe
+   (die ist 50…100, Owner 22.09.2026), weil die Wahrscheinlichkeiten der Menge wirklich den
+   ganzen Bereich abdecken. Menge in Graphit, dein Bucket in Blau, Mean
    als Linie. „63 revealed“. Darunter die Faktenzeile „Crowd 64 · You 80“ (kein „closer“).
 8. `What others wrote` — die geteilten Sätze der anderen (§11.4), sonst
    `Nobody shared a sentence this time.`

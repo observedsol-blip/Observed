@@ -364,14 +364,18 @@ geschützte Pfade ab sofort nicht mehr über Bash-Skripte.
 **Zwei Antworten, die der Owner erfragt hat:**
 1. **Seite + Sicherheit → `p_bps`** (`components/SideConfidence.tsx:16–26`):
    `Up 80 → 8000`, `Down 80 → 2000`, keine Seite → `5000`. Der Regler **kann nach der Wahl einer
-   Seite nicht unter 50**: `clampToStep` (`SideConfidence.tsx:66–69`) rundet auf 5er-Schritte und
-   klemmt auf 50–100, weil 45 % Up dasselbe wäre wie 55 % Down — zwei Namen für eine Antwort.
-   **Für Figma heißt das:** Der Eingaberegler hat **11 erreichbare Positionen (50…100)**, wird
-   aber auf einer **0–100-Spur mit 21 Ticks** gezeichnet (`Scale.tsx`, `TICKS` aus `mock.ts:27`).
-   Die linke Hälfte ist tot. Die 21 Positionen stammen aus der Wahrscheinlichkeitsskala des
-   Programms (0…10000 in 500er-Schritten) und sind in der **Verteilung** richtig, in der
-   **Eingabe** nicht. Das ist eine offene Gestaltungsfrage, keine Abweichung von E11: die
-   Reglerworte in §11.1 decken genau 50–100 ab.
+   Seite nicht unter 50**: 45 % Up wäre dasselbe wie 55 % Down — zwei Namen für eine Antwort.
+   **Owner-Entscheidung 22.09.2026, umgesetzt:** Die Eingabe wird jetzt als das gezeichnet, was
+   sie annimmt — **50…100, 11 Ticks, Beschriftung 50 · 75 · 100**. Die Verteilung bleibt
+   **0…100 mit 21 Positionen**, weil die Wahrscheinlichkeiten der Menge den ganzen Bereich
+   abdecken. Damit ist die alte Regel aus `04-DESIGN-BIBLE-BRIEF.md:38` — *„Scale-Komponente ist
+   für Eingabe und Verteilung dieselbe Geometrie (21 Positionen)“* — **durch E11 ersetzt**; sie
+   steht dort durchgestrichen mit Begründung. Vorher war die linke Hälfte der Spur tot und lud zu
+   einer Geste ein, die der Code danach still zurückgenommen hat.
+   Die Geometrie liegt jetzt in `app/src/core/scale.ts` (ohne React, darum prüfbar): 8 Tests,
+   darunter die Umkehrprobe Pixel ↔ Wert für alle elf Positionen und die Zusicherung, dass jede
+   erreichbare Position auf dem 500-bps-Raster des Programms liegt.
+
 2. **Literata Italic** ist im bereits installierten Paket (`400Regular_Italic`). Geladen, als
    `font.serifItalic` und `type.sentence` (17/26) in den Tokens, und `Result` zeichnet den Satz
    von gestern damit. Vorher war es Plex Sans mit künstlicher Schräge — weder die Familie noch

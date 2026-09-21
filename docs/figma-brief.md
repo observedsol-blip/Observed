@@ -109,8 +109,8 @@ Fertige Textbausteine in `app/src/components/Type.tsx`: `Kicker` (meta, uppercas
 | Tab-Höhe | 56, Abstand 24, Oberkante Haarlinie | `components/TabBar.tsx` |
 | Primärknopf | `minHeight 56`, Rand 1 dp, `alignSelf: flex-start`, deaktiviert `opacity 0.5` | `components/PrimaryButton.tsx` |
 | Haarlinie | 1 dp, `marginVertical 16`, **max. zwei pro Screen** | `components/Hairline.tsx` |
-| Skala Eingabe | Spur 56 hoch, Rand 8, Ticks 10 dp (bei 0/25/50/75/100) bzw. 5 dp, Cursor 2 × 34 | `components/Scale.tsx:23–27,146–163` |
-| Skala Verteilung | 96 hoch, Balken 6 dp breit, 21 Positionen, Mittelwert als Linie | `components/Scale.tsx:24,208–226` |
+| Skala Eingabe | **50…100, 11 Ticks**, lang bei 50/75/100, Beschriftung `50 · 75 · 100`; Spur 56 hoch, Rand 8, Cursor 2 × 34 | `core/scale.ts`, `components/Scale.tsx` |
+| Skala Verteilung | **0…100, 21 Positionen** (die Buckets des Programms), 96 hoch, Balken 6 dp, Mittelwert als Linie | `core/scale.ts`, `components/Scale.tsx` |
 | Schritt-Knöpfe `−5`/`+5` | 64 × 48, Rand 1 dp | `components/Scale.tsx:64–71` |
 | Satzfeld | `minHeight 44`, Unterstrich 1 dp | `components/SentenceField.tsx:42` |
 
