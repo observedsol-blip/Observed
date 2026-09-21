@@ -285,6 +285,14 @@ Programm. Was dabei ungeprüft bleibt: das Zeichnen selbst und die Gesten.
 - Entscheidung, ob der Onboarding-Satz „One Seed Vault approval a day“ bleibt — er ist jetzt
   belegt, also kann er.
 
+**Figma-Brief, 21.09.:** `docs/figma-brief.md` — die einzige Eingabe für den Entwurf. Tokens mit
+Fundstelle je Wert, die freigegebenen Texte wörtlich, die Zustände, die der Code wirklich hat, und
+**23 Lücken**, die niemand erfinden darf. Drei Befunde daraus: das Launcher-Icon ist noch das
+Expo-Vorlagenbild (grau auf Weiß, `splash-icon.png` byte-identisch mit `adaptive-icon.png`), in
+`app/src` steht kein einziger Hex-Wert außerhalb von `tokens.ts`, und Record und Settings zeichnen
+weiter aus `mock.ts` — mit den alten Zeiten, „rounds“ statt „calls“, Schwelle 21 statt 20 und einem
+Versäumnis zu 0.250 statt als vollem Fehlschlag.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
