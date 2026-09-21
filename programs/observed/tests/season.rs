@@ -421,6 +421,7 @@ fn whole_season_in_fast_forward() {
             );
             revealed_only_checked += 1;
         }
+
         assert_eq!(player.commits, want.0, "commits p{i}");
         assert_eq!(player.reveals, want.1, "reveals p{i}");
         assert_eq!(player.missing_scored, want.2, "missing p{i}");
@@ -432,6 +433,10 @@ fn whole_season_in_fast_forward() {
         );
         total_entries += player.commits;
     }
+    assert_eq!(
+        revealed_only_checked, PLAYERS,
+        "the revealed-only diagnosis is derivable for every device from Player alone"
+    );
 
     // ---- the rolling close: deposits come back, the record does not move
     let first = terms_from(&rounds[0]);
