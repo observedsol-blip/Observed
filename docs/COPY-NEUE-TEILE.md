@@ -60,8 +60,8 @@ Hero: `Tomorrow it counts.`
 Body: `One question a day about something nobody knows yet. You answer with a number, seal it, and
 open it the next evening. Over weeks that becomes a record you cannot rewrite.`
 Zeile: `Tonight's question opens at 16:00 UTC · 18:00 where you are.`
-Link: `See a finished round →` (führt in die Beispielrunde)
-Link klein: `See a real sealed round on Solana →` (Explorer-Link auf eine echte Runde der Saison)
+Link: `See a finished call →` (führt in die Vorschau; „call“ nach der Wortregel vom 21.09.)
+Link klein: `See a real sealed round on Solana →` (Explorer-Link auf eine echte Runde der Saison — hier bleibt „round“, weil der Link die Kette benennt)
 
 ## B. Der Satz vor dem Siegeln
 > **Überholt am 21.09.2026 durch 03-SCREEN-MAP §11.2 (E13/E8).** Dort steht die
@@ -95,7 +95,7 @@ Neigung zu "Ja" statt Übermut. Beides raus.
 
 Unter 21 aufgedeckten Runden, Hero:
 `On 5 questions you were at least 80% sure. 3 of them happened.`
-Darunter: `Too few rounds for a verdict.`
+Darunter: `Too few calls for a verdict.`
 Wenn weniger als 3 Runden mit ≥80 %: `Not enough confident calls yet.`
 
 Ab 21 aufgedeckten Runden bleibt das Temperatur-Urteil wie geplant ("You run hot."), weil es dann

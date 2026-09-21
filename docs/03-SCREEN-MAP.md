@@ -1,5 +1,9 @@
 # OBSERVED — Screen-Map v2 (Sweep 21.09.2026)
 
+**Wortregel (Owner, 21.09.2026):** Nutzerseitig heißt es **„call“**, nicht „round“ — in Push,
+Widget und App. „Round“ bleibt in Explorer-Links, README und Belegtexten, also überall dort, wo
+es die Kette benennt.
+
 §1–§10 sind am 21.09.2026 auf die geltenden Regeln gezogen: Siegeln 16:00–04:00 UTC, Referenz
 04:02, Ausgang 16:00, Aufdecken 72 h, Richtungsfrage als Standard, Bewegung an fünf
 Ereignistagen. Die freigegebenen Texte stehen in §11, die ersetzten Fassungen wörtlich in §12.
@@ -17,7 +21,10 @@ Wallet erst beim ersten Seal.
 
 **Erststart außerhalb des Fensters (zwischen 04:00 und 16:00 UTC):** kein „Window closed“.
 Stattdessen die **Vorschau** (D1/E4, bis 02.10.): eine simulierte Runde in etwa 20 Sekunden, mit
-echtem Regler, ohne Wallet, dauerhaft gekennzeichnet `Preview · simulated round`. Danach die echte
+echtem Regler, ohne Wallet, dauerhaft gekennzeichnet `Preview · simulated round`
+> — **Konflikt mit der Wortregel (offen, Owner):** Dieser String kommt wörtlich aus deiner
+> D1-Vorgabe und sagt „round“. Konsequent wäre `Preview · simulated call`. Ich ändere
+> freigegebene Copy nicht von mir aus. Danach die echte
 nächste Öffnung in Ortszeit und `Remind me when the window opens`.
 
 ## 2. Today
@@ -26,14 +33,14 @@ Aufdecken 72 h ab dem Ausgang.
 
 Zustände:
 - **Offen, unbeantwortet:** Fensterzeile „Seal by 04:00 UTC · 06:00 where you are“ (ab 03:50 UTC:
-  „Network is busy — seal now“); „ROUND 11 · 6 OCT“; „Genesis · verified“; Frage (Literata),
+  „Network is busy — seal now“); „CALL 11 · 6 OCT“; „Genesis · verified“; Frage (Literata),
   Standard die Richtungsfrage: „Will SOL be higher at 16:00 than at 04:02 UTC?“; an den fünf
   Ereignistagen stattdessen die Bewegungsfrage plus **Kontextzeile** darunter, klein
   (z. B. „US jobs report at 12:30 UTC.“); Seitenwahl `Up`/`Down`, darunter der Sicherheitsregler
   mit 21 Positionen und den Reglerworten aus §11.1; darunter das Satzfeld (§11.2); ein Primary
   „Seal today“ (Zeile darüber nur wenn nötig: „Yesterday reveals in this same signature“);
   Kostenzeile (identisch mit Spec §11): „No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL
-  deposit, refunded when the round closes.“
+  deposit, refunded when the call closes.“
 - **Versiegelt (Abend/Nacht):** Frage bleibt, Status „Sealed · 21:12 UTC“, kein zweites Hero.
   Hinweis „Hidden until you reveal.“
 - **Pending (nach 04:00, vor 16:00):** kein leeres Plakat. Frage klein, jetzt mit der Referenz
@@ -41,13 +48,13 @@ Zustände:
   mit lokaler Zeit. Die eigene Zahl wird nicht wiederholt.
 - **Verpasst (nicht versiegelt, Fenster zu):** „Window closed · next question 16:00 UTC“. Kein
   Vorwurf, kein Streak. **Offene Aufdeckungen aus den letzten drei Tagen bleiben trotzdem
-  möglich** und stehen hier als eigener Punkt („2 rounds still open to reveal“).
+  möglich** und stehen hier als eigener Punkt („2 calls still open to reveal“).
 - **Nicht eligible:** „No Genesis Token found in this wallet.“ + Erklärung, was zählt (das Gerät),
   Link zu Settings.
 - **Zu wenig SOL (vor dem Wallet-Sheet geprüft):** „Not enough SOL to seal · you need about
   0.003 SOL“ + „Your answer is saved on this phone. Add SOL and seal before 04:00 UTC.“
 - **Keine Runde heute** (niemand hat sie angelegt — `create_round` ist permissionless):
-  „No question today. Open rounds can still be revealed.“ — Reveal-only-Pfad, kein leerer Fehler.
+  „No question today. Open calls can still be revealed.“ — Reveal-only-Pfad, kein leerer Fehler.
 
 ## 3. Result (Kern)
 Kicker: „READING · 6 OCT“ (nie „Yesterday / 6 Oct“). Reihenfolge von oben — **Punkt 3–7 sind die
@@ -67,13 +74,13 @@ Fassung vom 21.09. (E11/E13), sie ersetzen die alte Brier-Zeile**:
    als Linie. „63 revealed“. Darunter die Faktenzeile „Crowd 64 · You 80“ (kein „closer“).
 8. `What others wrote` — die geteilten Sätze der anderen (§11.4), sonst
    `Nobody shared a sentence this time.`
-9. „One round added. No verdict on your skill.“
+9. „One call added. No verdict on your skill.“
 10. Evidence-Referenz klein: Feed, Referenz (04:02) und Ergebnis (16:00) mit Zeitstempeln,
     Explorer-Links auf die **Transaktionen**, nicht auf die Konten.
 
 Der Brier-Wert steht hier **nicht**. Er lebt im Record (§4).
 
-Zustände: **Resolved** (ab ≈ 16:05 mit Teilmenge „63 of 71 revealed · open until 16:00 on 9 Oct“,
+Zustände: **Resolved** (ab ≈ 16:05 mit Teilmenge „63 of 71 revealed · open until Fri 18:00“ (Ortszeit, wie im Widget),
 danach final) · **NO_RESOLVE** (Programmstatus `Cancelled`: „No valid reading in the window. Nobody
 scored.“; das Evidenz-Fenster nennt, welches Update fehlte: „Reference 04:02–04:03 UTC · missing“
 bzw. „Outcome 16:00–16:01 UTC · missing“ — beide Fenster 60 s) · **Sample** (Banner).
@@ -89,15 +96,15 @@ Zwei Zahlen und ein Satz (§11.5):
   Fußnote „missing counts as a full miss“.
 - Baselines: „Always 50%: 0.250 · Crowd: 0.211“.
 - Kalibrierungskurve **und** jede Aussage über Übersicherheit: gesperrt bis **20 aufgedeckte
-  Runden** — Text „Unlocks after 20 revealed rounds · you're at 8“, kein leeres Chart. (Missing
+  Runden** — Text „Unlocks after 20 revealed calls · you're at 8“, kein leeres Chart. (Missing
   zählt im Saisonwert, nicht in der Kurve.)
 - Liste vergangener Runden: Datum, Frage, deine versiegelte Antwort („Up, 80%“), Ausgang, Status
   (called / missed / too close / no side / missing / no resolve). Missing wird im Client
   abgeleitet: Commits − Reveals − offene; „open“ ist ein eigener Status, nie Missing vor
   Fensterschluss — und offen heißt seit dem 21.09. **bis zu drei Tage**.
-- Demo-Toggle „Show sample record (36 rounds)“ mit Banner „Sample data · not your phone“.
+- Demo-Toggle „Show sample record (36 calls)“ mit Banner „Sample data · not your phone“.
 
-## 5. Round Detail
+## 5. Round Detail (im UI: „Call detail“)
 Frage (mit Kontextzeile, falls Ereignistag) · deine versiegelte Antwort · Ausgang · Verteilung ·
 Brier dieser Runde · „Too close to call“, falls `|outcome_margin_bps| ≤ band_bps`, mit der
 gemessenen Bewegung · Evidence (Feed-ID; Referenz und Ergebnis je `publish_time`,
@@ -107,6 +114,7 @@ fehlende Fenster („Reference 04:02–04:03 UTC · missing“ bzw. „Outcome 1
 je 60 s).
 
 ## 6. Publication (nur wenn dieses Gerät gepostet hat)
+> Bleibt ungebaut (siehe unten). Falls doch: „call“ statt „round“, wie überall im UI.
 > **Offene Frage (Owner entscheidet, 18.09.):** Solange der Resolver-Dienst jede Runde postet, trifft „This phone posted the oracle reading." nie zu. Entweder die Zeile wird ehrlich umformuliert (Poster benennen), oder die App postet selbst, wenn sie kann, und der Dienst springt nur ein — Letzteres braucht Pyth-Zugang auf dem Gerät. Wird zusammen mit dem Seal-Moment entschieden; bis dahin bleibt der Zustand ungebaut.
 Kleiner, würdiger Zustand, kein Preis-Screen: „This phone posted the oracle reading for round 41 · 63 entries.“ Erst nach bestätigtem `Round.resolver` bzw. `referencer`. Der Knopf dafür ist optional („Post the reading · needs several approvals“) und nie Teil der täglichen Geste.
 
@@ -115,11 +123,15 @@ Wallet · „Genesis · verified“ mit Mint · Autoritäten: calendar und pause
 
 ## 8. Push (Texte)
 Rein mechanisch auf die neuen Zeiten gezogen; der Wortlaut ist unverändert, wo er passte.
-- 16:00 UTC: „Outcome is in. Reveal window open for three days.“
+- 16:00 UTC, **mit** eigenem Satz: „Yesterday's call is in. See what you wrote.“
+- 16:00 UTC, **ohne** eigenen Satz: „Yesterday's call is in.“
+  (Der Push lockt mit dem eigenen Satz, nicht mit dem Fenster. Wie lange offen ist, steht in
+  der App.)
 - lokal −1 h vor 04:00: „One hour to seal today's answer.“
 - 16:00 UTC (Vortagesrunde vollständig): „Yesterday is in. 63 revealed.“
-- **Letzter Abend einer offenen Runde** (neu, weil es das Fenster jetzt gibt): „Last evening to
-  reveal Tuesday's round.“
+- **Letzter Abend einer offenen Runde:** „Last evening to reveal Tuesday's call. After that it
+  counts as a miss.“ (Die Folge muss drinstehen, sonst ist der Fehlschlag am nächsten Tag eine
+  Überraschung.)
 - NO_RESOLVE: „No valid reading yesterday. Nobody scored.“
 
 ## 9. Fehlerzustände
@@ -142,8 +154,8 @@ Textlink mit Pfeil (kein Pill-Button — die Systemrundung des Widgets ist die e
 - **Yesterday in:** Kicker „Yesterday“; Hero `You called the side.` / `It went the other way.` /
   `Too close to call.`; darunter klein „Crowd 64 · You 80“ erst, wenn der Nutzer das in Settings
   erlaubt (Standard aus); Link „See reading →“.
-- **Offen zum Aufdecken:** Kicker „Open“; „2 rounds waiting · last one until 16:00 on 9 Oct“;
-  Link „Reveal →“.
+- **Offen zum Aufdecken:** Kicker „Open“; „2 calls waiting · first closes Fri 18:00“ — Zeit in
+  **Ortszeit**, im Widget ist kein Platz für UTC und lokal; Link „Reveal →“.
 - **NO_RESOLVE:** Kicker „Yesterday“; „No valid reading. Nobody scored.“; Link „See why →“.
 - **Kein Wallet / kein SGT:** „Connect to seal today →“.
 Aktualisierung: bei App-Öffnen, per Push (16:00, 04:00) und alle 30 Min über WorkManager; Zustand
