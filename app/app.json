@@ -30,7 +30,14 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-font"
-    ]
+      "expo-font",
+      "expo-secure-store"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "69ac1370-17cb-4a7f-82a2-68fb897fc996"
+      }
+    },
+    "owner": "dinkelbergg"
   }
 }

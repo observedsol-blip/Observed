@@ -1,0 +1,21 @@
+{
+  "cli": {
+    "version": ">= 24.0.0",
+    "appVersionSource": "local"
+  },
+  "build": {
+    "diagnostics": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": { "APP_VARIANT": "diagnostics" },
+      "credentialsSource": "local",
+      "developmentClient": false
+    },
+    "tester": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "credentialsSource": "local"
+    }
+  },
+  "submit": {}
+}
