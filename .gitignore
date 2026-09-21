@@ -20,3 +20,4 @@ test-ledger
 # Repo kommt, das oeffentlich werden soll.
 .codex/
 .claude/.tmp/
+spikes/baserate/*_0416.json
