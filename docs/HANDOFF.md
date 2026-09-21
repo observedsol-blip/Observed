@@ -418,6 +418,57 @@ nicht mehr gibt; Verzeichnis und Zeilen sind gelöscht. Trotzdem falsch: Ein Skr
 keine Schlüssel erzeugen, die irgendwo hingeschrieben werden. Am Mittwoch wird der vorhandene
 Validator-Payer wiederverwendet, kein neuer erzeugt.
 
+## Resolver-Audit, 22.09.2026 (`observed-resolver`, Commit `0836a80`)
+
+Vorgezogen, weil der Dienst am Donnerstag mit der Hot Wallet live geht. Gleiches Format wie das
+App-Audit.
+
+**Automatisch:** 22 Tests grün (21 vorher + der neue unten), `tsc --noEmit` sauber.
+`npm audit --omit=dev`: **4 mittlere Meldungen**, alle über `@solana/web3.js` → `jayson` →
+`stream-json`/`uuid`; identisch mit der App, kein Fix ohne Bruch. Kein Build-Werkzeug in der
+Laufzeit (der Worker bündelt nur `@solana/web3.js` und `bs58`).
+
+**Secret-Scan:** `.dev.vars` ist in `.gitignore:3`, war **nie** committet (0 Commits), Inhalt
+ungelesen. In der **ganzen Historie** null Treffer für `PRIVATE KEY`, `helius`, `quicknode`,
+`api-key=`, `ghp_`, Telegram-Bot-Muster, `KICK_TOKEN=`; keine Datei mit einem Secret-Namen wurde je
+angelegt. Die base58-Treffer in `src/chain.ts` sind Programm-ID und Diskriminatoren, die
+64-Hex-Treffer sind Test-Fixtures.
+
+**Was der Dienst überhaupt senden kann** (vollständig, `src/chain.ts:304–366`): `set_reference`,
+`resolve`, `score_entry`, `cancel_round`, `close_entry`. **Mehr gibt es nicht** — kein
+`initialize`, kein `publish_calendar`, kein `pause`, kein `commit`, kein `reveal`. Die Hot Wallet
+unterschreibt ausschließlich als Gebührenzahler; in `close_entry` ist der Empfänger der Miete
+`entry.rent_refund_to`, vom Programm beim Siegeln festgeschrieben — der Dienst kann die Kaution
+also nicht zu sich umleiten. Bedingungen: Lesungen nur für eine Runde, deren Zeitpunkt ±10 min um
+jetzt liegt, und nur innerhalb des 60-s-Fensters; `cancel_round` nur, wenn das Lesefenster
+nachweislich vorbei ist; `score_entry` für Versäumnisse erst nach Fensterschluss; `close_entry`
+erst nach `max(reveal_close + close_after, earliest_close_unix)`.
+
+**KICK_TOKEN schließt zu.** Ohne gesetztes Token antwortet der Worker 404, und zwar so, als gäbe es
+die Route nicht (`src/index.ts:115–123`); der Vergleich ist konstant in der Zeit
+(`sameSecret:127`). **Neu belegt:** Ein Test zählt jetzt die `fetch`-Aufrufe während sechs
+abgewiesener Anfragen — darunter ein Schlüssel ein Zeichen zu kurz, einer ein Zeichen zu lang und
+die teure `?tight=1`-Variante — und verlangt **null**. Jeder Außenkontakt des Workers (RPC,
+Health-Ping, Transaktion) läuft durch `fetch`, also ist damit belegt: **keine unauthentifizierte
+Anfrage kann die Hot Wallet Geld kosten.**
+
+**Wenn die RPCs ausfallen:** Der Lese-Lauf kennt **zwei** Anbieter und wechselt bei 429, Timeout
+oder 5xx; fallen beide aus, versucht er es bis zum Fensterende weiter, meldet dann
+`window closed … NO_RESOLVE` und feuert **beide** Alarme (RUN und BACKLOG). Keine stille Runde.
+
+| # | Befund | Schwere | Stand |
+|---|---|---|---|
+| R1 | **Es gibt nur zwei Anbieter, nicht drei.** `Env` kennt `RPC_URL` und `RPC_URL_FALLBACK`; der dritte Rückfall (`api.mainnet-beta.solana.com`), den das Drehbuch und Offen 10 nennen, existiert im Code nicht | mittel | **offen, Entscheidung Owner:** entweder ein dritter Slot (kleine Änderung, aber Codeänderung am Vorabend) oder das Drehbuch auf zwei korrigieren |
+| R2 | **Der stündliche Lauf nutzt den zweiten Anbieter nicht.** `sweep` arbeitet nur mit der primären Verbindung; ist die stundenlang gedrosselt, wird nichts gewertet und nichts geschlossen. Gemeldet wird es (RUN-Ping schlägt fehl), verloren geht nichts — die Arbeit ist aus dem Zustand abgeleitet und holt sich selbst ein | niedrig | **offen** (bewusst so gebaut; Änderung wäre Verhalten, nicht Reparatur) |
+| R3 | **Ein Fehlschlag in einer Zehnergruppe kostet die ganze Gruppe.** Wertet ein zweiter Dienst gleichzeitig, scheitert die Sammel-Transaktion an `AlreadyScored`, und die übrigen neun warten eine Stunde. Nächster Lauf baut die Gruppe ohne den bereits gewerteten Eintrag neu — es heilt sich, kostet aber Zeit | niedrig | offen |
+| R4 | **`withReport` verschluckt deterministische Programmfehler als „skipped".** Ein dauerhaft falscher Aufruf sähe eine Stunde lang aus wie „nichts zu tun"; erst der 12-h-Backlog-Alarm zieht | niedrig | offen |
+| R5 | Der Lese-Lauf prüft den Kontostand **nicht** (nur der stündliche tut das, Boden 0,05 SOL). Eine leere Wallet fällt also frühestens eine Stunde vorher auf | niedrig | akzeptiert, mit Alarm abgedeckt |
+| R6 | Fehlermeldungen wandern in die Logs und in die Antwort eines autorisierten Kicks. **Geprüft:** web3.js baut HTTP-Fehler als `"<status> <statusText>: <body>"` (`index.cjs.js:5270`) — **ohne URL**, der Helius-Schlüssel steht also nicht darin | — | kein Befund, nachgeprüft |
+
+**Nicht gefunden:** keine Möglichkeit für eine fremde Anfrage, eine Transaktion auszulösen; keine
+Instruktion mit Autoritätswirkung; kein Secret im Code, in den Fixtures oder in der Historie; kein
+Pfad, auf dem die Miete eines Spielers woanders landet als bei ihm.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
