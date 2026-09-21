@@ -120,12 +120,19 @@ export default function Diagnostics() {
       say(`  >>> COUNT THE SHEETS for each signature <<<`);
     });
 
-  /** The replacement for signMessage: sign the SAME transaction twice and compare. A fixed
-   *  blockhash on purpose — the seed must not change with the block. */
+  /** The replacement for signMessage: sign the SAME transaction twice and compare.
+   *
+   *  Second attempt. The first used a made-up blockhash and was refused in 2.4 s without a sheet,
+   *  exactly like the dummy blockhash before it — so the wallet checks the blockhash. This one
+   *  fetches ONE fresh blockhash and uses it for both signatures. If they come back identical,
+   *  the mechanism is sound and the only obstacle is that a blockhash dies after about two
+   *  minutes; that can be solved (durable nonce), and it becomes the owner's decision.
+   *  If they differ, the wallet adds something of its own and no seed can come from it. */
   const signFixedTwice = () =>
     run("Sign a fixed transaction twice (seed)", async () => {
       const session = await wallet.connect();
-      const FIXED_BLOCKHASH = "9zqK5BkVLJhPR1o7XxSUrXVQ4rGkrTrJ8Y5HBCRoP4on";
+      const FIXED_BLOCKHASH = (await connection.getLatestBlockhash("finalized")).blockhash;
+      say(`  one fresh blockhash for both: ${FIXED_BLOCKHASH.slice(0, 8)}…`);
       const ixs = [memo(`observed-v1-secret:${session.pubkey.toBase58()}`)];
       const t1 = Date.now();
       const first = await wallet.signForSeed(ixs, session.pubkey, FIXED_BLOCKHASH);
