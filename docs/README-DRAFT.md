@@ -1,6 +1,6 @@
 # Observed — README (Entwurf, noch nicht die echte README)
 
-> Entwurf vom 21.09.2026. Ersetzt die vierzeilige README **erst nach Freigabe**. Zahlen mit
+> Entwurf vom 21.09.2026, auf den Stand vom 22.09.2026 gezogen. Ersetzt die vierzeilige README **erst nach Freigabe**. Zahlen mit
 > `TBD` stehen erst nach dem Mainnet-Deploy am 24./26.09. fest.
 
 ---
@@ -24,7 +24,11 @@ The distinction matters, so it comes before anything else.
   when the player reveals it.
 - The question, the price account, the threshold, the measurement band and every deadline are
   fixed before the season starts, as a Merkle tree whose root is on chain. A call that is not in
-  that tree cannot be created.
+  that tree cannot be created. Most days the question is a **direction** — is the price higher at
+  16:00 than the reference at 04:02 UTC, strictly higher — and on five days it is a movement of at
+  least 1 % either way.
+- A sealed answer can be revealed for **72 hours** after the outcome. Miss three evenings in a row
+  and it is gone; miss one and the app catches up in the same single approval the next time.
 - The reference price is read **after** sealing closes. The program refuses any calendar where an
   admissible reference could have been published while sealing was still open.
 - Both readings come from the one Pyth account named in the call, at most 60 seconds old, fully
@@ -38,8 +42,12 @@ The distinction matters, so it comes before anything else.
 - The wording of the question, the local times, the crowd distribution, the streak, the Brier
   value and every sentence on the screen. All of it is derived from what the chain stores; none
   of it is enforced by the chain.
-- The sentence you write is on your phone unless you switch on sharing.
-- The reminders.
+- The sentence you write is on your phone unless you switch on sharing. If you do share it, its
+  hash goes into the sealing transaction and the text into the reveal — so anyone can check that
+  the sentence is the one you sealed, and not one written after the outcome.
+- The reminders. They are local, planned on the phone, offered only after the first sealed call,
+  and the permission is asked only when you tap the offer.
+- The app makes no sound at all.
 
 Anything in the second list can be checked against the first. How, is below.
 
@@ -83,23 +91,43 @@ the program, and a future version could behave differently from the one that is 
 | Expo SDK | 54, React Native 0.81.5 |
 
 ```
-anchor build                 # the program
+anchor build                 # the program — always before cargo test, see below
 cargo test --test observed   # 50 tests
 cargo test --test season     # the whole season in fast forward, 64 calls, 20 devices
-cd app && npm install && npm test   # 84 app tests
+cargo test --test capacity   # the daily transaction against the 1 232 byte limit
+cargo clippy --all-targets -- -D warnings
+cd app && npm install && npm test   # 129 app tests
 ```
 
-Measured on a clean clone: `anchor build` 1 min 11 s, program tests green, season run 36 s.
+Measured on 22.09.2026: `anchor build` 6 s incremental (1 min 11 s on a clean clone), 50 + 1 + 2 + 3
+program tests green, season run 29,6 s, 129 app tests in 0,4 s, clippy silent.
+
+**`cargo test` tests the built binary, not the source.** The tests load `target/deploy/observed.so`
+through `include_bytes!`. Without a build first you are testing the previous state and getting green
+ticks for a change that is not in it. Build, then test, then deploy that same file.
 
 **Reproducibility, honestly:** two builds of the same commit with the same toolchain in different
-directories produce `.so` files of identical size that differ in 896 of 345 288 bytes. The build
-is therefore **not byte-identical** across machines. What is published instead is the SHA-256 of
-the deployed file plus the output of `solana program dump`, which proves that the bytes on chain
-are the bytes that were tested. `TBD` until the deploy.
+directories produce `.so` files of identical size that differ in a few hundred bytes (measured:
+896 of 345 288). The build is therefore **not byte-identical** across machines. What is published
+instead is the SHA-256 of the deployed file plus the output of `solana program dump`, truncated to
+the file's own length — the dump is zero-padded, and without truncating, the two checksums never
+match. The whole sequence was rehearsed against a local validator on 22.09.2026 and produced
+identical checksums. The mainnet value is `TBD` until the deploy, because `--features mainnet`
+changes the binary.
 
 ## Verify a call yourself
 
-Nothing here needs our code. The outline of the script that ships with the repo:
+Nothing here needs our code, and this is where the evidence lives — the app has no evidence screen
+on purpose. One command, read-only, no key, no install beyond the repository:
+
+```
+node scripts/verify-round.mjs --round 11
+node scripts/verify-round.mjs --round 11 --rpc https://your-endpoint --deep
+```
+
+A call number is enough; the RPC defaults to the public mainnet endpoint and the calendar to the
+one in this repository. Exit code 0 means every check passed. What it does, and what you could do
+by hand instead:
 
 1. **Read the call.** `solana account <round PDA>` — or the explorer link in the app. It holds the
    terms hash, the price account, both readings with their publish times and slots, the outcome
@@ -112,17 +140,26 @@ Nothing here needs our code. The outline of the script that ships with the repo:
 5. **Check an entry.** `commitment = sha256("observed/commit/v1" ‖ program ‖ round ‖ terms_hash ‖
    mint ‖ wallet ‖ p_bps ‖ salt)`. After a reveal, salt and p_bps are public — the hash has to
    match the one that was stored before the outcome existed.
-6. **Check a shared sentence.** `sha256(salt ‖ sentence)` must equal the memo posted in the
-   sealing transaction, which is older than the outcome.
+6. **Check a shared sentence.** `sha256(salt ‖ sentence)` must equal the single 64-hex memo in the
+   very transaction that carried that wallet's commit. A commit cannot happen outside the sealing
+   window, so such a memo is necessarily older than the outcome.
 
-Script: `scripts/verify-round.mjs` — `TBD`, wird bis zur Einreichung geschrieben.
+The script does all six, prints both readings with `publish_time`, posting slot and submitter, and
+says `PASS` or names the check that failed. It opens every revealed seal it fetched (a sample by
+default, all of them with `--deep`) — the salt is public once an answer is revealed, so anybody can
+redo that arithmetic.
 
 ## What is not finished
 
 - The app has no tests on a real device beyond the measured wallet flow (one approval per day,
-  confirmed on a Seeker on 21.09.2026).
+  confirmed on a Seeker on 21.09.2026). There is no UI test library; the screens are drawn from
+  views that are tested, but the drawing itself is not.
 - The season has not run on mainnet yet.
-- There is no external audit.
+- There is no external audit. There is an internal one, with its findings and their fixes in
+  `docs/HANDOFF.md` — including two that changed behaviour: sealing is refused until both halves
+  of the answer are a decision, and a shared sentence only counts if its hash was in the commit
+  transaction.
+- The preview (a simulated call for first-time visitors outside the window) is not built.
 
 ---
 
