@@ -4,6 +4,7 @@ import Screen from '../components/Screen';
 import Hairline from '../components/Hairline';
 import { Block, Body, Kicker, Label, MonoMeta } from '../components/Type';
 import { color, space } from '../tokens';
+import Backup, { type BackupActions } from '../components/Backup';
 import {
   RESULT_STATES,
   TODAY_STATES,
@@ -46,6 +47,7 @@ function Choice({
 
 /** Settings stub (03 §7) plus the dev-only mock state control. */
 export default function Settings({
+  backup = null,
   todayState,
   onTodayState,
   resultState,
@@ -53,6 +55,8 @@ export default function Settings({
   recordState,
   onRecordState,
 }: {
+  /** null while the app draws design states — there is no secret to export then. */
+  backup?: BackupActions | null;
   todayState: DesignState;
   onTodayState: (s: DesignState) => void;
   resultState: ResultDesignState;
@@ -95,6 +99,8 @@ export default function Settings({
         <Kicker>Publication</Kicker>
         <Body style={{ marginTop: space.sm }}>{settings.publication}</Body>
       </Block>
+
+      <Backup actions={backup} />
 
       <Hairline />
 

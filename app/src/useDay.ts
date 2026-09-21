@@ -106,7 +106,18 @@ export function useDay(config: LiveConfig | null) {
     }
   }, [session, refresh]);
 
-  return { day, busy, error, connect, save, seal, refresh };
+  const backup = session
+    ? {
+        onExport: () => session.exportSecret(),
+        onImport: async (hex: string) => {
+          const result = await session.importSecret(hex);
+          await refresh();
+          return result;
+        },
+      }
+    : null;
+
+  return { day, busy, error, connect, save, seal, refresh, backup };
 }
 
 function message(e: unknown): string {

@@ -75,6 +75,7 @@ export default function App() {
         <View style={{ flex: 1 }}>
           {onSettings ? (
             <Settings
+              backup={LIVE ? live.backup : null}
               todayState={todayState}
               onTodayState={setTodayState}
               resultState={resultState}

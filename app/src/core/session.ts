@@ -16,8 +16,9 @@ import { Sealing } from "./sealing.ts";
 import { SeasonSecret } from "./secret.ts";
 import { type ResultView, type TodayView, resultView, sideRecord, streakOf, todayView } from "./day.ts";
 import { revealableNow } from "./revealing.ts";
-import type { SealRecord } from "./records.ts";
-import type { Store } from "./store.ts";
+import { type SealRecord, sealKey } from "./records.ts";
+import { recoverAll } from "./recovery.ts";
+import { type Store, setJson } from "./store.ts";
 import type { Wallet } from "./wallet.ts";
 
 export type SessionDeps = {
@@ -280,6 +281,54 @@ export class Session {
       },
       await this.deps.chain.blockhash(),
     );
+  }
+
+  /**
+   * The backup key (E2). 64 hex characters, useless without this wallet — it opens nothing on
+   * its own, it only rebuilds the salts that this phone would have derived anyway.
+   */
+  async exportSecret(): Promise<string | null> {
+    return new SeasonSecret({
+      store: this.deps.store,
+      now: this.deps.now,
+      randomBytes: this.deps.randomBytes,
+    }).exportSecret();
+  }
+
+  /**
+   * After a reinstall: paste the key back, then rebuild every open answer from the chain.
+   * Returns how many came back and which ones could not — a call that cannot be opened is named,
+   * never silently dropped.
+   */
+  async importSecret(hex: string): Promise<{ recovered: number[]; lost: number[] }> {
+    if (!this.walletKey) throw new Error("connect the wallet first");
+    const secrets = new SeasonSecret({
+      store: this.deps.store,
+      now: this.deps.now,
+      randomBytes: this.deps.randomBytes,
+    });
+    this.secretBytes = await secrets.importSecret(hex, this.walletKey);
+    this.sealing = this.makeSealing();
+
+    const now = this.deps.now();
+    const open = this.deps.calendar.filter(
+      (r) => now >= r.commitOpen && now < r.outcomeTime + 72 * 3600,
+    );
+    const entries = await this.deps.chain.entries(open.map((r) => r.roundId), this.sgtMint!);
+    const pairs = open
+      .filter((r) => entries.has(r.roundId))
+      .map((round) => ({ round, entry: entries.get(round.roundId)! }));
+    const { recovered, lost } = recoverAll({
+      secret: this.secretBytes,
+      calendar: this.deps.calendar,
+      entries: pairs,
+      wallet: this.walletKey,
+      sgtMint: this.sgtMint!,
+    });
+    for (const record of recovered) {
+      await setJson(this.deps.store, sealKey(record.roundId), record);
+    }
+    return { recovered: recovered.map((r) => r.roundId), lost };
   }
 
   /** The two numbers of the record, from what the chain stores. */

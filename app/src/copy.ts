@@ -67,4 +67,21 @@ export const copy = {
   noGenesisToken: "No Genesis Token found in this wallet.",
   windowClosed: "Window closed · next question 16:00 UTC",
   openReveals: (n: number) => `${n} ${n === 1 ? "call" : "calls"} still open to reveal`,
+
+  /** Backup and restore (E2). Proposed in docs/COPY-NEUE-TEILE.md §D — NOT yet approved by the
+   *  owner, which is why it lives here in one block and nowhere else. */
+  backup: {
+    heading: "Backup",
+    body: "Your open answers live on this phone. If you uninstall the app, answers you have sealed but not yet revealed are lost. Copy this key and keep it somewhere safe — with it, a new installation can open them again.",
+    copyButton: "Copy backup key",
+    copied: "Copied. It is useless without this wallet.",
+    restoreHeading: "Restore",
+    restoreBody:
+      "Paste the backup key from your old installation. Your sealed answers come back from the chain — the sentences you wrote do not.",
+    placeholder: "64 characters",
+    bad: "That is not a backup key.",
+    restored: (n: number) => `Restored. ${n} open ${n === 1 ? "call is" : "calls are"} yours again.`,
+    lost: (ids: number[]) =>
+      `${ids.length} sealed ${ids.length === 1 ? "call" : "calls"} could not be opened with this key.`,
+  },
 } as const;
