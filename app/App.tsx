@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Constants from 'expo-constants';
 import { SafeAreaView, StatusBar, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,8 +12,8 @@ import Settings from './src/screens/Settings';
 import Diagnostics from './src/screens/Diagnostics';
 import { useObservedFonts } from './src/fonts';
 import { color } from './src/tokens';
-import { RecordState } from './src/mock';
 import { mockResult, mockToday, type DesignState, type ResultDesignState } from './src/mockViews';
+import { recordView } from './src/core/record.ts';
 import { useDay, type LiveConfig } from './src/useDay';
 import season from './src/season1.json';
 
@@ -40,10 +40,26 @@ export default function App() {
   const [onSettings, setOnSettings] = useState(false);
   const [todayState, setTodayState] = useState<DesignState>('open');
   const [resultState, setResultState] = useState<ResultDesignState>('called');
-  const [recordState, setRecordState] = useState<RecordState>('default');
-  const [showSampleRecord, setShowSampleRecord] = useState(false);
 
   const live = useDay(LIVE);
+
+  // Record and Settings cost their own reads, so they are fetched when their screen opens.
+  const { loadRecord, loadSettings } = live;
+  useEffect(() => {
+    if (!LIVE) return;
+    if (area === 'Record') void loadRecord();
+    if (onSettings) void loadSettings();
+  }, [area, onSettings, loadRecord, loadSettings]);
+
+  // Without a chain there is nothing to show but an empty record — no fixture, no invented data.
+  const emptyRecord = recordView({
+    now: Math.floor(Date.now() / 1000),
+    calendar: [],
+    rounds: new Map(),
+    entries: new Map(),
+    records: [],
+    player: null,
+  });
 
   // The diagnostics build has one job and shows it immediately — no long press, no tabs.
   if (IS_DIAGNOSTICS) {
@@ -75,13 +91,12 @@ export default function App() {
         <View style={{ flex: 1 }}>
           {onSettings ? (
             <Settings
+              view={live.settings}
               backup={LIVE ? live.backup : null}
               todayState={todayState}
               onTodayState={setTodayState}
               resultState={resultState}
               onResultState={setResultState}
-              recordState={recordState}
-              onRecordState={setRecordState}
             />
           ) : area === 'Today' ? (
             <Today
@@ -97,11 +112,7 @@ export default function App() {
           ) : area === 'Result' ? (
             <Result view={resultView} />
           ) : (
-            <Record
-              state={recordState}
-              showSample={showSampleRecord}
-              onToggleSample={() => setShowSampleRecord((v) => !v)}
-            />
+            <Record view={live.record ?? emptyRecord} />
           )}
         </View>
 

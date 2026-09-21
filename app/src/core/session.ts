@@ -16,7 +16,9 @@ import type { Entry, Round } from "../chain/layout.ts";
 import { sha256Of } from "./sentence.ts";
 import { Sealing } from "./sealing.ts";
 import { SeasonSecret } from "./secret.ts";
-import { type ResultView, type TodayView, resultView, sideRecord, streakOf, todayView } from "./day.ts";
+import { type ResultView, type TodayView, resultView, streakOf, todayView } from "./day.ts";
+import { type RecordView, recordView } from "./record.ts";
+import { type SettingsView, settingsView } from "./settings.ts";
 import { revealableNow } from "./revealing.ts";
 import { type SealRecord, sealKey } from "./records.ts";
 import { recoverAll } from "./recovery.ts";
@@ -346,16 +348,53 @@ export class Session {
     return { recovered: recovered.map((r) => r.roundId), lost };
   }
 
-  /** The two numbers of the record, from what the chain stores. */
-  async record(): Promise<{ hits: number; calls: number; player: Awaited<ReturnType<Chain["player"]>> }> {
+  /**
+   * The Record, from what the chain stores plus the seal records on this phone.
+   *
+   * It asks for every call of the season at once — four RPC calls in total, and only when the
+   * player opens the screen. Without a wallet there is nothing to ask, and the view says so with
+   * zeros rather than with an invented empty state.
+   */
+  async record(): Promise<RecordView> {
+    const now = this.deps.now();
+    if (!this.sgtMint) {
+      return recordView({
+        now,
+        calendar: this.deps.calendar,
+        rounds: new Map(),
+        entries: new Map(),
+        records: [],
+        player: null,
+      });
+    }
     const ids = this.deps.calendar.map((r) => r.roundId);
-    const [rounds, entries] = await Promise.all([
+    const [rounds, entries, player] = await Promise.all([
       this.deps.chain.rounds(ids),
-      this.deps.chain.entries(ids, this.sgtMint!),
+      this.deps.chain.entries(ids, this.sgtMint),
+      this.deps.chain.player(this.sgtMint),
     ]);
-    const items = [...entries.entries()]
-      .map(([id, entry]) => ({ entry, round: rounds.get(id)! }))
-      .filter((x) => x.round);
-    return { ...sideRecord(items), player: await this.deps.chain.player(this.sgtMint!) };
+    const records = this.sealing ? await this.sealing.all() : [];
+    return recordView({ now, calendar: this.deps.calendar, rounds, entries, records, player });
+  }
+
+  /** Settings: the addresses that decide what this game is, each read from its own account. */
+  async settings(): Promise<SettingsView> {
+    const now = this.deps.now();
+    const [config, upgradeAuthority] = await Promise.all([
+      this.deps.chain.config(),
+      this.deps.chain.upgradeAuthority(),
+    ]);
+    // The next call that still has a future — its times are the ones the reminders use.
+    const next =
+      this.deps.calendar.find((r) => r.outcomeTime > now) ??
+      this.deps.calendar[this.deps.calendar.length - 1];
+    return settingsView({
+      wallet: this.walletKey,
+      sgtMint: this.sgtMint,
+      config,
+      upgradeAuthority,
+      outcomeTimeUtc: next?.outcomeTime ?? now,
+      commitCloseUtc: next?.commitClose ?? now,
+    });
   }
 }

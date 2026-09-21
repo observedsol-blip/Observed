@@ -5,7 +5,7 @@
 // errors, and those the caller has to be able to see.
 import { Connection, PublicKey, type Blockhash } from "@solana/web3.js";
 import bs58 from "bs58";
-import { IX, MEMO_ID, PROGRAM_ID, TOKEN_2022_ID } from "./ids.ts";
+import { BPF_LOADER_UPGRADEABLE_ID, IX, MEMO_ID, PROGRAM_ID, TOKEN_2022_ID } from "./ids.ts";
 import type { MemoTransaction } from "../core/others.ts";
 import {
   type Config,
@@ -75,6 +75,24 @@ export class Chain {
 
   async balance(owner: PublicKey): Promise<number> {
     return this.connection.getBalance(owner, "confirmed");
+  }
+
+  /**
+   * Who may replace the program, read from its own ProgramData account.
+   *
+   * Settings names this address, and naming it is the point: whoever holds it can change the
+   * rules. Layout of a ProgramData account: enum(4) · slot(8) · Option tag(1) · pubkey(32).
+   * A tag of 0 means the program is immutable — then there is no address, and `null` says so.
+   */
+  async upgradeAuthority(): Promise<PublicKey | null> {
+    const [programData] = PublicKey.findProgramAddressSync(
+      [PROGRAM_ID.toBuffer()],
+      BPF_LOADER_UPGRADEABLE_ID,
+    );
+    const data = await this.data(programData);
+    if (!data || data.length < 45) return null;
+    if (data[12] !== 1) return null; // no authority: the program cannot be changed any more
+    return new PublicKey(data.subarray(13, 45));
   }
 
   async blockhash(): Promise<Blockhash> {

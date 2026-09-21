@@ -469,6 +469,44 @@ oder 5xx; fallen beide aus, versucht er es bis zum Fensterende weiter, meldet da
 Instruktion mit Autoritätswirkung; kein Secret im Code, in den Fixtures oder in der Historie; kein
 Pfad, auf dem die Miete eines Spielers woanders landet als bei ihm.
 
+## Record und Settings von der Attrappe gelöst, 22.09.2026
+
+`app/src/mock.ts` ist **gelöscht**. Beweis: `git ls-files app/src/mock.ts` ist leer, und in
+`src/screens`, `src/components` und `App.tsx` gibt es keinen Import mehr auf `../mock` — die
+einzigen verbliebenen Treffer sind `mockViews.ts`, die Gestaltungszustände für Today und Result,
+die bewusst bleiben (eine Datei, zwei Datenquellen, damit der Entwurf ohne Wallet prüfbar ist).
+
+**Woher die Zahlen jetzt kommen:** `core/record.ts` rechnet aus dem `Player`-Konto (die Zähler und
+die Punktsumme des Programms), den `Round`- und `Entry`-Konten der Saison und den Siegel-Datensätzen
+auf dem Telefon. `core/settings.ts` nimmt Wallet und Mint aus der Sitzung, `calendar` und `pause`
+aus `Config` und die **Upgrade-Autorität aus dem ProgramData-Konto des Programms** (neu in
+`chain/rpc.ts`). Was nicht gelesen werden kann, steht als `—` da, nicht als Platzhalteradresse.
+
+**Was die vier Fehler der Attrappe waren** — alle vier jetzt weg: Brier als Held statt des
+Seiten-Records, das Wort „rounds", Kalibrierungsschwelle 21 statt 20, und ein Versäumnis zu 0,250
+statt als voller Fehlschlag. Die Saisonzahl ist jetzt die des Programms (`score_sum / scored_rounds`),
+also **inklusive** der vollen 1,000 pro Versäumnis.
+
+**Leerer Zustand ohne erfundenen Text:** Eine Saison, die nicht begonnen hat, liest sich als
+`0 of 0 calls`, Saisonwert `—`, Zähler `0 · 0 · 0` und `Unlocks after 20 revealed calls · you're at
+0`. Alles davon sind die freigegebenen Vorlagen aus §11.5 mit echten Nullen — kein neuer Satz.
+
+**GAP — bewusst nicht gebaut, Text fehlt:**
+1. **Demo-Schalter „Show sample record (36 calls)"** (§4): ausgebaut. Er braucht einen Datensatz,
+   und der einzige, den es gab, war genau die veraltete Attrappe. Als Feature offen — für die Jury
+   wäre er nützlich, dann aber aus einer echten, gekennzeichneten Saison.
+2. **Publication-Zeile in Settings** (§6): entfernt. §6 ist ungebaut und die Zeile war erfunden.
+3. **`EvidenceRef.tsx` gelöscht.** Die Komponente war von keinem Bildschirm benutzt und zeichnete
+   ausgedachte Belegzeilen. Der Evidenzblock aus §3.10 bleibt damit ein GAP, aber ein sichtbarer.
+4. **Vier Strukturüberschriften ohne Vorlage in 03:** `Side record`, `Season score`, `Calls`,
+   `Push`. Sie benennen Felder, die §4 und §7 inhaltlich verlangen, aber nicht benennen. Wenn du
+   andere Wörter willst, sind es vier Zeilen in `Record.tsx` und `Settings.tsx`.
+
+**Neu geprüft:** 11 Tests für die beiden Views (leere Saison, Saisonwert des Programms,
+Seiten-Record mit einer knappen Runde, `open` vs. `missing` vor und nach Fensterschluss,
+Menge-Grundlinie berechnet statt geraten, jede Adresse aus ihrem Konto, unveränderliches Programm
+ohne Upgrade-Autorität, Push-Zeiten eine Stunde vor Schluss). **120 App-Tests grün**, vorher 109.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|

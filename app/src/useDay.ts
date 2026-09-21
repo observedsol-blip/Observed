@@ -6,6 +6,8 @@ import { useCallback, useEffect, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { Chain } from "./chain/rpc.ts";
 import { Session, type DayState } from "./core/session.ts";
+import type { RecordView } from "./core/record.ts";
+import type { SettingsView } from "./core/settings.ts";
 import { SecureStoreAdapter } from "./platform/secureStore.ts";
 import { MwaWallet, type Cluster } from "./platform/mwaWallet.ts";
 import type { CalendarRound } from "./chain/calendar.ts";
@@ -15,6 +17,8 @@ export type LiveConfig = { endpoint: string; cluster: Cluster; calendar: Calenda
 export function useDay(config: LiveConfig | null) {
   const [session, setSession] = useState<Session | null>(null);
   const [day, setDay] = useState<DayState | null>(null);
+  const [record, setRecord] = useState<RecordView | null>(null);
+  const [settings, setSettings] = useState<SettingsView | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -55,6 +59,25 @@ export function useDay(config: LiveConfig | null) {
       setError(null);
     } catch (e) {
       // A network error is not a state of the game: say it, keep the last view.
+      setError(message(e));
+    }
+  }, [session]);
+
+  /** Record and Settings are read when their screen is opened, not on every refresh. */
+  const loadRecord = useCallback(async () => {
+    if (!session) return;
+    try {
+      setRecord(await session.record());
+    } catch (e) {
+      setError(message(e));
+    }
+  }, [session]);
+
+  const loadSettings = useCallback(async () => {
+    if (!session) return;
+    try {
+      setSettings(await session.settings());
+    } catch (e) {
       setError(message(e));
     }
   }, [session]);
@@ -119,7 +142,7 @@ export function useDay(config: LiveConfig | null) {
       }
     : null;
 
-  return { day, busy, error, connect, save, seal, refresh, backup };
+  return { day, record, settings, busy, error, connect, save, seal, refresh, loadRecord, loadSettings, backup };
 }
 
 function message(e: unknown): string {

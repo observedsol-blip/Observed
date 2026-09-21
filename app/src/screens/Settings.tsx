@@ -1,3 +1,8 @@
+// Settings (03 §7) — every address on this screen is read from an account, none from a fixture.
+//
+// Until 22.09.2026 the wallet, the mint and all three authorities were invented strings in
+// `app/src/mock.ts`. On a screen whose whole job is "here is who could change the rules", that
+// was the worst possible place for made-up data.
 import React from 'react';
 import { Pressable, View } from 'react-native';
 import Screen from '../components/Screen';
@@ -11,11 +16,7 @@ import {
   type DesignState,
   type ResultDesignState,
 } from '../mockViews';
-import {
-  RECORD_STATES,
-  RecordState,
-  settings,
-} from '../mock';
+import { type SettingsView, settingsCopy, shortAddress } from '../core/settings.ts';
 
 function Choice({
   label,
@@ -45,60 +46,66 @@ function Choice({
   );
 }
 
-/** Settings stub (03 §7) plus the dev-only mock state control. */
+/** An address row: the label from §7, the address as data. `—` when nothing could be read. */
+function Address({ label, value }: { label: string; value: string | null }) {
+  return <MonoMeta>{`${label} · ${value === null ? '—' : shortAddress(value)}`}</MonoMeta>;
+}
+
 export default function Settings({
+  view,
   backup = null,
   todayState,
   onTodayState,
   resultState,
   onResultState,
-  recordState,
-  onRecordState,
 }: {
+  /** null while the app draws design states: there is no chain to ask then. */
+  view: SettingsView | null;
   /** null while the app draws design states — there is no secret to export then. */
   backup?: BackupActions | null;
   todayState: DesignState;
   onTodayState: (s: DesignState) => void;
   resultState: ResultDesignState;
   onResultState: (s: ResultDesignState) => void;
-  recordState: RecordState;
-  onRecordState: (s: RecordState) => void;
 }) {
   return (
     <Screen>
       <Kicker>Wallet</Kicker>
       <Block top={space.sm}>
-        <MonoMeta>{settings.wallet}</MonoMeta>
-        <MonoMeta style={{ marginTop: space.xs }}>{settings.genesis}</MonoMeta>
-        <MonoMeta style={{ marginTop: space.xs }}>{settings.genesisMint}</MonoMeta>
+        <Address label="Wallet" value={view?.wallet ?? null} />
+        {view?.genesis ? (
+          <MonoMeta style={{ marginTop: space.xs }}>{view.genesis}</MonoMeta>
+        ) : null}
+        <View style={{ marginTop: space.xs }}>
+          <Address label="Mint" value={view?.sgtMint ?? null} />
+        </View>
       </Block>
 
       <Block>
         <Kicker>Authorities</Kicker>
         <View style={{ marginTop: space.sm, gap: space.xs }}>
-          <MonoMeta>{settings.authorityCalendar}</MonoMeta>
-          <MonoMeta>{settings.authorityPause}</MonoMeta>
-          <MonoMeta>{settings.authorityUpgrade}</MonoMeta>
+          <Address label="calendar" value={view?.authorities.calendar ?? null} />
+          <Address label="pause" value={view?.authorities.pause ?? null} />
+          <Address label="upgrade" value={view?.authorities.upgrade ?? null} />
         </View>
       </Block>
 
       <Hairline />
 
-      <MonoMeta>{settings.cost}</MonoMeta>
+      <MonoMeta>{view?.cost ?? ''}</MonoMeta>
       <Block top={space.lg}>
-        <Body>{settings.ownership}</Body>
-        <Body style={{ marginTop: space.sm }}>{settings.noCharge}</Body>
+        <Body>{settingsCopy.ownership}</Body>
+        <Body style={{ marginTop: space.sm }}>{settingsCopy.noCharge}</Body>
       </Block>
 
-      <Block>
-        <MonoMeta>{settings.pushTimes}</MonoMeta>
-        <MonoMeta style={{ marginTop: space.xs }}>{settings.backup}</MonoMeta>
-      </Block>
-
-      <Block>
-        <Kicker>Publication</Kicker>
-        <Body style={{ marginTop: space.sm }}>{settings.publication}</Body>
-      </Block>
+      {view ? (
+        <Block>
+          <Kicker>Push</Kicker>
+          <MonoMeta style={{ marginTop: space.xs }}>
+            {`${view.push.outcome} · ${view.push.lastHour}`}
+          </MonoMeta>
+        </Block>
+      ) : null}
 
       <Backup actions={backup} />
 
@@ -131,20 +138,6 @@ export default function Settings({
               label={s.label}
               selected={s.key === resultState}
               onPress={() => onResultState(s.key)}
-            />
-          ))}
-        </View>
-      </Block>
-
-      <Block top={space.lg}>
-        <Label>Record</Label>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginTop: space.sm }}>
-          {RECORD_STATES.map((s) => (
-            <Choice
-              key={s.key}
-              label={s.label}
-              selected={s.key === recordState}
-              onPress={() => onRecordState(s.key)}
             />
           ))}
         </View>

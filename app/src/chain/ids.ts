@@ -40,6 +40,9 @@ export const SECRET_MESSAGE_PREFIX = "observed-v1-secret:";
  */
 export const REVEAL_WINDOW_SECS = 72 * 3_600;
 
+/** The loader that owns upgradeable programs; its ProgramData account names the authority. */
+export const BPF_LOADER_UPGRADEABLE_ID = new PublicKey("BPFLoaderUpgradeab1e11111111111111111111111");
+
 export const LEAF_TAG = 0x00;
 export const NODE_TAG = 0x01;
 export const CALENDAR_DEPTH = 6;

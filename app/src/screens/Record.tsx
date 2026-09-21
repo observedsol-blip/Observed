@@ -1,27 +1,25 @@
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
-import Screen from '../components/Screen';
-import Hairline from '../components/Hairline';
-import SampleBanner from '../components/SampleBanner';
-import { Block, Body, Figures, FiguresMeta, Kicker, Label, MonoMeta } from '../components/Type';
-import { color, space, type } from '../tokens';
-import {
-  CALIBRATION_MIN_REVEALED,
-  EARLY_READ_MIN_REVEALED,
-  PastRound,
-  RecordState,
-  earlyRecord,
-  pastRounds,
-  record,
-  sampleRecord,
-} from '../mock';
+// Record — two numbers and a sentence (03 §4 and §11.5), drawn from what the chain stores.
+//
+// Until 22.09.2026 this screen read from `app/src/mock.ts`: a cumulative Brier as the hero, the
+// word "rounds", the calibration lock at 21, and a missing reveal counted as 0.250. All four were
+// wrong. What is big now is the side record; the Brier is the season score underneath it, and
+// every number comes out of `recordView` — from the Player account, the rounds, the entries and
+// the seal records on this phone.
+import React from "react";
+import { Text, View } from "react-native";
+import Screen from "../components/Screen";
+import Hairline from "../components/Hairline";
+import { Block, Body, FiguresMeta, Kicker, Label } from "../components/Type";
+import type { PastCall, RecordView } from "../core/record.ts";
+import { copy } from "../copy.ts";
+import { color, space, type } from "../tokens";
 
-function RoundRow({ round }: { round: PastRound }) {
+function CallRow({ call }: { call: PastCall }) {
   return (
     <View
       style={{
-        flexDirection: 'row',
-        alignItems: 'flex-start',
+        flexDirection: "row",
+        alignItems: "flex-start",
         paddingVertical: space.md,
         borderBottomWidth: 1,
         borderBottomColor: color.hairline,
@@ -29,107 +27,77 @@ function RoundRow({ round }: { round: PastRound }) {
       }}
     >
       <View style={{ width: 56 }}>
-        <MonoMeta>{round.date}</MonoMeta>
+        <FiguresMeta>{call.date}</FiguresMeta>
       </View>
       <View style={{ flex: 1 }}>
         <Label numberOfLines={2} style={{ color: color.ink }}>
-          {round.question}
+          {call.question}
         </Label>
         <FiguresMeta style={{ marginTop: space.xs }}>
           {[
-            round.probability === null ? 'You —' : `You ${round.probability}`,
-            round.outcome === null ? 'Outcome —' : `Outcome · ${round.outcome}`,
-            round.brier === null ? 'Brier —' : `Brier ${round.brier}`,
-            round.status,
-          ].join(' · ')}
+            call.sealed ?? "—",
+            call.outcome ?? "—",
+            call.brier ?? "—",
+            call.status,
+          ].join(" · ")}
         </FiguresMeta>
       </View>
     </View>
   );
 }
 
-/**
- * Record — 03 §4, plus the owner's early read.
- *
- * The "Show sample record (36 rounds)" toggle is specified copy from 03, not a
- * dev control. Which mock dataset is loaded is chosen on the Settings stub.
- */
-export default function Record({
-  state,
-  showSample,
-  onToggleSample,
-}: {
-  state: RecordState;
-  showSample: boolean;
-  onToggleSample: () => void;
-}) {
-  const base = state === 'early_read' ? earlyRecord : record;
-  const baseRounds = state === 'early_read' ? earlyRecord.rounds : pastRounds;
-
-  const brier = showSample ? sampleRecord.brier : base.brier;
-  const counts = showSample ? sampleRecord.countsValue : base.countsValue;
-  const baselines = showSample ? sampleRecord.baselines : base.baselines;
-  const rounds = showSample ? sampleRecord.rounds : baseRounds;
-
-  const revealed = rounds.filter((r) => r.probability !== null).length;
-  const curveUnlocked = revealed >= CALIBRATION_MIN_REVEALED;
-  const showEarlyRead =
-    !showSample && state === 'early_read' && revealed >= EARLY_READ_MIN_REVEALED && !curveUnlocked;
-
+export default function Record({ view }: { view: RecordView }) {
   return (
     <Screen>
-      {showSample ? <SampleBanner text={record.sampleBanner} /> : null}
+      {/* the side record, big — calls with a side, without the close ones */}
+      <Kicker>Side record</Kicker>
+      <Text style={{ ...type.hero, color: color.ink, marginTop: space.sm }}>
+        {copy.record.sideRecord(view.sideRecord.hits, view.sideRecord.calls)}
+      </Text>
+      <Block top={space.sm}>
+        <Label>{view.streak}</Label>
+      </Block>
 
-      <Kicker>{record.brierLabel}</Kicker>
-      <Text style={{ ...type.hero, color: color.ink, marginTop: space.sm }}>{brier}</Text>
+      {/* the season score: the program's own number, including what was never revealed */}
+      <Block>
+        <Kicker>Season score</Kicker>
+        <Text style={{ ...type.numberLarge, color: color.ink, marginTop: space.xs }}>
+          {view.seasonScore ? `${view.seasonScore.value} · ${view.seasonScore.scored} scored` : "—"}
+        </Text>
+        <Body style={{ marginTop: space.sm }}>{copy.record.explain}</Body>
+      </Block>
 
       <Block>
-        <Label>{record.countsLabel}</Label>
+        <Label>Commits · Reveals · Missing</Label>
         <Text style={{ ...type.numberLarge, color: color.ink, marginTop: space.xs }}>
-          {counts}
+          {`${view.counts.commits} · ${view.counts.reveals} · ${view.counts.missing}`}
         </Text>
-        <FiguresMeta style={{ marginTop: space.xs }}>{record.countsFootnote}</FiguresMeta>
+        <FiguresMeta style={{ marginTop: space.xs }}>missing counts as a full miss</FiguresMeta>
       </Block>
 
       <Block top={space.lg}>
-        <FiguresMeta>{baselines}</FiguresMeta>
+        <FiguresMeta>
+          {`Always 50%: ${view.baselines.always50}${
+            view.baselines.crowd === null ? "" : ` · Crowd: ${view.baselines.crowd}`
+          }`}
+        </FiguresMeta>
       </Block>
 
       <Hairline />
 
-      {/* The early read: a leaning with its sample size and its band — never a
-          verdict. The curve below it stays locked until 21 revealed rounds. */}
-      {showEarlyRead ? (
-        <Block top={0}>
-          <Figures style={{ letterSpacing: 0.6 }}>{earlyRecord.earlyRead}</Figures>
-          <Body style={{ marginTop: space.sm, color: color.meta }}>
-            {earlyRecord.calibrationLocked}
-          </Body>
-        </Block>
-      ) : showSample || curveUnlocked ? null : (
-        <Body>{state === 'early_read' ? earlyRecord.calibrationLocked : record.calibrationLocked}</Body>
-      )}
+      {/* no curve and no word about overconfidence until there are enough revealed calls */}
+      {view.calibration.unlocked ? null : <Body>{view.calibration.locked}</Body>}
 
       <Block>
-        <Kicker>Rounds</Kicker>
+        <Kicker>Calls</Kicker>
         <View style={{ marginTop: space.sm }}>
-          {rounds.map((r) => (
-            <RoundRow key={r.round} round={r} />
+          {view.calls.map((call) => (
+            <CallRow key={call.roundId} call={call} />
           ))}
         </View>
       </Block>
 
-      <Pressable
-        onPress={onToggleSample}
-        accessibilityRole="switch"
-        accessibilityState={{ checked: showSample }}
-        accessibilityLabel={record.sampleToggle}
-        style={{ minHeight: 48, justifyContent: 'center', marginTop: space.lg }}
-      >
-        <Label style={{ color: color.ink, textDecorationLine: 'underline' }}>
-          {record.sampleToggle}
-        </Label>
-      </Pressable>
+      <View style={{ height: space.xxl }} />
     </Screen>
   );
 }
