@@ -45,6 +45,10 @@ pub const SOURCE_PRICE_ACCOUNT: u8 = 1;
 /// Question kinds. ABOVE: outcome > reference × (1 + offset). MOVE: outcome is more than
 /// `offset` away from the reference in either direction. Both strict: equality is No.
 pub const KIND_ABOVE: u8 = 0;
+/// Widest band a direction round may name. The band is a label there, not a distance to
+/// a threshold, so it needs its own ceiling — above 1 % it would call most rounds close
+/// and say nothing.
+pub const MAX_DIRECTION_BAND_BPS: u16 = 100;
 pub const KIND_MOVE: u8 = 1;
 /// Upper bound for the submission window W and the maximum age A.
 pub const MAX_WINDOW_SECS: u16 = 3_600;
@@ -57,7 +61,12 @@ pub const NODE_TAG: u8 = 0x01;
 /// One season is a fixed 64-leaf tree (depth 6), docs/01-PROGRAM.md §3.
 pub const CALENDAR_DEPTH: usize = 6;
 pub const CALENDAR_LEAVES: u32 = 64;
-pub const REVEAL_WINDOW_SECS: i64 = 12 * 60 * 60;
+/// How long a sealed answer may be revealed after the outcome. 72 h, not 12: a day that
+/// slips must not cost a full miss (owner decision 21.09.2026, E10). Three days is the
+/// most that still fits, because up to three open rounds plus today's seal and two memos
+/// have to go into ONE transaction — 1 027 of 1 232 bytes (tests/capacity.rs).
+/// After the window, silence still costs `MISSING_SCORE_BPS`; that protection is untouched.
+pub const REVEAL_WINDOW_SECS: i64 = 72 * 60 * 60;
 pub const RESOLVE_WINDOW_SECS: i64 = 24 * 60 * 60;
 pub const BUCKETS: usize = 21;
 pub const BUCKET_STEP: u16 = 500;
@@ -769,8 +778,17 @@ impl RoundTerms {
         }
         require!(self.max_conf_bps > 0, ObservedError::BadConfidenceBound);
         // A band that reaches the threshold would call every round close and say nothing.
+        // The direction question (ABOVE with threshold 0) is the one case without a distance to
+        // spare: there the band only labels the rounds that the choice of measurement moment
+        // could have flipped. It keeps its own ceiling, and nothing changes for MOVE.
+        let direction = self.kind == KIND_ABOVE && self.offset_bps == 0;
         require!(
-            self.band_bps > 0 && i32::from(self.band_bps) < self.offset_bps.abs(),
+            self.band_bps > 0
+                && if direction {
+                    self.band_bps <= MAX_DIRECTION_BAND_BPS
+                } else {
+                    i32::from(self.band_bps) < self.offset_bps.abs()
+                },
             ObservedError::BadBand
         );
         require!(

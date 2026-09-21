@@ -124,3 +124,38 @@ Der Code folgt hier bereits den Entscheidungen; die Spec widerspricht ihm an die
 - §7 „Muskelgedächtnis-Test … Offsets so wählen, dass 40–60 % erwartbar sind“ → „30–70 %, Mitte 45 %“.
 - §5 neu, knappe Runden: „Jede Runde nennt vorab eine **Messbandbreite** (Saison 1: 25 Basispunkte, aufgerundet aus dem p90 der gemessenen Spanne je Zeitpunkt). Beim Auflösen schreibt das Programm, wie weit der Ausgang die Schwelle verfehlt oder überschritten hat. Liegt dieser Abstand innerhalb der Bandbreite, war die Runde innerhalb der Messgenauigkeit entschieden; das zeigt die App und jeder kann es aus den gespeicherten Werten nachrechnen. Die Schwelle ist immer mindestens das Vierfache der Bandbreite.“
 - Datierte Zeile: „19.09.2026 — Orakel: gesponsertes Pyth-Konto, erste gültige Einreichung in 60 s, Höchstalter 60 s; Auswahl sichtbar statt verhindert. Fenster 16:00–04:00 UTC, Referenz 04:02 (zwei Minuten nach Fensterschluss, niemand, der versiegelt hat, kann sie gesehen haben), Ergebnis 16:00. Saison 1 nur Fragetyp Bewegung, Schwellen ≥ 1,0 %, BTC nicht am Wochenende.“
+
+## 16. Fragetyp „Richtung" als Standard und Aufdeckfenster 72 h (Owner-Entscheidungen 21.09.2026, im Programm)
+Umgesetzt und getestet; die Spec widerspricht dem Code an diesen Sätzen. Braucht `.spec-unlock`.
+Ersetzt Teile von Vorschlag 15 (Fragetyp) und die dort verworfene Alternative (Fenster 36 h).
+
+- §3 Tabelle, Zeile „Aufdecken".
+  - alt: „Aufdecken | 16:00–04:00 (Folgetag) | `reveal` für R, parallel zu `commit` für R+1 …"
+  - neu: „**Aufdecken | 16:00 bis 16:00 drei Tage später (72 h)** | `reveal` für jede noch offene
+    Runde, zusammen mit `commit` für die heutige — alles in EINER Transaktion, eine Freigabe.
+    Wer einen Tag auslässt, verliert die schon gesiegelten Runden nicht. Nach Fensterschluss
+    kostet Schweigen weiterhin den vollen Fehlschlag (1,000)."
+  - Begründung für die Spec: Ein ausgelassener Abend kostete bisher eine volle Strafe. Das ist die
+    Lehre aus Trepa („a live hour a day required them to build their day around us"). 72 h ist die
+    längste Frist, die noch in eine Transaktion passt: drei Aufdeckungen plus Siegeln plus zwei
+    Memos sind 1 027 von 1 232 Bytes (`programs/observed/tests/capacity.rs`).
+- §6, Punkt „Missing = Commits − Reveals − offene Einträge": „höchstens zwei offene" → „**höchstens
+  drei offene**" (mit 72 h fällt `reveal_close(R−4)` genau auf das Öffnen des Siegelfensters von R).
+- §7, Fragetyp.
+  - alt (aus Vorschlag 15): „Saison 1: nur der Fragetyp **Bewegung** …"
+  - neu: „Saison 1 stellt als Standard die **Richtungsfrage**: „Will SOL be higher at 16:00 than at
+    04:02 UTC?" — Endpunkt gegen Endpunkt, strikt, **Gleichstand ist Nein**. Keine Schwelle, also
+    nichts zu eichen: über 364 Tage liegt die Ja-Quote bei 47–49 % für SOL, BTC und ETH
+    (`spikes/baserate/direction.mjs`). Werktags rotieren SOL, BTC, ETH; am Wochenende läuft nur
+    SOL, weil bei Schwelle 0 eine Wochenendrunde bei SOL in 15 % der Fälle im Messband liegt, bei
+    ETH in 25 % und bei BTC in 37 %. An **Ereignistagen** (US-Arbeitsmarktbericht, US-CPI, der Tag
+    nach einem FOMC-Beschluss) bleibt die **Bewegungsfrage** mit 1,7 % und einer Kontextzeile; die
+    Zeile ist Anzeige und steht nicht im Hash."
+  - Ergänzung zur Messbandbreite: „Die Schwelle ist mindestens das Vierfache der Bandbreite" gilt
+    nur noch für Bewegungsfragen. Bei der Richtungsfrage gibt es keine Schwelle; dort ist die
+    Bandbreite die Marke für „innerhalb der Messgenauigkeit entschieden" und auf 1 % gedeckelt.
+    Das trifft je nach Feed jede achte bis zehnte Werktagsrunde — die App muss das sagen können
+    (Arbeitstitel „Too close to call"), sonst wäre die Anzeige unehrlich.
+- Datierte Zeile: „21.09.2026 — Standardfrage ist die Richtung (Gleichstand = Nein), Bewegung nur
+  noch an fünf Ereignistagen; Aufdeckfenster 72 h statt 12 h, eine Freigabe deckt alles Offene auf."
+

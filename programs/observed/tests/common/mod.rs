@@ -39,7 +39,7 @@ pub const COMMIT_CLOSE: i64 = DAY0 + 12 * 3600;
 pub const REFERENCE_DELAY: i64 = 120;
 pub const REFERENCE_TIME: i64 = COMMIT_CLOSE + REFERENCE_DELAY;
 pub const OUTCOME_TIME: i64 = DAY0 + 24 * 3600;
-pub const REVEAL_CLOSE: i64 = OUTCOME_TIME + 12 * 3600;
+pub const REVEAL_CLOSE: i64 = OUTCOME_TIME + 72 * 3600;
 pub const RESOLVE_DEADLINE: i64 = OUTCOME_TIME + 24 * 3600;
 pub const MAX_CONF_BPS: u16 = 50;
 pub const OFFSET_BPS: i32 = 100; // +1 %
@@ -76,7 +76,7 @@ pub struct Env {
 }
 
 /// Reveal window length, mirrored from the program (used by the season test).
-pub const REVEAL_WINDOW: i64 = 12 * 3600;
+pub const REVEAL_WINDOW: i64 = 72 * 3600;
 
 pub fn read_fixture(name: &str) -> (Pubkey, Pubkey, u64, Vec<u8>) {
     fixture(name)
@@ -278,6 +278,20 @@ pub fn reference_update(env: &mut Env) -> Pubkey {
     );
     put_price_update(env, data)
 }
+/// A reading at an arbitrary time — for tests that play more than one round.
+pub fn update_at(env: &mut Env, price: i64, at: i64) -> Pubkey {
+    let data = price_update(
+        env.feed_id,
+        price,
+        100_000,
+        -8,
+        at,
+        at - 1,
+        VerificationLevel::Full,
+    );
+    put_price_update(env, data)
+}
+
 /// Outcome update: `price` in the same 1e-8 scale, exactly at the outcome time.
 pub fn outcome_update(env: &mut Env, price: i64) -> Pubkey {
     let data = price_update(

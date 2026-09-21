@@ -932,6 +932,155 @@ fn confidence_bound_is_exact_at_the_edge() {
     }
 }
 
+/// The direction question (E1): "will it be higher at 16:00 than at 04:02?" is the existing
+/// ABOVE rule with threshold 0. Strictly higher counts, equality is No, and the margin is simply
+/// the move — so a round decided inside the measurement band is visible as such.
+#[test]
+fn a_direction_round_is_decided_by_the_side_alone() {
+    const REFERENCE: i64 = 15_000_000_000;
+    const YES: u8 = observed::Outcome::Yes as u8;
+    const NO: u8 = observed::Outcome::No as u8;
+    for (price, expected, note) in [
+        (REFERENCE + 1, YES, "one unit higher is Yes"),
+        (REFERENCE - 1, NO, "one unit lower is No"),
+        (REFERENCE, NO, "equality is No"),
+        (REFERENCE + REFERENCE / 100, YES, "a full percent higher is Yes"),
+    ] {
+        let mut env = setup_with(DAY0, observed::KIND_ABOVE, 0);
+        let payer = env.payer.insecure_clone();
+        assert_eq!(read_round(&env, 0).offset_bps, 0, "threshold 0");
+
+        set_time(&mut env.svm, REFERENCE_TIME + 5);
+        let upd = reference_update(&mut env);
+        sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+        set_time(&mut env.svm, OUTCOME_TIME + 5);
+        let out = outcome_update(&mut env, price);
+        sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+
+        let round = read_round(&env, 0);
+        assert_eq!(round.outcome, expected, "{note}");
+        assert_eq!(
+            round.threshold_mantissa, round.reference.price,
+            "with threshold 0 the bar is the reference itself"
+        );
+    }
+}
+
+/// The price of threshold 0: every round decided by less than the band is a round the choice of
+/// measurement moment could have flipped. It has to be visible, not hidden.
+#[test]
+fn a_direction_round_decided_by_one_unit_lands_inside_the_band() {
+    const REFERENCE: i64 = 15_000_000_000;
+    let mut env = setup_with(DAY0, observed::KIND_ABOVE, 0);
+    let payer = env.payer.insecure_clone();
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    // 10 basis points up: a Yes, but well inside the 25 bps band
+    let out = outcome_update(&mut env, REFERENCE + REFERENCE / 1_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+
+    let round = read_round(&env, 0);
+    assert_eq!(round.outcome, observed::Outcome::Yes as u8, "higher, so Yes");
+    assert_eq!(round.outcome_margin_bps, 10, "ten basis points above the reference");
+    assert!(
+        round.outcome_margin_bps.unsigned_abs() as u16 <= round.band_bps,
+        "inside the measurement band: the app must say 'too close to call'"
+    );
+}
+
+/// E10: a day that slips must not cost a full miss. The window is 72 h now — and the day the
+/// player comes back, ONE approval reveals every open round and seals today's.
+#[test]
+fn one_approval_reveals_every_open_round_and_seals_today() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let payer_pk = payer.pubkey();
+    let player = env.player.insecure_clone();
+    let salt = [4u8; 32];
+    // every round has its own terms, so every round has its own commitment
+    let seal_for = |env: &Env, round_id: u32| {
+        observed::commitment_hash(
+            &round_pda(round_id),
+            &terms_of(env.day0, round_id, env.feed_id).hash(SEASON, round_id),
+            &env.sgt_mint,
+            &env.player.pubkey(),
+            6_500,
+            &salt,
+        )
+    };
+
+    // four consecutive rounds; the player seals the first three and then disappears
+    for round_id in 1..=3u32 {
+        let terms = terms_of(env.day0, round_id, env.feed_id);
+        let proof = env.proofs[round_id as usize].clone();
+        sendx!(env, &payer, [ix_create_round(&payer_pk, round_id, terms, proof)])
+            .expect("create_round");
+    }
+    for round_id in 0..=2u32 {
+        let terms = terms_of(env.day0, round_id, env.feed_id);
+        set_time(&mut env.svm, terms.commit_open + 60);
+        let c = seal_for(&env, round_id);
+        sendx!(env, &player, [ix_commit(&env, round_id, c)]).expect("commit");
+        set_time(&mut env.svm, terms.reference_time + 5);
+        let upd = update_at(&mut env, 15_000_000_000, terms.reference_time);
+        sendx!(env, &payer, [ix_set_reference(&env, round_id, upd)]).expect("set_reference");
+        set_time(&mut env.svm, terms.outcome_time + 5);
+        let out = update_at(&mut env, 15_200_000_000, terms.outcome_time);
+        sendx!(env, &payer, [ix_resolve(&env, round_id, out)]).expect("resolve");
+    }
+
+    // Three days later: round 0's window still has 16 h left, round 3 is open for sealing.
+    let now = DAY0 + 80 * 3600;
+    assert!(now < REVEAL_CLOSE, "round 0 is still revealable after three days");
+    set_time(&mut env.svm, now);
+    let cu = sendx!(
+        env,
+        &player,
+        [
+            ix_reveal(&env, 0, 6_500, salt),
+            ix_reveal(&env, 1, 6_500, salt),
+            ix_reveal(&env, 2, 6_500, salt),
+            ix_commit(&env, 3, seal_for(&env, 3)),
+        ]
+    )
+    .expect("one transaction for three reveals and today's seal");
+
+    let p = read_player_for(&env, env.sgt_mint);
+    assert_eq!(p.reveals, 3, "all three caught up in one approval");
+    assert_eq!(p.commits, 4, "and today is sealed");
+    println!("three reveals + one commit in one transaction: {cu} CU");
+}
+
+/// The protection stays: after the window, silence costs the full miss.
+#[test]
+fn after_seventy_two_hours_a_missing_reveal_still_costs_everything() {
+    let mut env = setup();
+    let payer = env.payer.insecure_clone();
+    let player = env.player.insecure_clone();
+    let salt = [5u8; 32];
+    set_time(&mut env.svm, DAY0 + 60);
+    sendx!(env, &player, [ix_commit(&env, 0, commitment(&env, 0, 6_500, salt))]).expect("commit");
+    set_time(&mut env.svm, REFERENCE_TIME + 5);
+    let upd = reference_update(&mut env);
+    sendx!(env, &payer, [ix_set_reference(&env, 0, upd)]).expect("set_reference");
+    set_time(&mut env.svm, OUTCOME_TIME + 5);
+    let out = outcome_update(&mut env, 15_200_000_000);
+    sendx!(env, &payer, [ix_resolve(&env, 0, out)]).expect("resolve");
+
+    // one second after the window closes
+    set_time(&mut env.svm, REVEAL_CLOSE + 1);
+    expect_err(
+        sendx!(env, &player, [ix_reveal(&env, 0, 6_500, salt)]),
+        "OutsideRevealWindow",
+    );
+    sendx!(env, &payer, [ix_score(&env, 0)]).expect("score");
+    let p = read_player_for(&env, env.sgt_mint);
+    assert_eq!(p.missing_scored, 1);
+    assert_eq!(p.score_sum, u64::from(observed::MISSING_SCORE_BPS));
+}
+
 /// Account sizes others depend on: the resolver filters Entry by `dataSize: 184`, and Round's
 /// size sets the season's rent. A change here must be a decision, not an accident.
 #[test]
@@ -975,6 +1124,15 @@ fn create_round_refuses_unknown_or_unsafe_terms() {
             "BadOffset",
         ),
         (Box::new(|t| t.band_bps = 0), "BadBand"),
+        // the direction question has no distance to a threshold, so the band has its own ceiling
+        (
+            Box::new(|t| {
+                t.kind = observed::KIND_ABOVE;
+                t.offset_bps = 0;
+                t.band_bps = observed::MAX_DIRECTION_BAND_BPS + 1;
+            }),
+            "BadBand",
+        ),
         (
             Box::new(|t| t.band_bps = t.offset_bps.unsigned_abs() as u16),
             "BadBand",
@@ -1367,6 +1525,8 @@ fn calendar_fixture_matches_program() {
         outcome_time: r["outcomeTime"].as_i64().expect("outcomeTime"),
     };
     let btc = hex_to_32("e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43");
+    let mut direction = 0usize;
+    let mut events: Vec<String> = Vec::new();
 
     for r in rounds {
         let round_id = r["roundId"].as_u64().expect("roundId") as u32;
@@ -1374,25 +1534,47 @@ fn calendar_fixture_matches_program() {
         terms
             .validate()
             .expect("create_round would accept these terms");
-        // season-1 rules (DECISIONS 18./19.09.2026)
-        assert_eq!(terms.kind, observed::KIND_MOVE, "season 1 asks only 'move'");
+        // season-1 rules (DECISIONS 18./19.09.2026, owner decision 21.09.2026 on E1)
         assert_eq!(
             (terms.window_secs, terms.max_age_secs),
             (60, 60),
             "W = A = 60 s"
         );
-        assert!(
-            terms.offset_bps >= 100,
-            "threshold ≥ 1.0 % (4 × measurement spread)"
-        );
         assert_eq!(
             terms.band_bps, 25,
             "measurement band 25 bps (p90 22.7, rounded up)"
         );
-        assert!(
-            i32::from(terms.band_bps) * 4 <= terms.offset_bps,
-            "threshold is at least four times the band"
-        );
+        match terms.kind {
+            // the standard question: direction, no threshold, equality is No
+            observed::KIND_ABOVE => {
+                assert_eq!(terms.offset_bps, 0, "a direction round has no threshold");
+                direction += 1;
+            }
+            // event days keep the movement question; there the old rule still holds
+            observed::KIND_MOVE => {
+                assert!(
+                    terms.offset_bps >= 100,
+                    "threshold ≥ 1.0 % (4 × measurement spread)"
+                );
+                assert!(
+                    i32::from(terms.band_bps) * 4 <= terms.offset_bps,
+                    "threshold is at least four times the band"
+                );
+                let day = r["measuredDay"].as_str().expect("measuredDay").to_string();
+                events.push(day.split(' ').nth(1).expect("date").to_string());
+            }
+            other => panic!("season 1 knows no question kind {other}"),
+        }
+        // weekends run SOL only: at threshold 0 a weekend round is inside the band in 15 % of
+        // cases for SOL, but 25 % for ETH and 37 % for BTC (spikes/baserate/direction.mjs)
+        let weekday = r["measuredDay"].as_str().expect("measuredDay")[..3].to_string();
+        if weekday == "Sat" || weekday == "Sun" {
+            assert_eq!(
+                r["feed"].as_str().expect("feed"),
+                "SOL/USD",
+                "weekends run SOL only"
+            );
+        }
         assert_eq!(
             terms.price_account,
             feed_account(&terms.feed_id),
@@ -1452,6 +1634,21 @@ fn calendar_fixture_matches_program() {
         );
         assert_eq!(terms.max_conf_bps, 50);
     }
+
+    // the mix the owner decided on 21.09.2026: direction every day, movement on the five days
+    // where something happens inside the measured window
+    assert_eq!(direction, 59, "59 direction rounds");
+    assert_eq!(
+        events,
+        vec![
+            "2026-10-02", // US jobs report, 12:30 UTC
+            "2026-10-14", // US CPI, 12:30 UTC
+            "2026-10-29", // the day after the FOMC decision (18:00 UTC, outside any window)
+            "2026-11-06", // US jobs report, 13:30 UTC (daylight saving has ended)
+            "2026-11-10", // US CPI, 13:30 UTC
+        ],
+        "exactly the five event days, on their real dates"
+    );
 
     // a tampered rule must not verify under the published root
     let mut tampered = terms_from(&rounds[0]);

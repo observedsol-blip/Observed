@@ -21,7 +21,7 @@ use {
 
 const PLAYERS: usize = 20;
 /// Rounds played with a scripted deviation from the happy path.
-const NO_REFERENCE_ROUND: u32 = 7; // nobody takes the reference → NO_RESOLVE
+const NO_REFERENCE_ROUND: u32 = 5; // nobody takes the reference → NO_RESOLVE
 const NO_OUTCOME_ROUND: u32 = 23; // referenced, but no outcome reading → NO_RESOLVE
 const CLOSE_CALL_ROUND: u32 = 31; // outcome one basis point past the threshold
 const RENT_PER_BYTE_YEAR_X2: u64 = 6_960; // lamports per byte for rent exemption
@@ -42,6 +42,46 @@ enum Style {
     Forgetful(u16),
     /// Seals only every third round.
     Occasional(u16),
+    /// Seals every day, but its reveal does not go through for two days (no SOL, a crash, a
+    /// cancelled approval) and is caught up on the third — the only way a device really carries
+    /// three open rounds at once, and the case the 72 h window exists for (E10, 21.09.2026).
+    Late(u16),
+}
+
+impl Style {
+    fn p_bps(&self) -> u16 {
+        match self {
+            Style::Diligent(v) | Style::Forgetful(v) | Style::Occasional(v) | Style::Late(v) => *v,
+        }
+    }
+    /// Does this device seal on this day?
+    fn seals(&self, day: usize) -> bool {
+        match self {
+            Style::Occasional(_) => day.is_multiple_of(3),
+            _ => true,
+        }
+    }
+    /// Does it open the app on this day at all? (No app, no seal and no reveal.)
+    fn opens(&self, day: usize) -> bool {
+        match self {
+            Style::Occasional(_) => day.is_multiple_of(3),
+            _ => true,
+        }
+    }
+    /// Does the reveal part of today's transaction go through?
+    fn reveals_today(&self, day: usize) -> bool {
+        match self {
+            Style::Late(_) => day.is_multiple_of(3),
+            _ => true,
+        }
+    }
+    /// Of the rounds still open, which does it reveal today?
+    fn reveals(&self, round_index: usize) -> bool {
+        match self {
+            Style::Forgetful(_) => round_index.is_multiple_of(2),
+            _ => true,
+        }
+    }
 }
 
 fn season_file() -> serde_json::Value {
@@ -201,6 +241,7 @@ fn whole_season_in_fast_forward() {
         let style = match i % 4 {
             0 => Style::Forgetful(5_500 + (i as u16 % 3) * 500),
             1 => Style::Occasional(7_000),
+            2 => Style::Late(6_000),
             _ => Style::Diligent(3_000 + (i as u16 % 5) * 1_000),
         };
         players.push(Player {
@@ -214,171 +255,204 @@ fn whole_season_in_fast_forward() {
     let payer = env.payer.insecure_clone();
     let payer_pk = payer.pubkey();
     let salt = [9u8; 32];
-    let mut expected: BTreeMap<usize, (u32, u32, u32, u64)> = BTreeMap::new(); // commits, reveals, missing, score_sum
+    // commits, reveals, missing, score_sum, seals that fell into a cancelled round
+    let mut expected: BTreeMap<usize, (u32, u32, u32, u64, u32)> = BTreeMap::new();
     let mut cancelled = 0usize;
     let mut resolved = 0usize;
     let mut close_calls = 0usize;
     let mut cu_total: u64 = 0;
-    let mut reference_price = 0i64;
+    let mut biggest_daily_batch = 0usize;
 
-    for (index, round_json) in rounds.iter().enumerate() {
-        let round_id = round_json["roundId"].as_u64().expect("roundId") as u32;
-        let terms = terms_from(round_json);
-        let proof: Vec<[u8; 32]> = round_json["proof"]
+    let terms_at = |i: usize| terms_from(&rounds[i]);
+    let proof_at = |i: usize| -> Vec<[u8; 32]> {
+        rounds[i]["proof"]
             .as_array()
             .expect("proof")
             .iter()
             .map(|p| hex_to_32(p.as_str().expect("hex")))
-            .collect();
-
-        // --- the round is created in advance, as the owner does for the whole season
-        set_time(&mut env.svm, terms.commit_open - 60);
-        cu_total += sendx!(
-            env,
-            &payer,
-            [ix_create_round(&payer_pk, round_id, terms, proof)]
-        )
-        .unwrap_or_else(|e| panic!("create_round {round_id}: {e}"));
-
-        // --- sealing
-        set_time(&mut env.svm, terms.commit_open + 300);
-        for (i, p) in players.iter().enumerate() {
-            let seals = match p.style {
-                Style::Diligent(_) => true,
-                Style::Forgetful(_) => true,
-                Style::Occasional(_) => index % 3 == 0,
-            };
-            if !seals {
-                continue;
-            }
-            let p_bps = match p.style {
-                Style::Diligent(v) | Style::Forgetful(v) | Style::Occasional(v) => v,
-            };
-            let commitment = observed::commitment_hash(
-                &round_pda(round_id),
-                &terms.hash(season_no, round_id),
-                &p.mint,
-                &p.wallet.pubkey(),
-                p_bps,
-                &salt,
-            );
-            cu_total += sendx!(env, &p.wallet, [ix_commit_for(p, round_id, commitment)])
-                .unwrap_or_else(|e| panic!("commit r{round_id} p{i}: {e}"));
-            expected.entry(i).or_default().0 += 1;
-        }
-
-        // --- reference (rule O1: inside [reference_time, +W])
-        let price = 15_000_000_000 + (index as i64 % 7) * 10_000_000;
-        if round_id != NO_REFERENCE_ROUND {
-            set_time(&mut env.svm, terms.reference_time + 2);
-            let upd = reading_at(
-                &mut env,
-                terms.feed_id,
-                terms.price_account,
-                price,
-                terms.reference_time,
-            );
-            cu_total += sendx!(env, &payer, [ix_set_reference(&env, round_id, upd)])
-                .unwrap_or_else(|e| panic!("set_reference {round_id}: {e}"));
-            reference_price = price;
-        }
-
-        // --- outcome
-        let outcome_price = if round_id == CLOSE_CALL_ROUND {
-            // one basis point past the upper threshold → margin 1, inside the band
-            reference_price + reference_price * (terms.offset_bps as i64 + 1) / 10_000
-        } else if index % 2 == 0 {
-            reference_price + reference_price * (terms.offset_bps as i64 + 120) / 10_000
-        // clear Yes
+            .collect()
+    };
+    // Both readings of a round are fixed up front, so reference and outcome agree.
+    let reference_price = |i: usize| 15_000_000_000i64 + (i as i64 % 7) * 10_000_000;
+    let outcome_price = |i: usize| {
+        let reference = reference_price(i);
+        let t = terms_at(i);
+        if i as u32 == CLOSE_CALL_ROUND {
+            // one unit past the bar: decided, but inside the measurement band
+            reference + reference * (t.offset_bps as i64 + 1) / 10_000 + 1
+        } else if i.is_multiple_of(2) {
+            reference + reference * (t.offset_bps as i64 + 120) / 10_000 // clear Yes
+        } else if t.kind == observed::KIND_MOVE {
+            reference + reference / 10_000 // moved far too little: clear No
         } else {
-            reference_price + reference_price / 10_000 // clear No (0.01 % move)
-        };
-        let mut is_resolved = false;
-        if round_id != NO_REFERENCE_ROUND && round_id != NO_OUTCOME_ROUND {
-            set_time(&mut env.svm, terms.outcome_time + 2);
+            reference - reference * 120 / 10_000 // clearly lower: clear No
+        }
+    };
+
+    let mut is_resolved = vec![false; rounds.len()];
+    let mut is_cancelled = vec![false; rounds.len()];
+    let mut sealed = vec![vec![false; PLAYERS]; rounds.len()];
+    let mut pending: Vec<Vec<usize>> = vec![Vec::new(); PLAYERS]; // sealed, not revealed yet
+
+    // A day at a time, clock strictly forward — the same order the real season runs in:
+    // 16:00 yesterday's outcome, 16:05 the players' one approval, 04:02 the reference,
+    // and three days later the scoring of what nobody revealed.
+    // Four extra days at the end drain the tail.
+    for day in 0..rounds.len() + 4 {
+        let open = first.commit_open + day as i64 * 86_400;
+
+        // --- the owner creates the round before its window opens
+        if day < rounds.len() {
+            set_time(&mut env.svm, open - 60);
+            cu_total += sendx!(
+                env,
+                &payer,
+                [ix_create_round(&payer_pk, day as u32, terms_at(day), proof_at(day))]
+            )
+            .unwrap_or_else(|e| panic!("create_round {day}: {e}"));
+        }
+
+        // --- 16:00: yesterday's round gets its outcome reading
+        if day >= 1 && day - 1 < rounds.len() {
+            let y = day - 1;
+            let yt = terms_at(y);
+            if y as u32 != NO_REFERENCE_ROUND && y as u32 != NO_OUTCOME_ROUND {
+                set_time(&mut env.svm, yt.outcome_time + 2);
+                let upd = reading_at(
+                    &mut env,
+                    yt.feed_id,
+                    yt.price_account,
+                    outcome_price(y),
+                    yt.outcome_time,
+                );
+                cu_total += sendx!(env, &payer, [ix_resolve(&env, y as u32, upd)])
+                    .unwrap_or_else(|e| panic!("resolve {y}: {e}"));
+                is_resolved[y] = true;
+                resolved += 1;
+                let round = read_round(&env, y as u32);
+                if round.outcome_margin_bps.abs() <= i32::from(round.band_bps) {
+                    close_calls += 1;
+                }
+            }
+        }
+
+        // --- 16:05: one approval per device — reveal what is open, seal today
+        set_time(&mut env.svm, open + 300);
+        for (i, p) in players.iter().enumerate() {
+            if !p.style.opens(day) {
+                continue;
+            }
+            let mut ixs: Vec<Instruction> = Vec::new();
+            let mut revealing: Vec<usize> = Vec::new();
+            // every round still inside its 72 h window, oldest first
+            let mut still_pending: Vec<usize> = Vec::new();
+            for &r in pending[i].iter() {
+                let rt = terms_at(r);
+                let open_for_reveal = is_resolved[r]
+                    && open + 300 >= rt.outcome_time
+                    && open + 300 < rt.outcome_time + REVEAL_WINDOW;
+                if is_cancelled[r] {
+                    continue; // a cancelled round is never revealed and never scored
+                }
+                if open_for_reveal && p.style.reveals_today(day) && p.style.reveals(r) {
+                    ixs.push(ix_reveal_for(p, r as u32, p.style.p_bps(), salt));
+                    revealing.push(r);
+                } else if open + 300 < rt.outcome_time + REVEAL_WINDOW {
+                    still_pending.push(r); // window still open, comes back tomorrow
+                }
+                // anything else: the window closed, it will be scored as missing
+            }
+            pending[i] = still_pending;
+
+            let seals_today = day < rounds.len() && p.style.seals(day);
+            if seals_today {
+                let t = terms_at(day);
+                let commitment = observed::commitment_hash(
+                    &round_pda(day as u32),
+                    &t.hash(season_no, day as u32),
+                    &p.mint,
+                    &p.wallet.pubkey(),
+                    p.style.p_bps(),
+                    &salt,
+                );
+                ixs.push(ix_commit_for(p, day as u32, commitment));
+            }
+            if ixs.is_empty() {
+                continue;
+            }
+            biggest_daily_batch = biggest_daily_batch.max(revealing.len());
+            // ONE transaction, ONE approval: everything this device does today
+            cu_total += send(&mut env, &p.wallet, &ixs)
+                .unwrap_or_else(|e| panic!("daily tx day {day} p{i}: {e}"));
+            let e = expected.entry(i).or_default();
+            e.1 += revealing.len() as u32;
+            if seals_today {
+                e.0 += 1;
+                sealed[day][i] = true;
+                pending[i].push(day);
+            }
+        }
+
+        // --- 04:02 the next morning: the reference for today's round
+        if day < rounds.len() && day as u32 != NO_REFERENCE_ROUND {
+            let t = terms_at(day);
+            set_time(&mut env.svm, t.reference_time + 2);
             let upd = reading_at(
                 &mut env,
-                terms.feed_id,
-                terms.price_account,
-                outcome_price,
-                terms.outcome_time,
+                t.feed_id,
+                t.price_account,
+                reference_price(day),
+                t.reference_time,
             );
-            cu_total += sendx!(env, &payer, [ix_resolve(&env, round_id, upd)])
-                .unwrap_or_else(|e| panic!("resolve {round_id}: {e}"));
-            is_resolved = true;
-            resolved += 1;
+            cu_total += sendx!(env, &payer, [ix_set_reference(&env, day as u32, upd)])
+                .unwrap_or_else(|e| panic!("set_reference {day}: {e}"));
         }
 
-        // --- reveal, inside the reveal window
-        set_time(&mut env.svm, terms.outcome_time + 600);
-        for (i, p) in players.iter().enumerate() {
-            let sealed = match p.style {
-                Style::Occasional(_) => index % 3 == 0,
-                _ => true,
-            };
-            let reveals = match p.style {
-                Style::Diligent(_) | Style::Occasional(_) => true,
-                Style::Forgetful(_) => index % 2 == 0,
-            };
-            if !sealed || !reveals {
-                continue;
+        // --- the resolver's housekeeping, later the same day
+        if day >= 1 && day - 1 < rounds.len() {
+            let y = day - 1;
+            if !is_resolved[y] {
+                set_time(&mut env.svm, open + 13 * 3600);
+                cu_total += sendx!(env, &payer, [ix_cancel(y as u32)])
+                    .unwrap_or_else(|e| panic!("cancel {y}: {e}"));
+                assert_eq!(read_round(&env, y as u32).status, RoundStatus::Cancelled as u8);
+                is_cancelled[y] = true;
+                cancelled += 1;
+                for (i, seal) in sealed[y].iter().enumerate() {
+                    if *seal {
+                        expected.entry(i).or_default().4 += 1;
+                    }
+                }
             }
-            let p_bps = match p.style {
-                Style::Diligent(v) | Style::Forgetful(v) | Style::Occasional(v) => v,
-            };
-            cu_total += sendx!(env, &p.wallet, [ix_reveal_for(p, round_id, p_bps, salt)])
-                .unwrap_or_else(|e| panic!("reveal r{round_id} p{i}: {e}"));
-            expected.entry(i).or_default().1 += 1;
         }
-
-        // --- what the resolver does after the reveal window: cancel or score everything
-        set_time(&mut env.svm, terms.outcome_time + REVEAL_WINDOW + 60);
-        let round = read_round(&env, round_id);
-        if !is_resolved {
-            cu_total += sendx!(env, &payer, [ix_cancel(round_id)])
-                .unwrap_or_else(|e| panic!("cancel {round_id}: {e}"));
-            assert_eq!(
-                read_round(&env, round_id).status,
-                RoundStatus::Cancelled as u8
-            );
-            cancelled += 1;
-            continue;
-        }
-        assert_eq!(
-            round.status,
-            RoundStatus::Resolved as u8,
-            "round {round_id}"
-        );
-        if round.outcome_margin_bps.abs() <= i32::from(round.band_bps) {
-            close_calls += 1;
-        }
-
-        let yes = round.outcome == observed::Outcome::Yes as u8;
-        for (i, p) in players.iter().enumerate() {
-            let sealed = match p.style {
-                Style::Occasional(_) => index % 3 == 0,
-                _ => true,
-            };
-            if !sealed {
-                continue;
+        // --- scoring: only once the 72 h window of that round is over
+        if day >= 4 {
+            let r = day - 4;
+            if r < rounds.len() && is_resolved[r] {
+                let rt = terms_at(r);
+                set_time(&mut env.svm, rt.outcome_time + REVEAL_WINDOW + 60);
+                let round = read_round(&env, r as u32);
+                let yes = round.outcome == observed::Outcome::Yes as u8;
+                for (i, p) in players.iter().enumerate() {
+                    if !sealed[r][i] {
+                        continue;
+                    }
+                    cu_total += sendx!(env, &payer, [ix_score_for(p, r as u32)])
+                        .unwrap_or_else(|e| panic!("score r{r} p{i}: {e}"));
+                    let entry = read_entry_for(&env, r as u32, p.mint).expect("entry");
+                    let e = expected.entry(i).or_default();
+                    if entry.scored_as_missing {
+                        e.2 += 1;
+                    }
+                    e.3 += u64::from(entry.score_bps);
+                    let want = if entry.revealed {
+                        observed::brier_score_bps(p.style.p_bps(), yes).expect("score")
+                    } else {
+                        observed::MISSING_SCORE_BPS
+                    };
+                    assert_eq!(entry.score_bps, want, "score r{r} p{i}");
+                }
             }
-            cu_total += sendx!(env, &payer, [ix_score_for(p, round_id)])
-                .unwrap_or_else(|e| panic!("score r{round_id} p{i}: {e}"));
-            let entry = read_entry_for(&env, round_id, p.mint).expect("entry");
-            let e = expected.entry(i).or_default();
-            if entry.scored_as_missing {
-                e.2 += 1;
-            }
-            e.3 += u64::from(entry.score_bps);
-            let p_bps = match p.style {
-                Style::Diligent(v) | Style::Forgetful(v) | Style::Occasional(v) => v,
-            };
-            let want = if entry.revealed {
-                observed::brier_score_bps(p_bps, yes).expect("score")
-            } else {
-                observed::MISSING_SCORE_BPS
-            };
-            assert_eq!(entry.score_bps, want, "score r{round_id} p{i}");
         }
     }
 
@@ -389,7 +463,11 @@ fn whole_season_in_fast_forward() {
         "every round reached a final state"
     );
     assert_eq!(cancelled, 2, "the two scripted NO_RESOLVE rounds");
-    assert!(close_calls >= 1, "the scripted close round is marked close");
+    assert_eq!(close_calls, 1, "exactly the scripted close round is inside the band");
+    assert_eq!(
+        biggest_daily_batch, 3,
+        "the 72 h window really produced three reveals in one approval"
+    );
 
     let mut total_entries = 0u32;
     let mut revealed_only_checked = 0usize;
@@ -428,8 +506,8 @@ fn whole_season_in_fast_forward() {
         assert_eq!(player.score_sum, want.3, "score_sum p{i}");
         assert_eq!(
             player.scored_rounds,
-            want.0 - cancelled_seals(&p.style, PLAYERS),
-            "scored rounds p{i} (commits minus the cancelled rounds)"
+            want.0 - want.4,
+            "scored rounds p{i} (commits minus the seals in cancelled rounds)"
         );
         total_entries += player.commits;
     }
@@ -497,7 +575,8 @@ fn whole_season_in_fast_forward() {
         "season: {resolved} resolved, {cancelled} NO_RESOLVE, {close_calls} close; \
          {total_entries} entries, {PLAYERS} players; CU total {cu_total}; \
          rent bound: rounds {:.3} SOL + players {:.4} SOL; \
-         {closed} entries closed rolling, {:.3} SOL back to the players (expected {:.3})",
+         {closed} entries closed rolling, {:.3} SOL back to the players (expected {:.3}); \
+         biggest daily batch: {biggest_daily_batch} reveals + one seal in one approval",
         round_rent as f64 / 1e9,
         player_rent as f64 / 1e9,
         refunded as f64 / 1e9,
@@ -505,12 +584,3 @@ fn whole_season_in_fast_forward() {
     );
 }
 
-/// Seals that fall into a cancelled round are never scored.
-fn cancelled_seals(style: &Style, _players: usize) -> u32 {
-    // rounds 7 and 23 are cancelled; occasional players only sealed in rounds where index % 3 == 0
-    let cancelled_indices = [NO_REFERENCE_ROUND as usize, NO_OUTCOME_ROUND as usize];
-    match style {
-        Style::Occasional(_) => cancelled_indices.iter().filter(|i| *i % 3 == 0).count() as u32,
-        _ => cancelled_indices.len() as u32,
-    }
-}

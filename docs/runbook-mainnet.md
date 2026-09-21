@@ -17,7 +17,7 @@ Ausweg, falls er scheitert.
 | Repo | `docs/generated/CALENDAR-season1.md` gelesen — das sind die 64 Fragen der Saison |
 
 Die Kalender-Wurzel dieser Saison lautet
-`66347dd5ad1c4eab1a6ea56decc736f4b76d21c29e6482d776a63430f98ec7fa`.
+`5ae91bdab786e6a040ba91664223a03ff4f85f57474606ded064dff780d08c89`.
 Sie steht auch in `tests/fixtures/calendar/season1.json` und wird in Schritt 3 on-chain gesetzt.
 
 ## 0b. Endabgleich am Mittwoch — in dieser Reihenfolge
@@ -80,7 +80,7 @@ Adressen, `paused` ist false.
 Offline-Schlüssel kompromittiert ist. Dann: nicht weitermachen, neue `game_id` nehmen.
 
 ## 3. Kalender veröffentlichen
-`publish_calendar(season = 1, root = 66347dd5…, leaf_count = 64)`.
+`publish_calendar(season = 1, root = 5ae91bda…, leaf_count = 64)`.
 **Prüfen:** `Config.calendar_root` ist die Wurzel oben, `first_round_id = 0`, `max_round_id = 63`.
 **Wenn die Wurzel falsch ist:** sofort anhalten. Eine falsche Wurzel lässt sich **nicht** ersetzen,
 solange die Saison läuft. Dann neue `game_id`, Schritte 2–3 wiederholen.

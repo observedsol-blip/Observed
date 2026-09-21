@@ -22,7 +22,7 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 6. Keine Schlüssel, keine Wallet-Adressen von Dinkelberg, keine Secrets — auch nicht als Beispiel.
 
 ## Stand
-- Letzte Aktualisierung: 21.09.2026, von Claude Code (Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
+- Letzte Aktualisierung: 21.09.2026 (abends), von Claude Code (**E1 + E10 umgesetzt**: Richtungsfrage als Standard, Aufdeckfenster 72 h, neuer Kalender-Root `5ae91bda…`, Saisonlauf auf Tagesmechanik umgebaut; davor: Wochenende ausgewertet, A = 60 s bleibt; `close_entry` rollierend, Saisonlauf damit wiederholt; Ablese-Läufe mit Backoff und zweitem RPC-Anbieter; Codex-Teilscan triagiert, alte Resolver-Kopie gelöscht, Konfidenzgrenze exakt, `/__scheduled` geschlossen).
 - **Entschieden am 21.09. (Dinkelberg):** `Player` wird **nicht** erweitert (Option 1, Bänder-Zähler erst nach dem 10.11.); `close_entry` rollierend — schließbar 30 Tage nach dem Aufdeckfenster, aber nie vor dem 09.11.2026, beide Werte in den Rundenbedingungen und im Hash; der Resolver schließt täglich, die Miete geht an die Wallet des Spielers, die Gebühr zahlt die Hot Wallet. Bis die Veranstalter antworten gilt: **der Resolver darf während der Bewertung nicht angefasst werden** — das Drehbuch plant so.
 - Davor: 19.09.2026, von Claude Code (O1 entschieden: W = A = 60 s, `posted_slot` für beide Lesungen; Basisraten-Linie (c); Schwellen ≥ 1,0 %, BTC nicht am Wochenende; zweiter Cron für 04:00 und 16:00; Schnitt am Do 24.09. aus gemessenen Zahlen).
 - **Arbeitsreihenfolge (Dinkelberg, 20.09.).** Zuerst 1–7: Flag für knappe Runden (erledigt, d1b32ce) · Resolver auf O1 (erledigt, Resolver-Repo `4aa25a8`, jetzt auf GitHub) · Devnet von Ende zu Ende · App-Kernablauf mit Attrappen · Release-Build-Konfiguration · Drehbuch für den Mainnet-Deploy am 24.09. · Tester-Anleitung.
@@ -49,6 +49,7 @@ Ablage: `docs/HANDOFF.md` im Repo. Das Repo ist die Wahrheit; es gibt bewusst ke
 | 18.09. | Claude Code → Chat | Offen 1 (Kompatibilität) ist teilweise schon beantwortet | `pyth-solana-receiver-sdk` 2.0.0 prüft ohne Feature `pro-compatible` den Besitzer `rec5E…`: Konten im alten Stack werden angenommen, Konten im neuen Stack (`rec2HH…`) abgelehnt. Der Emitterwechsel spielt beim Lesen eines Kontos keine Rolle, das Programm prüft nur Besitzer, Diskriminator und `Full` | Offen bleibt nur, wie lange der alte Stack noch aktualisiert wird. Der Wechsel ist ein Cargo-Feature plus neue Fixtures, 2–4 h (teuerste Unbekannte: Fixtures aus echten Konten des neuen Stacks) |
 | 18.09. | Claude Code → Chat | „SOL bewegt sich an ~45 % der Tage um mehr als 2 %" | Für unser Fenster 04→16 UTC: 33,5 % über 365 Tage, 26,7 % in den letzten 90. Montag bis Freitag 40 %, Samstag/Sonntag 17 % (docs/spikes/baserate.md) | Schwellen müssen nach Werktag und Wochenende getrennt werden, sonst liegt die Basisrate am Wochenende bei 17 %, also außerhalb von 30–70 %. Eine eingefrorene Rate driftet um ~14 Punkte im Jahr |
 | 21.09. | Claude Code → Dinkelberg | Die Wochenendmessung des Loggers gibt es nicht: Der Prozess starb am Sa 01:27 UTC, als die Sitzung endete (mein Fehler, kein Dienst dahinter) | Ersatz aus dem Ledger, einseitig aber belastbar: Eine Lücke im Transaktionsstrom eines Kontos **beweist**, dass es in dieser Zeit nicht aktualisiert wurde. Sa+So: SOL 37 807 Tx, größte Lücke 10 s; BTC 41 430 Tx, größte 66 s (eine, 19.09. 19:12); ETH 4 095 Tx, p50 52 s, größte 87 s, 17 Lücken > 60 s (19.09. 19:12, 20.09. 03:07, 19.09. 01:19 …) | **A = 60 s hält auch am Wochenende.** Eine Runde geht erst verloren, wenn eine Lücke das ganze Fenster überdeckt, also > 117 s (60 s Alter + 55 s Nachversuche); beobachtetes Maximum 87 s. An den Lesezeiten 04:02 und 16:00 lag am Wochenende keine Lücke > 60 s. Knappster Feed ist ETH. Logger läuft neu bis Mi 20:00 UTC für die Werktagsnächte |
+| 21.09. | Claude Code → Claude Code (Selbstkorrektur) | Ich hatte geschrieben, mit 72 h könnten „bis zu drei Runden offen“ sein, und das klang nach Alltag | Im Saisonlauf kam heraus: Wer die App täglich öffnet, hat **immer nur eine** offene Aufdeckung. Siegeln und Aufdecken passieren im selben Besuch, und die Runde von gestern ist um 16:00 schon aufgelöst (W = 60 s, später geht gar nicht). Drei offene Runden entstehen nur, wenn das Aufdecken zwei Tage in Folge **scheitert** — kein SOL, Absturz, abgebrochene Freigabe | Die 72 h sind trotzdem richtig, aber aus einem anderen Grund als gedacht: Sie retten **die Runden, die man schon gesiegelt hat**, wenn man Tage auslässt. Im Saisonlauf gibt es jetzt eine vierte Gewohnheit (`Late`), die genau diesen Fall fährt und drei Aufdeckungen plus Siegeln in einer Freigabe nachholt |
 | 19.09. | Claude Code → Spec/Chat | Spec §3: Der Referenzpreis sei „beim Versiegeln **niemandem** bekannt“ | Mit A = 60 s darf der fixierte Wert bis zu 60 s **vor** Abgabeschluss (04:00) veröffentlicht sein. Wer in der letzten Minute versiegelt, kennt ihn im ungünstigsten Fall; in `reading_age_is_measured_at_submission` ist das getestet | **Behoben 19.09. (Dinkelberg):** Das Siegelfenster bleibt 16:00–04:00, die **Referenz wandert auf 04:02**. `create_round` verlangt `reference_time − A > commit_close`, jeder zulässige Referenzwert ist also nach 04:01 veröffentlicht. Getestet in `no_admissible_reference_was_visible_while_sealing`. Neuer Kalender-Root `fca5712f…`, `Round` 480 B. Copy-Zusage: „The reference is taken after sealing closes. Nobody who sealed could have seen it.“ |
 | 18.09. | Claude Code ↔ Chat (offen) | **Chat:** Bei „Bewegung" hat ein Modell den größten Vorsprung, wegen der Basisrate. **Claude Code:** Größter Vorsprung ja, aber aus einem anderen Grund | Die Basisrate halten wir mit Schwellen um 30–70 % ohnehin nahe 50 %. Der eigentliche Vorsprung ist die aktuelle Volatilität (implizite Vola, Ereignistage), und die ist vorhersagbar. Bei Richtung und Vergleich hat niemand einen Vorsprung, auch kein Modell | Wer KI sichtbar machen will, bräuchte eine Linie „aktuelle Volatilität" statt „Basisrate". Das ist in Saison 1 nicht machbar |
 | 18.09. | Claude Code → Dinkelberg (**Veto**, Messung) | O1 (b) „erste gültige Einreichung gewinnt, Wert höchstens A s alt“: Der Anspruch trägt nur, wenn die Wahl des Einreichers das Ergebnis praktisch nie dreht | Tage der letzten 90, an denen die zulässige Spanne den Ausgang hätte drehen können (Spanne aus dem Logger, neuer Stack, Takt 5 s; Abstand zur Schwelle aus Coinbase-Minutenkursen): W=10 s/A=10 s → 4 (p50) bis 8 (p90); W=30/A=15 → 6–15; W=60/A=60 → 11–30; W=120/A=60 → 12–32. Pro Saison mit 64 Runden, jeweils p90: SOL 5,7 / 10 / 21, BTC 5,7 / 10,7 / 18, ETH 8,5–19. Nahe null nur, wenn die Spanne unter ~5 bps liegt, also bei W und A ≈ 2–3 s. Dann hat ETH bei A=10 s schon in 61 % der Zeitpunkte keinen zulässigen Wert, und Landen ist praktisch unmöglich | **Bei keinem praktikablen W/A nahe null.** Zeile 1 (Korridor-Veto) war damit richtig. O1 ist entschieden, trägt aber nur mit bezifferter Restunsicherheit im Anspruch (siehe nächste Zeile). Alternative ohne Wahl: „letztes Update vor T“ auf einem Konto mit ~55-s-Takt (ETH neu/0, alle alt/0), ~6 % Verlust pro Zeitpunkt. Für SOL und BTC im neuen Stack (Takt 5 s) geht das nicht. Entscheidung bei Dinkelberg. **Entschieden 19.09. (Dinkelberg):** W = 60 s, A = 60 s. Die Restzahl kommt nicht in den Anspruchssatz; die Orakelfrage bekommt einen eigenen Absatz und eine Belegtabelle im Repo |
@@ -187,6 +188,40 @@ nicht angefasst — weder `commits`, `reveals`, `missing_scored`, `scored_rounds
 Getestet in `rounds_without_a_seal_leave_no_trace_in_the_record`. Bestraft wird nur, wer siegelt
 und dann nicht aufdeckt. „Serie statt Pflicht“ trägt.
 
+## E1 + E10 umgesetzt — 21.09.2026 (eine Änderung, ein Deploy)
+
+**Programm** (zwei Stellen, kein Layoutwechsel, `Round` bleibt 498 B, **Resolver unverändert**):
+- `REVEAL_WINDOW_SECS` 12 h → **72 h**. Kein neues Feld: `reveal_close` steht ohnehin in jeder
+  Runde und ist damit pro Runde nachprüfbar (Entscheidung Dinkelberg, 21.09.).
+- `validate()`: Die Richtungsfrage ist `KIND_ABOVE` mit `offset_bps = 0`. Dafür gilt
+  `band_bps ≤ MAX_DIRECTION_BAND_BPS` (100) statt `band_bps < |offset_bps|`. **Für
+  Bewegungsfragen ändert sich nichts**, `offset_bps = 0` bleibt dort `BadOffset`.
+
+**Kalender** (neu erzeugt, Root `5ae91bdab786e6a040ba91664223a03ff4f85f57474606ded064dff780d08c89`):
+59 Richtungsrunden, fünf Bewegungsrunden an den Ereignistagen (7 ETH, 19 BTC, 34 BTC, 42 BTC,
+46 ETH, je 1,7 %), Wochenenden nur SOL, Kontextzeile je Ereignisrunde (Anzeige, **nicht im Hash**).
+
+**Tests** (alle grün: 50 Programmtests + Saisonlauf + 2 Messtests, clippy leer, Resolver 21/21):
+- `a_direction_round_is_decided_by_the_side_alone` — eine Einheit höher = Ja, eine tiefer = Nein,
+  **Gleichstand = Nein**, Schwelle = Referenzpreis.
+- `a_direction_round_decided_by_one_unit_lands_inside_the_band` — 10 bps Bewegung: Ja, aber
+  `|margin| ≤ band`, also „Too close to call“.
+- `create_round_refuses_unknown_or_unsafe_terms` +1 Fall: Richtungsrunde mit Band 101 → `BadBand`.
+- `one_approval_reveals_every_open_round_and_seals_today` — drei Aufdeckungen + Siegeln in **einer**
+  Transaktion, 74 596 CU.
+- `after_seventy_two_hours_a_missing_reveal_still_costs_everything` — der Schutz steht.
+- `calendar_fixture_matches_program` prüft jetzt die Mischung: 59 Richtungsrunden, genau fünf
+  Ereignistage an ihren echten Daten, Wochenenden nur SOL.
+- **Saisonlauf auf Tagesmechanik umgebaut**: Uhr läuft strikt vorwärts über 68 Tage — 16:00 Ausgang
+  von gestern, 16:05 die eine Freigabe je Gerät (Aufdecken + Siegeln in einer Transaktion), 04:02
+  Referenz, drei Tage später die Missing-Wertung. Ergebnis: 62 aufgelöst, 2 NO_RESOLVE, **genau
+  eine knappe Runde** (vorher waren 29 ein Artefakt des Testskripts), 1 070 Einträge, größter
+  Tagesstapel 3 Aufdeckungen + 1 Siegel, 1 070 Einträge rollierend geschlossen, 2,324 SOL zurück.
+
+**Offen daraus:** `docs/00-SPEC.md` beschreibt noch das alte Aufdeckfenster und die alte Frageart.
+Die Datei ist gesperrt — Vorschlag 16 liegt in `docs/spec-changes-2026-09-17.md`, geändert wird sie
+erst mit `.spec-unlock`.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
@@ -200,6 +235,7 @@ und dann nicht aufdeckt. „Serie statt Pflicht“ trägt.
 | 8 | Offline-Schlüssel + Hot Wallet erzeugen, Cloudflare/Helius/healthchecks einrichten, **Mainnet-Deploy bis Do 24.09.** (SGT gibt es nur auf Mainnet, fremde Tester ab 27.09. brauchen Mainnet) | Dinkelberg | Do 24.09. |
 | 9 | Expo-Token erneuern (stand im Chat). **Pyth-Key wird nicht mehr gebraucht**: Der Resolver liest nur noch das gesponserte Konto, kein Hermes, kein Schlüssel | Dinkelberg | sofort |
 | 10 | Zweiter RPC-Anbieter für die Ablese-Läufe: Konto anlegen, dann `wrangler secret put RPC_URL_FALLBACK`. Vorschlag **QuickNode** (eigenes Netz, eigene Firma, kostenloser Solana-Endpunkt) als Zweiten; **Helius** bleibt der Erste. Dritter Rückfall ohne Konto ist `api.mainnet-beta.solana.com` — gedrosselt, aber besser als nichts | Dinkelberg | vor Do 24.09. |
+| 13 | `.spec-unlock` für 00-SPEC: Frageart (Richtung statt Bewegung) und Aufdeckfenster (72 h statt 12 h) stehen dort noch alt. Vorschlag 16 ist geschrieben | Dinkelberg | vor der Einreichung |
 | 12 | Berechtigungen der Agenten: `Bash(npm install*)` und `Bash(gh pr create*)` aus der Erlaubnisliste nehmen, Bash-Verbote für `~/.config/observed/**` und `~/.config/solana/**` ergänzen (Begründung im Codex-Abschnitt) | Dinkelberg | vor Do 24.09. |
 | 11 | Frage an die Veranstalter: Darf der Resolver (eigenes Repo, nicht Teil der Einreichung) während der Bewertung geändert werden? Bis zur Antwort plant das Drehbuch mit **nein** | Dinkelberg | offen |
 

@@ -1,77 +1,78 @@
 # Calendar season 1 — generated, review before publishing
 
 Generator: `node services/calendar/generate.mjs --season 1 --start 2026-09-24 --leaves 64`
-Rules: terms v3; question kind "move", strict; source: sponsored Pyth account (upgraded stack), W = 60 s, A = 60 s, max_conf_bps 50, measurement band 25 bps.
-Mon–Fri rotate SOL 1.7 %, BTC 1.3 %, ETH 1.2 %; Sat/Sun rotate SOL 1.1 %, ETH 1 % (no BTC on weekends).
-Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal 16:00–04:00 the next day.
+Rules: terms v3; standard question "direction" (threshold 0, strict, equality is No); source: sponsored Pyth account (upgraded stack), W = 60 s, A = 60 s, max_conf_bps 50, measurement band 25 bps.
+Mon–Fri rotate SOL, BTC, ETH; Sat/Sun SOL only.
+Event days (movement, 1.7 %): 2026-10-02 ETH, 2026-10-14 BTC, 2026-10-29 BTC, 2026-11-06 BTC, 2026-11-10 ETH. The context line is display only and not part of the hash.
+Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal for 72 h after the outcome.
 Unused leaves: sha256(0x00 || [0;32]) = 7f9c9e31ac8256ca2f258583df262dbc7d6f68f2a03043d5c99a4ae5a7396ce9
 
-**Merkle root (= Config.calendar_root):** `66347dd5ad1c4eab1a6ea56decc736f4b76d21c29e6482d776a63430f98ec7fa`
+**Merkle root (= Config.calendar_root):** `5ae91bdab786e6a040ba91664223a03ff4f85f57474606ded064dff780d08c89`
 **Last outcome:** 2026-11-27T16:00:00.000Z
 
-| round | measured on (UTC) | feed | more than ± | price account | terms_hash |
+| round | measured on (UTC) | feed | question | price account | terms_hash |
 |---|---|---|---|---|---|
-| 0 | Fri 2026-09-25 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `536ec42dfecfd3665aa020af8b5ebe322eb213f52644b84cdb6a0807a4ed1ea1` |
-| 1 | Sat 2026-09-26 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `b00679abc5b9bd69e1f9dbf6f89ccd7e52bcb9ac43b24ab194f6bc52cafdc6a3` |
-| 2 | Sun 2026-09-27 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `f2c92c04bb354378ac21a361c55e56264386b958cd3592602d8e1a213572802b` |
-| 3 | Mon 2026-09-28 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `9a6a65c53aed09ba6b33264ca843df7146e7b7a35212c837e430ad4b0407842a` |
-| 4 | Tue 2026-09-29 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `ee912f1ce21173040bcdfa24a202b8c956cd050da689da80883dcd72d4e55590` |
-| 5 | Wed 2026-09-30 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `18aa6f5493d7bf7f9f319527acd64160e09f54569c53db3cc16c3f6537c537a5` |
-| 6 | Thu 2026-10-01 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `2f69a6376030e10280a3799d493f94f2ae42b03ab5394efa6aa6ac2945109b4c` |
-| 7 | Fri 2026-10-02 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `4b5a2cf2dc32b2cd85a62542804ffd3b5dc8cd948b43ca9474956b8f60fd16e6` |
-| 8 | Sat 2026-10-03 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `45530b260f8845f010023674dfe692ceae5c110c240bac5ffd9f9f744bd826bd` |
-| 9 | Sun 2026-10-04 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `e3d9f6fef02bf2fbe219896e8947b7bb33f8c04e0440398a0f45eb311fd9a71a` |
-| 10 | Mon 2026-10-05 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `f1d850a4e9420d47cdbfe7939af132494372fd2f6db9c7768f349bbd59ac34e0` |
-| 11 | Tue 2026-10-06 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `57ff4c65482b973b11310a153f4b2c0fb444e85f4677b3ab8b01242cac3a10b6` |
-| 12 | Wed 2026-10-07 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `35c575fc8cb4c3bcdc4ba085eecb1f0f4c28a9511bc194d01e970150174202da` |
-| 13 | Thu 2026-10-08 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `dac767bd4e8821012a2e5dfb198e76391d0ffa1e10ae8c668d81b3522b504293` |
-| 14 | Fri 2026-10-09 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `394272a3ecf9a910a89e25a227c2988bd98eab1e2e6ee96014b0cc6d17f75413` |
-| 15 | Sat 2026-10-10 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `a197f0a48c0c3f346a5e31d31cb563eca1fa500b60da9e5e0baf592a2efc97a5` |
-| 16 | Sun 2026-10-11 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `36522309353c16edf721983b2d548498aea86461049e39392fb0607ecab313a8` |
-| 17 | Mon 2026-10-12 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `8b3578aaa94b12c052493972129b0dfc4ed77546dbc796c8b81511b9e93cdd4f` |
-| 18 | Tue 2026-10-13 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `3fba62824680be1e74169f725c7af28b75dd6badf9cd0cdc7eba43f5ebf93403` |
-| 19 | Wed 2026-10-14 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `2d8585fabb7dbdd7598460a531c713743de4306f729404ebcdd4de9b560fd6a0` |
-| 20 | Thu 2026-10-15 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `c20fae41c7df7c2144cd6eeda3b975b6903a8a943c21f291a40e4c2c4a3f564c` |
-| 21 | Fri 2026-10-16 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `37c59ad76f24c2c55baf069a657988b9314bce9cd4c72dd8509032670d463297` |
-| 22 | Sat 2026-10-17 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `e66fbf41766c45b71be8aece1394a78fa6ca8efbc85e48b528fde3e15911d69d` |
-| 23 | Sun 2026-10-18 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `47199be56483cd770793189a426b38f49414151ef0a3154d5ed8a75c6d662375` |
-| 24 | Mon 2026-10-19 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `eb383cf13940a9ebeec2d5513d01e33b70c8a95f4bad24efdf9950033340c9f0` |
-| 25 | Tue 2026-10-20 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `59601eeea838e3626e9267e7cfcc857b397d53d45300b7cdfa74778e90a7df82` |
-| 26 | Wed 2026-10-21 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `9acc58ec6abb60be32556fd9459a7017a50386d37b5e77f70731fe0f3ce50b6a` |
-| 27 | Thu 2026-10-22 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `5510e2dc76edd1e42c63eddd87eae895251fd45ab8e3d13de256d1c84802f5ee` |
-| 28 | Fri 2026-10-23 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `d421b82df5fc187a816ea595c0d468720ad7ad29bbdcca2e0431006c095e87ad` |
-| 29 | Sat 2026-10-24 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `635e52bbbdc3272aa252b5d85ffe81eff8ca9af93641a0329861bcb6bd4e88a8` |
-| 30 | Sun 2026-10-25 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `cbf1cca15811774376c580b5eb49e840e13465883ed8f77ea3d8edecc71c4842` |
-| 31 | Mon 2026-10-26 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `eec91254eb14e89be987a991f9c318136600e89de4681c28aed609d572e37a45` |
-| 32 | Tue 2026-10-27 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `7d97e587d5e2760bfe0e0667d03ba0fa4b0a3e822954956fe7371982654b8865` |
-| 33 | Wed 2026-10-28 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `179cc2ad0c94c82df1cc7ed0189c7ca7a170951ec51bd90f3d80103dfa7c37f9` |
-| 34 | Thu 2026-10-29 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `22c9aaf93abcd1d848ced1632e6c2e82d885f29dd4458b3118e3043f47b03e20` |
-| 35 | Fri 2026-10-30 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `d576a27b5200ddbba7069045cad3aecb7b8b677c7a5f8e7a6c0b8d311b95a693` |
-| 36 | Sat 2026-10-31 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `c331486b461835cbc6dd4229291f41ca2ce9c727ac826f07939f4cec75f6df5f` |
-| 37 | Sun 2026-11-01 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `83611bd8cce622098a4b7f14d5b3098147483495cf062c8567ee6577ea799ad5` |
-| 38 | Mon 2026-11-02 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `2e19c3a6f6df3aad6c07bf439c0a2b01776891b4d3f6fbbb9bd7bd686e4f9d14` |
-| 39 | Tue 2026-11-03 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `62e598e5d5bd24c177b0c5a5d0913376fd56b3634f372c130dddf930b06aa603` |
-| 40 | Wed 2026-11-04 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `9594919162132a434dccf6f8a4350ead827acfada1e61ff872bf004cc89b474f` |
-| 41 | Thu 2026-11-05 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `6bc03f78bd98a92f7830679d8a2db150a91cb5ef206f83f94b886990704a7cbc` |
-| 42 | Fri 2026-11-06 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `b51bbe464d8b9808ba59897887e580664d51db39cc386f74a6a87e6263dfc032` |
-| 43 | Sat 2026-11-07 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `6ffd9ca09fc4c87635bd5d8c369681b940ecc9f087db4440addee33501705571` |
-| 44 | Sun 2026-11-08 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `077fb30ea8394b5881af348142383f84607371bf1fc84faa102276e20253e26f` |
-| 45 | Mon 2026-11-09 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `aec1acbe5ee7d16e3c29302a8aeda0b9cc34c1b7704edec8ee29a7f6942daddd` |
-| 46 | Tue 2026-11-10 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `c19a7d0c876749fff7e389818232959505699fcb4ae60ef3a04671b1dfe7d26c` |
-| 47 | Wed 2026-11-11 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `dcb36748debb565f427618ab24f2065f249a73f182511c2c37c9232f6ab74136` |
-| 48 | Thu 2026-11-12 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `4bea9c973e38bd0ddc5ac6d009fdcd28a21a30db05dff09c6c0c2f48e9d9c1db` |
-| 49 | Fri 2026-11-13 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `81b160ebdc716591c22813e4e9b544c2366956d7c9217298c251c4dc2cd7460f` |
-| 50 | Sat 2026-11-14 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `9520d68b333d5139fa7aa21d278143e5349d40633c8b379cb5dca967fd77437e` |
-| 51 | Sun 2026-11-15 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `49c4fccd258fc175a9dbf24f6c716af2984a9272c7d8ba8d082a73b43df2228f` |
-| 52 | Mon 2026-11-16 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `5622ba84abcc02d6c47a121ffdc44a8a49f63af41980602721455428b101d9d3` |
-| 53 | Tue 2026-11-17 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `49376185242b0482c1db915d70b7ff4234369eae2a4e1f62becab4d83c4c37f1` |
-| 54 | Wed 2026-11-18 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `9624b533ba4bd9b1261882beb6097bc9ffd77714ba282d2810e476a0e4968272` |
-| 55 | Thu 2026-11-19 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `8523a1e364efc1439efc17bacf8d432b89741066646de8befa439a2bf76ee612` |
-| 56 | Fri 2026-11-20 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `4f596d16520e58f4af00fb355947e4ee2e953dde16d559dc896a268bacbe2bd2` |
-| 57 | Sat 2026-11-21 | SOL/USD | 1.1 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `d63d1a4b2ca4ddb25a86b27d1f7b5791d87a7038128617b2e20a8262c76eb98b` |
-| 58 | Sun 2026-11-22 | ETH/USD | 1 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `dc3a3d77e4bbfc6030c2370ec5e6e6fd9864c0c9923207d1bfc6817b7f980b09` |
-| 59 | Mon 2026-11-23 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `d7497c25ba89f69e2867ef17de28870ae6a156827fecd0ae4f73c509d046ce6f` |
-| 60 | Tue 2026-11-24 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `ff9d89f32103fe597c8a0f80093b7427a314c15a010623d2bbe4804285727529` |
-| 61 | Wed 2026-11-25 | BTC/USD | 1.3 % | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `553cf4e144f030cc0147b88728f64a0e75908c746f0a174fec776bcb897485f4` |
-| 62 | Thu 2026-11-26 | ETH/USD | 1.2 % | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `19623192698a3a4521b23176f93511d5bcf437e4e41987b8e31a87be3ee053e2` |
-| 63 | Fri 2026-11-27 | SOL/USD | 1.7 % | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `65905e54f8370726be33b3e1771b35199ef085a9facb99f700385b19450aa470` |
+| 0 | Fri 2026-09-25 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `32fdb802a2ac6e612a9f0d3b9ee3b0051e472c8ef23c2f34882d4834848c1426` |
+| 1 | Sat 2026-09-26 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `35c5d2d1e54d8cba0970ca19736cff1df89123aea39d5dcf55ce44f7f7164a1a` |
+| 2 | Sun 2026-09-27 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `edb9508c4f84178ffb3a1a918dbb13f3d234eb037aa1dbe42b266b948bb26624` |
+| 3 | Mon 2026-09-28 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `5af7a04471bcdf2dfef1c9af9e8392b64cd7b13791821ef15247d9f7e7ac5567` |
+| 4 | Tue 2026-09-29 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `ff830674af4210dac8f10ff3573d3f1f69a9fbd42c60e0c4a60aedfd68187e55` |
+| 5 | Wed 2026-09-30 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `b19a8f2e29ccb193f02bb32308459a2eed430eb0034cbb8767bcccc1b7e0700a` |
+| 6 | Thu 2026-10-01 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `ad657ea9a4031d11c07c7ccb0edee6eb8beaf6ab290471d020b74b0d42c9bdae` |
+| 7 | Fri 2026-10-02 | ETH/USD | more than ±1.7 % — US jobs report at 12:30 UTC. | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `b10ae811796603e849d04e7fd0b49d985a04020d85b974428414860e3b3bcea6` |
+| 8 | Sat 2026-10-03 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `6fd6ef2cc5a565b30a9c3fdb0133e40d7bcb12b64231383eb432c511e39c9c46` |
+| 9 | Sun 2026-10-04 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `7a20e54d5bb256f4d058f06c8aea783b76dac8fba7449528d4ad59e5aade4aa0` |
+| 10 | Mon 2026-10-05 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `6550d75d0ee9f6bc70af49c3a81e4a9075aa2f81c32f74d421da5801e1ef3ff3` |
+| 11 | Tue 2026-10-06 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `b0625d10dae10521c662c0b50c2fb1c51225c5f1badc78695e26a99b61f83918` |
+| 12 | Wed 2026-10-07 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `8f99781a6ece9a3c843876a64b059721f2709ffee35b38d511ab106ae2a058fa` |
+| 13 | Thu 2026-10-08 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `d745625c4360bf2e3f5eefa7001e1577b1cf531064cccafc56700b75df85d306` |
+| 14 | Fri 2026-10-09 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `ea9778eed352f635d785b95f80026eff94abd5dbabceb3641ffcdc19d4c31469` |
+| 15 | Sat 2026-10-10 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `a37566c2519d7a9370289e0db2f2a145f45c6c35e22a252b98ebb57d7599da2e` |
+| 16 | Sun 2026-10-11 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `9434b3d55409e691220db29cc3298831e48b7609c8bc3e0bac30f6dcd30cbc26` |
+| 17 | Mon 2026-10-12 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `b316245a5cb8f30aaa8ab5541e81e9e670d18de09575ce98fcbfe46e4e9cfc58` |
+| 18 | Tue 2026-10-13 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `d7e9ae4ddd0077b050c92aa2841a08e1541b5503c4489686aa092952b77f67a3` |
+| 19 | Wed 2026-10-14 | BTC/USD | more than ±1.7 % — US inflation data at 12:30 UTC. | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `40bd1fd085e7af116a7016f9679f1edb7b7af7a561005aee2ae4fce24cb0646f` |
+| 20 | Thu 2026-10-15 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `a3c3b593feb59af88a3ec07818836bd573c490c2a92516f6d7e560a463d89293` |
+| 21 | Fri 2026-10-16 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `b65186ac425b05ce19fbdc5628ce3fa237ca8f03240999360f950b4ab1e9bdc0` |
+| 22 | Sat 2026-10-17 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `328d737752dcb13ee2ab1a930430aab3271e275ddebbca4d4af1d8455aacc97a` |
+| 23 | Sun 2026-10-18 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `e97a000d0db9133c1819b8eb257c7988b63a49d6b73d898835ce02f6c016e090` |
+| 24 | Mon 2026-10-19 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `57a03506fbf0c8def225835c3175f00bc2f7c401427e88f9102d749c7525f4fb` |
+| 25 | Tue 2026-10-20 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `98950d6798510dd701554977c3e4e04b05576d410b62d414a628b391a965514c` |
+| 26 | Wed 2026-10-21 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `ee399f3284cec749123536138efa7b82b88265138fa117c38f41018353b27b46` |
+| 27 | Thu 2026-10-22 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `531b664d12e69a6e807811deef71d498b7501fc4039acfc7a87181498b4b0188` |
+| 28 | Fri 2026-10-23 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `359f181abc5eb34acfb825c87a6174c766b637703c19c860e3f40ad713f1d7f8` |
+| 29 | Sat 2026-10-24 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `0557872cd1c785e109d51a79eb9de85a681ed96041ed0c46038ea732abb07784` |
+| 30 | Sun 2026-10-25 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `ac04c37274c847298bc417daeebc007055e6f939c11ab9353b8a49037ec63459` |
+| 31 | Mon 2026-10-26 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `81f2760b9fedf14436c2dbd25e1155e9fc4776bd8082b6b0172a87c557e43c53` |
+| 32 | Tue 2026-10-27 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `4949dbd102ae98f35605073ae3c3791b42c82e2123cb59c955ab307126ba21cc` |
+| 33 | Wed 2026-10-28 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `9d487c069bbd1614642ea55842d16ad8f10cfe427c8f2928c95952eed90d4f02` |
+| 34 | Thu 2026-10-29 | BTC/USD | more than ±1.7 % — The Fed decided yesterday at 18:00 UTC. | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `ae5826e83ab2549ca175d0e726167e7f14ac9d23443c096bafc40dc755cadec1` |
+| 35 | Fri 2026-10-30 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `abc1ad710ab75561b4565297a20d846126b76445e1a6bd7e0d18b597a2702073` |
+| 36 | Sat 2026-10-31 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `e3dfb2145dc020add9079d1afc25f3e2b1f0c1bd4c5fa99a359aa8a1da2f0747` |
+| 37 | Sun 2026-11-01 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `d06b72b44ff04185c964796e88f10dbbe9c42f64f27fb9350887867a7e682499` |
+| 38 | Mon 2026-11-02 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `319881235cd54c07622eabf2f6d0bd01306f8c511f3603df4c2435c517f0f0e4` |
+| 39 | Tue 2026-11-03 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `6ae9ce81f965790757e7ee762c5ea8c8a636ee6541bd6777ef03ff6754e95d2f` |
+| 40 | Wed 2026-11-04 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `c6acb61d747f76174b3196c250d1ca0771ef784457b9b0efa8ab23241252cfef` |
+| 41 | Thu 2026-11-05 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `778588788cdffa61c369a2c926f57cb6e7f9062d98ca8da164746660057eac29` |
+| 42 | Fri 2026-11-06 | BTC/USD | more than ±1.7 % — US jobs report at 13:30 UTC. | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `8f47224263c62c3c860f732497231787dddb82bcf4f2ca6be965aff7c1f51087` |
+| 43 | Sat 2026-11-07 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `220fd9b871632ec100ff3f7eca90c7fc20ba6135e48eaaf902b19c7602a8bc16` |
+| 44 | Sun 2026-11-08 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `2fc72eb009be9d44cc27848f77520fa1a3e0212f39c8007b61220dcd9fcb2fee` |
+| 45 | Mon 2026-11-09 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `23264bb893616e657933db1bbaea48c6bee91d691f6305c5cd8426a928dd0513` |
+| 46 | Tue 2026-11-10 | ETH/USD | more than ±1.7 % — US inflation data at 13:30 UTC. | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `50a40e1409fb963eecfefa7bcaab36d68239310c7397843a5b9d243dd0050367` |
+| 47 | Wed 2026-11-11 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `acd75073ccca4eede5e316ae2e791b36b9b857c2718630f832ce869786ed8017` |
+| 48 | Thu 2026-11-12 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `67ab8cfd10024cd12407eb4e1f0ad5eff5a497cb4a18234c49be1a3ad487a227` |
+| 49 | Fri 2026-11-13 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `d3000a7f2eb4cb3dadb56edbd5e1126bd420469354927462a3f4b9de45e95169` |
+| 50 | Sat 2026-11-14 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `6ec2adccc66723efb41a91ebca49c0ef27308f1baf43c7987e98dc44d799db4f` |
+| 51 | Sun 2026-11-15 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `9c9a01a117d7fb1afd8cca544532a218934637aa4d2f3f878d1f48dbb9d15bbb` |
+| 52 | Mon 2026-11-16 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `e7c619eb6527ada5ebbd8d92f53c30c8e71eae6f17efbed47f802a1a1a999a4c` |
+| 53 | Tue 2026-11-17 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `0395d1521facabaed1cddeae79eda788d806d9a58dd27a1ad259ed83cf4f949b` |
+| 54 | Wed 2026-11-18 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `76a5835a70fc0a45c926bc6c87cf0942fae20c687052541561baf205e7dff570` |
+| 55 | Thu 2026-11-19 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `573a1f2dcd5bbb62c2e16de3255fdbbfdd68a7627a8bcb9b92f3f6d6d2045cf8` |
+| 56 | Fri 2026-11-20 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `5d53a71c27ea506354909d3712284c05c61beba1d4bdae8d2dc61413fe305506` |
+| 57 | Sat 2026-11-21 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `90c8c75b2bb3372f6dcae83d09f9a33e3f7caff008db3214f497c4e22a1da33b` |
+| 58 | Sun 2026-11-22 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `37a2b087a368e0b8d88c2893ad0fe8c74a03bef2c61416204c5fc48f073e2737` |
+| 59 | Mon 2026-11-23 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `9943e152b6f97ffed02503b90310e262f76ff5701fcb00696ddc2deb025148c0` |
+| 60 | Tue 2026-11-24 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `f16f4ae315b4c697214727985ef4e53dc4d75619a61a4235e78637cbf68c7b11` |
+| 61 | Wed 2026-11-25 | ETH/USD | higher? | `7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH` | `a35bf6d1d554d954e71f8b0a38300c427295a67e46cdd2dedf0f5aac2aea0e44` |
+| 62 | Thu 2026-11-26 | SOL/USD | higher? | `7AviUf9nL62mcxNbQGKm4nKDQnPjswo6c5MX4D57HmyE` | `ac3a506350562c8822732a71327847308fe8dde69c71ffd0b338f9473516fcd0` |
+| 63 | Fri 2026-11-27 | BTC/USD | higher? | `APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5` | `2e9ccc93d092d50990e4dea2982fed01458c44ce586702dc77f5aa2c452e0cdb` |

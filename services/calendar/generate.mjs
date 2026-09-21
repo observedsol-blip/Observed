@@ -27,12 +27,32 @@ const FEEDS = {
   BTC: { name: "BTC/USD", id: "e62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43", account: "APgzQGGdv2qCgBkX6aHVkrGePtBVDDg68GiqaM7rmtf5" },
   ETH: { name: "ETH/USD", id: "ff61491a931112ddf1bd8147cd1b641375f79f5825126d665480874634fd0ace", account: "7odryi4WfoMFHtv2eubdMgP1pqQMmdiXSK1N2tqZ2nRH" },
 };
-/** "move more than x %, either way", measured 04:00 → 16:00 UTC on the outcome day.
- *  Calibrated on the last 30 days to ~45–50 % Yes (docs/spikes/baserate.md, HANDOFF 19.09.);
- *  never below 1.0 % = 4 × the measurement spread. BTC does not run on weekends. */
-const WEEKDAY = [["SOL", 170], ["BTC", 130], ["ETH", 120]];
-const WEEKEND = [["SOL", 110], ["ETH", 100]];
+/** The standard question is direction (E1, 21.09.2026): "higher at 16:00 than at 04:02?",
+ *  decided strictly, equality is No. Threshold 0, so there is nothing to calibrate — measured
+ *  over 364 days the Yes rate is 47–49 % for all three feeds (spikes/baserate/direction.mjs).
+ *  Weekdays rotate the feeds; weekends run SOL only, because at threshold 0 a weekend round is
+ *  inside the 25 bps band in 15 % of cases for SOL but 25 % for ETH and 37 % for BTC. */
+const WEEKDAY_DIRECTION = ["SOL", "BTC", "ETH"];
+const WEEKEND_DIRECTION = ["SOL"];
+/** Event days keep the movement question with a context line: on those days something happens
+ *  inside the measured window, and "how far" is the more interesting question than "which way".
+ *  1.7 %, because on the twelve jobs-report Fridays of the past year BTC and ETH moved more than
+ *  that in half the cases, against 30 % / 40 % on ordinary weekdays (spikes/baserate/eventdays.mjs,
+ *  n = 12 — a hint, not a rate). SOL barely reacts to these releases and is not used here.
+ *  Times are UTC and account for the end of US daylight saving on 1 Nov 2026.
+ *  The context line is display only: it is NOT part of the terms hash and can be corrected later. */
+const EVENT_OFFSET_BPS = 170;
+const EVENT_DAYS = {
+  "2026-10-02": { feed: "ETH", context: "US jobs report at 12:30 UTC." },
+  "2026-10-14": { feed: "BTC", context: "US inflation data at 12:30 UTC." },
+  // The FOMC decision lands at 18:00 UTC, AFTER the 16:00 outcome — so the event round is the
+  // day after, and sealing happens with the decision already known. The line has to say that.
+  "2026-10-29": { feed: "BTC", context: "The Fed decided yesterday at 18:00 UTC." },
+  "2026-11-06": { feed: "BTC", context: "US jobs report at 13:30 UTC." },
+  "2026-11-10": { feed: "ETH", context: "US inflation data at 13:30 UTC." },
+};
 const VERSION = 3;
+const KIND_ABOVE = 0;
 const KIND_MOVE = 1;
 const SOURCE_PRICE_ACCOUNT = 1;
 const MAX_CONF_BPS = 50;
@@ -50,6 +70,9 @@ const REFERENCE_DELAY_SECS = 120;
  *  EARLIEST_CLOSE. Judging runs to 8 Nov; with 30 days alone the first entries would vanish on
  *  26 Oct, including the ones in the video and the evidence table (owner decision 21.09.2026). */
 const CLOSE_AFTER_SECS = 30 * 24 * 3600;
+/** Mirrors REVEAL_WINDOW_SECS in the program (72 h since 21.09.2026). Display only — the length
+ *  is a program constant, not part of the terms. */
+const REVEAL_WINDOW_SECS = 72 * 3600;
 const EARLIEST_CLOSE_UNIX = Date.parse("2026-11-09T00:00:00Z") / 1000;
 const TERMS_DOMAIN = Buffer.from("observed/terms/v3", "utf8");
 const LEAF_TAG = 0x00;
@@ -144,13 +167,23 @@ for (let i = 0; i < leafCount; i++) {
   const outcomeTime = commitClose + 12 * 3600; // 16:00 UTC that day = outcome
   const measured = new Date(commitClose * 1000); // the day the move is measured on
   const weekend = measured.getUTCDay() === 0 || measured.getUTCDay() === 6;
-  const [key, offsetBps] = weekend ? WEEKEND[weekendN++ % WEEKEND.length] : WEEKDAY[weekdayN++ % WEEKDAY.length];
+  const measuredDate = measured.toISOString().slice(0, 10);
+  const event = EVENT_DAYS[measuredDate];
+  // Event days keep their feed no matter where the rotation stands, and they do not consume a
+  // rotation step — the standard rounds keep cycling as if the event day were not there.
+  const key = event
+    ? event.feed
+    : weekend
+      ? WEEKEND_DIRECTION[weekendN++ % WEEKEND_DIRECTION.length]
+      : WEEKDAY_DIRECTION[weekdayN++ % WEEKDAY_DIRECTION.length];
+  const kind = event ? KIND_MOVE : KIND_ABOVE;
+  const offsetBps = event ? EVENT_OFFSET_BPS : 0;
   const feed = FEEDS[key];
   const terms = {
     season,
     roundId,
     version: VERSION,
-    kind: KIND_MOVE,
+    kind,
     sourceKind: SOURCE_PRICE_ACCOUNT,
     feedId: feed.id,
     priceAccount: feed.account,
@@ -174,7 +207,12 @@ for (let i = 0; i < leafCount; i++) {
     measuredDay: `${DAYS[measured.getUTCDay()]} ${measured.toISOString().slice(0, 10)}`,
     // Informational only; the client builds the sentence from docs/03-SCREEN-MAP.md.
     // "more than" is strict in the program: exactly x % is No.
-    question: `Will ${key} move more than ${offsetBps / 100}% up or down between 04:02 and 16:00 UTC on ${measured.toISOString().slice(0, 10)}?`,
+    question: event
+      ? `Will ${key} move more than ${offsetBps / 100}% up or down between 04:02 and 16:00 UTC on ${measuredDate}?`
+      : `Will ${key} be higher at 16:00 than at 04:02 UTC on ${measuredDate}?`,
+    // display only, never hashed; the client takes the wording from docs/03-SCREEN-MAP.md
+    context: event ? event.context : null,
+    revealCloseUtc: new Date((outcomeTime + REVEAL_WINDOW_SECS) * 1000).toISOString(),
     termsHash: termsHash(terms).toString("hex"),
   });
 }
@@ -202,15 +240,17 @@ const out = {
   firstRoundId,
   rules: {
     version: VERSION,
-    kind: "move (KIND_MOVE = 1): |outcome/reference − 1| > x, strict",
+    kind: "direction (KIND_ABOVE = 0, threshold 0): outcome > reference, strict, equality is No; "
+      + "event days keep movement (KIND_MOVE = 1): |outcome/reference − 1| > x, strict",
     source: "sponsored Pyth account, upgraded stack (SOURCE_PRICE_ACCOUNT = 1)",
     windowSecs: WINDOW_SECS,
     maxAgeSecs: MAX_AGE_SECS,
     maxConfBps: MAX_CONF_BPS,
     bandBps: BAND_BPS,
-    weekday: WEEKDAY.map(([k, x]) => `${k} ${x / 100}%`),
-    weekend: WEEKEND.map(([k, x]) => `${k} ${x / 100}%`),
-    times: "commit 16:00–04:00 UTC, reference 04:02, outcome 16:00, reveal 16:00–04:00 next day",
+    weekday: WEEKDAY_DIRECTION.join(", ") + " (direction, no threshold)",
+    weekend: WEEKEND_DIRECTION.join(", ") + " (direction, no threshold)",
+    eventDays: Object.entries(EVENT_DAYS).map(([d, e]) => `${d} ${e.feed} ${EVENT_OFFSET_BPS / 100}% — ${e.context}`),
+    times: "commit 16:00–04:00 UTC, reference 04:02, outcome 16:00, reveal 72 h after the outcome",
   },
   merkleRoot: root,
   emptyLeaf: emptyLeaf.toString("hex"),
@@ -226,17 +266,18 @@ const md = [
   `# Calendar season ${season} — generated, review before publishing`,
   "",
   `Generator: \`node services/calendar/generate.mjs --season ${season} --start ${startDay} --leaves ${leafCount}\``,
-  `Rules: terms v${VERSION}; question kind "move", strict; source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}, measurement band ${BAND_BPS} bps.`,
-  `Mon–Fri rotate ${WEEKDAY.map(([k, x]) => `${k} ${x / 100} %`).join(", ")}; Sat/Sun rotate ${WEEKEND.map(([k, x]) => `${k} ${x / 100} %`).join(", ")} (no BTC on weekends).`,
-  "Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal 16:00–04:00 the next day.",
+  `Rules: terms v${VERSION}; standard question "direction" (threshold 0, strict, equality is No); source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}, measurement band ${BAND_BPS} bps.`,
+  `Mon–Fri rotate ${WEEKDAY_DIRECTION.join(", ")}; Sat/Sun ${WEEKEND_DIRECTION.join(", ")} only.`,
+  `Event days (movement, ${EVENT_OFFSET_BPS / 100} %): ${Object.entries(EVENT_DAYS).map(([d, e]) => `${d} ${e.feed}`).join(", ")}. The context line is display only and not part of the hash.`,
+  "Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal for 72 h after the outcome.",
   `Unused leaves: sha256(0x00 || [0;32]) = ${out.emptyLeaf}`,
   "",
   `**Merkle root (= Config.calendar_root):** \`${root}\``,
   `**Last outcome:** ${out.lastOutcomeUtc}`,
   "",
-  "| round | measured on (UTC) | feed | more than ± | price account | terms_hash |",
+  "| round | measured on (UTC) | feed | question | price account | terms_hash |",
   "|---|---|---|---|---|---|",
-  ...rounds.map((r) => `| ${r.roundId} | ${r.measuredDay} | ${r.feed} | ${r.offsetBps / 100} % | \`${r.priceAccount}\` | \`${r.termsHash}\` |`),
+  ...rounds.map((r) => `| ${r.roundId} | ${r.measuredDay} | ${r.feed} | ${r.kind === KIND_ABOVE ? "higher?" : `more than ±${r.offsetBps / 100} % — ${r.context}`} | \`${r.priceAccount}\` | \`${r.termsHash}\` |`),
   "",
 ].join("\n");
 const mdPath = join(ROOT, `docs/generated/CALENDAR-season${season}.md`);
