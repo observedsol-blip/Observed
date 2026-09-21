@@ -583,9 +583,12 @@ einzige Ausnahme, vom Owner am 22.09.2026 entschieden; sie steht im Kommentar in
 
 Freigegeben und wörtlich im Code (`app/src/copy.ts`), in 03 §11.9 und in COPY-NEUE-TEILE §F:
 `Side record` · `Season score` · `Calls` · `Reminders` · `Remind me each evening` · `Not now`.
-Damit ist **kein** Text mehr im Bildschirm entstanden, der in keinem Dokument steht — bis auf die
-in §4 genannten Reste (`— they go out with this signature`, `Nothing revealed yet.`, die
-Wiederherstellungsmeldung, der Platzhalter `64 characters`).
+**Nachtrag 22.09. abends:** Auch die letzten vier sind entschieden (03 §11.10).
+`Nothing revealed yet.` und `64 characters` sind freigegeben, `— they go out with this signature`
+ist ersetzt durch **`Yesterday's call opens in the same approval.`** Offen bleibt **nur** die
+Meldung nach einer Wiederherstellung; sie liegt dem Owner wörtlich vor. Dazu eine Doppelung, die
+seine Entscheidung braucht: §2 nennt für denselben Moment die ältere Zeile „Yesterday reveals in
+this same signature" — im Code steht nur die neue.
 
 **Ersatzlos gestrichen, vom Owner bestätigt:** der Demo-Schalter mit den 36 Beispiel-Calls (die
 Vorschau D1 ersetzt ihn), die Publication-Zeile in Settings, und der Evidenzblock auf dem

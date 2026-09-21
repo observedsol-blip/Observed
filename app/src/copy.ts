@@ -31,6 +31,15 @@ export const copy = {
   remindMe: "Remind me each evening",
   notNow: "Not now",
 
+  /** Result, before the first reveal of the season (§3), approved 22.09.2026. */
+  nothingRevealed: "Nothing revealed yet.",
+
+  /**
+   * Today, when open reveals ride along with tonight's seal (§2), approved 22.09.2026.
+   * It replaces the invented "— they go out with this signature".
+   */
+  revealsRideAlong: "Yesterday's call opens in the same approval.",
+
   /** The headings of Record and Settings (§4, §7), approved 22.09.2026. */
   headings: {
     sideRecord: "Side record",
@@ -113,5 +122,7 @@ export const copy = {
     bad: "This code doesn't match your sealed calls.",
     /** Onboarding, under "Reinstalling can forfeit a pending answer." */
     onboarding: "You can copy a backup code in Settings.",
+    /** The paste field, approved 22.09.2026 — it says what a backup code looks like. */
+    placeholder: "64 characters",
   },
 } as const;

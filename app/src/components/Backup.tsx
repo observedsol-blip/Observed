@@ -77,7 +77,7 @@ export default function Backup({
       <TextInput
         value={paste}
         onChangeText={onPaste}
-        placeholder="64 characters"
+        placeholder={copy.backup.placeholder}
         placeholderTextColor={color.meta}
         autoCapitalize="none"
         autoCorrect={false}

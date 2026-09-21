@@ -279,6 +279,21 @@ nichts mit einem Push-Dienst zu tun haben.
 Damit sind die vier Strukturüberschriften und die zwei Knopftexte belegt, die bis zum 22.09. im
 Bildschirm entstanden waren.
 
+### 11.10 Die letzten Bildschirmtexte — freigegeben 22.09.2026
+
+Damit steht auf keinem Bildschirm mehr ein Satz, der in keinem Dokument steht.
+
+- **Result, vor der ersten Aufdeckung der Saison:** `Nothing revealed yet.`
+- **Backup-Feld, Platzhalter:** `64 characters`
+- **Today, wenn offene Aufdeckungen mitgehen:** `Yesterday's call opens in the same approval.`
+  — ersetzt den erfundenen Halbsatz „— they go out with this signature“. Steht als eigene
+  Zeile unter `{n} calls still open to reveal`.
+
+> **Doppelung, die dir auffällt, bevor sie jemand anderem auffällt:** §2 nennt für denselben
+> Moment die ältere Zeile „Yesterday reveals in this same signature“. Beide sagen dasselbe, die
+> neue in der Wortregel („call“, „approval“). Im Code steht nur die neue. Soll die alte Zeile in
+> §2 ersetzt werden, ist es eine Zeile — offen, deine Entscheidung.
+
 ### 11.8 Backup-Code (E2) — freigegeben 21.09.2026
 Das Wort ist **„backup code“**, nie „key“ und nie „recovery“: Ein Feld, das nach einem
 „Schlüssel“ fragt, ist das Muster, mit dem Leute um ihre Wallet-Phrase gebracht werden.

@@ -177,3 +177,17 @@ zur Vorschau (D1) und wird dort gebraucht, nicht hier.
 Drei Dinge sind **ersatzlos gestrichen** (Owner, 22.09.2026): der Demo-Schalter mit den 36
 Beispiel-Calls — die Vorschau ersetzt ihn —, die Publication-Zeile in Settings, und der
 Evidenzblock auf dem Bildschirm; die Belege leben im README.
+
+## G. Die letzten Bildschirmtexte (freigegeben 22.09.2026)
+
+| Ort | Text |
+|---|---|
+| Result, vor der ersten Aufdeckung | `Nothing revealed yet.` |
+| Backup-Feld, Platzhalter | `64 characters` |
+| Today, offene Aufdeckungen gehen mit | `Yesterday's call opens in the same approval.` |
+
+Der letzte ersetzt „— they go out with this signature“. **Offen:** §2 nennt für denselben Moment
+noch die ältere Zeile „Yesterday reveals in this same signature“; im Code steht nur die neue.
+
+**Noch nicht entschieden:** die Meldung nach einer Wiederherstellung (`Backup.tsx`). Sie steht dem
+Owner zur Entscheidung vor.

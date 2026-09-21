@@ -147,9 +147,12 @@ export default function Today({
       ) : (
         <>
           {view.openReveals > 0 ? (
-            <Label style={{ marginBottom: space.md }}>
-              {`${copy.openReveals(view.openReveals)} — they go out with this signature`}
-            </Label>
+            <Block top={0}>
+              <Label>{copy.openReveals(view.openReveals)}</Label>
+              <Label style={{ marginTop: space.xs, marginBottom: space.md }}>
+                {copy.revealsRideAlong}
+              </Label>
+            </Block>
           ) : null}
           <PrimaryButton
             label="Seal today"

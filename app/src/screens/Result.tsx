@@ -30,7 +30,7 @@ export default function Result({
     return (
       <Screen>
         <Block>
-          <Body style={{ color: color.meta }}>{waiting ?? "Nothing revealed yet."}</Body>
+          <Body style={{ color: color.meta }}>{waiting ?? copy.nothingRevealed}</Body>
         </Block>
       </Screen>
     );
