@@ -865,6 +865,8 @@ fn round_layout_fixture() {
             "band_bps": round.band_bps,
             "window_secs": round.window_secs,
             "max_age_secs": round.max_age_secs,
+            "close_after_secs": round.close_after_secs,
+            "earliest_close_unix": round.earliest_close_unix,
             "commit_open": round.commit_open,
             "commit_close": round.commit_close,
             "reference_time": round.reference_time,
