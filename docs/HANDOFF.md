@@ -704,13 +704,55 @@ Gefunden beim ersten Matrixlauf: Eine Runde ohne Referenz hat Null-Lesungen, und
 `verify-round.mjs` prüfte sie trotzdem — drei FAILs für einen Call, der einfach noch offen ist.
 Behoben (`c744f7b`): Abschnitt 2 prüft nur, was es schon gibt.
 
-### Was die Matrix nicht abdeckt
+### Befund M3 — der Resolver hätte ab dem 9. November jede Rückzahlung verschluckt
 
-**`close_entry`** braucht `reveal_close + close_after`, und `reveal_close` ist `outcome + 72 h` aus
-einer Programmkonstante. Die Uhr des Validators folgt der Wanduhr — **aber sie lässt sich
-vorstellen**: `--warp-slot 648000` ergab gemessen **+64 792 s** (rund 0,1 s je Slot). Der Weg
-dorthin ist also: Konten des Laufs sichern, frischen Validator mit `--warp-slot 2 592 000` und
-diesen Konten starten, dann `close_entry`. Das ist der nächste Schritt und noch nicht gebaut.
+Dieselbe Prüfung, auf den Resolver angewandt (Owner-Auftrag, 22.09.). Zuerst die Frage, **wo
+überhaupt gesucht wird**: In `programs/observed/src/lib.rs` tragen alle Konten der fünf
+Resolver-Instruktionen einen **gespeicherten** Bump (`bump = …`). Gesucht wird ausschließlich im
+`commit` — `entry` (Zeile 28) und `player` (Zeile 36). Die Resolver-Kosten schwanken also nicht;
+sie sind konstant und messbar.
+
+Gemessen, zweimal unabhängig — auf dem Validator (`matrix.mjs`) und in den Programmtests, die
+jede Instruktion ausdrucken. **Die beiden Laufzeiten weichen um weniger als ein Drittel Prozent
+voneinander ab:**
+
+| Instruktion | Validator | Programmtests | Resolver fordert | Verhältnis |
+|---|---|---|---|---|
+| `set_reference` | 10 502 | 10 502 | 30 000 | 2,9× ✓ |
+| `resolve` | 11 013 | 11 047 | 30 000 | 2,7× ✓ |
+| `cancel_round` | 9 046 | 9 046 | 20 000 | 2,2× ✓ |
+| `score_entry` | 11 960 (11 998 im Stapel) | 11 958 | 13 000 je Eintrag | **1,08×** ✗ |
+| `close_entry` | nicht messbar (s. u.) | **9 138** | **6 000** je Eintrag | **0,66×** ✗✗ |
+
+**`close_entry` hätte nicht funktioniert.** Ein Stapel von acht braucht rund 73 000 Einheiten und
+forderte 48 000 an. Die Transaktion wäre gescheitert, `withReport` hätte sie als „skipped"
+abgelegt — und die Kautionen von acht Spielern wären liegen geblieben, **ohne dass jemand es
+erfährt**. Beginn wäre der 9. November gewesen, wenn die ersten Einträge schließbar werden.
+Behoben im Resolver (`d16bcff`): 6 000 → **14 000**, `score_entry` 13 000 → **16 000**, dazu fünf
+Tests, die die Budgets gegen die Messwerte halten — samt dem alten Wert als das, was sie
+verhindern sollen.
+
+### Warum `close_entry` nicht auf dem Validator messbar ist — gemessen, nicht vermutet
+
+Es braucht `outcome + 72 h`. Die Uhr eines Test-Validators lässt sich vorstellen, **aber nur
+innerhalb ihrer Epoche**: Der Gewinn ist `(warp_slot mod 432 000) × 0,3 s`. Vier Messungen:
+
+| Slots | Uhr springt um |
+|---|---|
+| 648 000 | +64 801 s (18,0 h) |
+| 1 300 000 | +1 201 s (0,3 h) |
+| 2 000 000 | +81 601 s (22,7 h) |
+| 2 630 631 | +11 590 s (3,2 h) |
+
+Ein Sprung reicht also höchstens ~36 h, und **Sprünge addieren sich nicht**: Jede frische Kette
+beginnt wieder bei der Wanduhr, egal welche Konten man hinüberkopiert. Der erste Versuch, die
+Konten auf eine zweite, vorgestellte Kette zu heben, ist genau daran gescheitert — und die
+Messung steht jetzt im Kopf von `matrix.mjs`, damit niemand denselben Weg zweimal geht.
+
+**Wo `close_entry` bewiesen ist:** in den Programmtests, die auf LiteSVM mit setzbarer Uhr laufen
+— Verweigerung vor dem Termin, Schließen nach der Wertung, Schließen auf einer abgesagten Runde,
+ein Fremder, der für einen Spieler schließt, und ein Dieb, der die Miete umleiten will. Dort kommt
+auch die Zahl 9 138 her.
 
 **„Freigaben = 1"** zählt Transaktionen, nicht Wallet-Blätter — das bleibt die Messung am Gerät.
 

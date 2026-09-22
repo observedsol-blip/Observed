@@ -10,14 +10,14 @@
 // app (`Session`) and once through `scripts/verify-round.mjs`, which trusts nothing of ours.
 //
 //   node spikes/e2e/matrix.mjs            # the whole matrix, ~5 minutes
+//   node spikes/e2e/matrix.mjs --warp     # explains why close_entry is not here (measured)
 //   node spikes/e2e/matrix.mjs --keep     # leave the validator running afterwards
 //
 // Exit code 0 means every row passed. Any failure prints the row and the reason.
 //
-// What it cannot do, stated rather than faked:
-//   * `close_entry` needs `reveal_close + close_after`, and `reveal_close` is `outcome + 72 h`
-//     from a program constant. A local validator's clock follows the wall clock, so that row
-//     needs the clock warp (see `docs/HANDOFF.md`); it is not part of this run.
+// The long window is not faked either. `close_entry` needs `outcome + 72 h`, which a test
+// validator cannot reach — the reason is measured at the bottom of this file, and the
+// instruction is covered by the program's own tests, where the clock can be set.
 //   * "approvals = 1" counts TRANSACTIONS, not wallet sheets. How many sheets Seed Vault shows
 //     is a measurement on the device (21.09.2026), and no script can replace it.
 import { execFileSync, spawn, spawnSync } from "node:child_process";
@@ -39,6 +39,8 @@ const { MemoryStore } = await import(join(APP, "src/core/store.ts"));
 const { configPda, entryPda, playerPda, roundPda } = await import(join(APP, "src/chain/pda.ts"));
 
 const KEEP = process.argv.includes("--keep");
+/** Also run the long-window phase: `close_entry`, on a second chain whose clock is 72 h older. */
+const WARP = process.argv.includes("--warp");
 const RPC = "http://127.0.0.1:8899";
 const DIR = join(homedir(), "e2e-matrix");
 const SOLANA = join(homedir(), ".local/share/solana/install/active_release/bin");
@@ -277,10 +279,21 @@ const config = configPda();
 const sgtMint = new PublicKey(plan.sgtMint);
 const feedAccount = new PublicKey(feed.pubkey);
 
+/** What the resolver's own instructions cost, measured the same way as the app's. */
+const adminCu = [];
 const send = async (ixs, signers, label) => {
   const tx = new Transaction().add(...ixs);
   try {
-    return await web3.sendAndConfirmTransaction(connection, tx, signers, { commitment: "confirmed" });
+    const signature = await web3.sendAndConfirmTransaction(connection, tx, signers, { commitment: "confirmed" });
+    for (let i = 0; i < 8; i += 1) {
+      const got = await connection.getTransaction(signature, { commitment: "confirmed", maxSupportedTransactionVersion: 0 });
+      if (got) {
+        adminCu.push({ label, cu: got.meta?.computeUnitsConsumed ?? null, signature });
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    return signature;
   } catch (e) {
     const logs = e.transactionLogs ?? e.logs ?? [];
     // The whole log, not the first 200 characters: a truncated program error is a riddle.
@@ -487,10 +500,18 @@ const r8a = await sealRow("R8a", "seal the resolver will score · Down 85", 10, 
 console.log("\n--- the readings (what the resolver does)");
 await waitFor(yesterday.referenceTime + 1, "set_reference");
 const yesterdayIds = ROUNDS.filter((r) => r.when === "yesterday").map((r) => r.id);
-await inBatches(yesterdayIds, (id) => readingIx("set_reference", id), "set_reference");
+// Call 7 is nobody's: never sealed, and now deliberately left without a reading, so that
+// `cancel_round` can be measured on the thing it is for instead of on a refusal.
+const CANCEL_ID = 7;
+const toRead = yesterdayIds.filter((id) => id !== CANCEL_ID);
+// The first one alone, so its cost is visible on its own; the rest batched, as the resolver
+// does it. Both numbers matter: the single one for the budget, the batch for the window.
+await send([readingIx("set_reference", toRead[0])], [authority], "set_reference (single)");
+await inBatches(toRead.slice(1), (id) => readingIx("set_reference", id), "set_reference");
 await waitFor(yesterday.outcomeTime + 1, "resolve");
-await inBatches(yesterdayIds, (id) => readingIx("resolve", id), "resolve");
-console.log(`  ${yesterdayIds.length} calls referenced and resolved`);
+await send([readingIx("resolve", toRead[0])], [authority], "resolve (single)");
+await inBatches(toRead.slice(1), (id) => readingIx("resolve", id), "resolve");
+console.log(`  ${toRead.length} calls referenced and resolved, call ${CANCEL_ID} left unread on purpose`);
 
 console.log("\n--- the evening and the rest");
 nowChain = await clock();
@@ -580,6 +601,31 @@ await row("R8", "resolver scores separately · the next evening still confirms",
   });
 });
 
+// ---- what the resolver's remaining instructions cost --------------------------------------------
+await row("M-cancel", "cancel_round on the call that lost its window", async () => {
+  await send([ix(
+    [meta(config, false, false), meta(roundPda(CANCEL_ID), false, true)],
+    disc("cancel_round"),
+  )], [player], "cancel_round");
+  const after = await new Chain(connection).round(CANCEL_ID);
+  if (after?.status !== 4) throw new Error(`cancel did not take: status ${after?.status}`);
+});
+
+// How much does one more entry in a batch really cost? The resolver budgets 13 000 per entry
+// and packs ten of them; measured alone, one costs about 12 000 — but most of that is the fixed
+// part of a transaction, so the marginal cost is the number that decides whether ten fit.
+await row("M-score-batch", "score_entry, several in one transaction", async () => {
+  // Only revealed entries can be scored before the window closes — the program refuses the rest,
+  // and rightly so. These four were revealed by rows R4 to R7.
+  const ids = [3, 5, 6, 9];
+  await send(
+    [web3.ComputeBudgetProgram.setComputeUnitLimit({ units: 200_000 }),
+      ...ids.map((id) => scoreIx(id, entryPda(roundPda(id), sgtMint)))],
+    [player],
+    `score_entry ×${ids.length} (batched)`,
+  );
+});
+
 // ---- verify every resolved call, with the script a stranger would use ----------------------------
 console.log("\n--- verify-round.mjs");
 const verified = new Map();
@@ -610,7 +656,53 @@ for (const row of rows) {
   }
   for (const s of row.signatures) console.log(`     sig ${s}`);
 }
+// ---- what the program searches for, and what that costs -------------------------------------
+console.log("\n=== PDA derivation: where the program searches instead of computing ===");
+console.log("Only `commit` searches (lib.rs: entry `bump`, player `bump`). Every other account,");
+console.log("and every instruction the resolver sends, carries a stored bump — constant cost.");
+const playerBump = PublicKey.findProgramAddressSync(
+  [Buffer.from("player"), config.toBuffer(), sgtMint.toBuffer()], PROGRAM,
+)[1];
+console.log(`  player PDA bump: ${playerBump} (${255 - playerBump} search steps, every commit pays it)`);
+const bumps = plan.rounds.map((r) => ({
+  id: r.roundId,
+  bump: PublicKey.findProgramAddressSync(
+    [Buffer.from("entry"), roundPda(r.roundId).toBuffer(), sgtMint.toBuffer()], PROGRAM,
+  )[1],
+}));
+const worst = bumps.reduce((a, b) => (a.bump <= b.bump ? a : b));
+console.log(`  entry PDA bumps: ${bumps.map((b) => b.bump).join(" ")}`);
+console.log(`  deepest search in this run: call ${worst.id}, bump ${worst.bump}, ` +
+  `${255 - worst.bump} steps ≈ ${(255 - worst.bump) * 1530} CU on top`);
+
+console.log("\n=== what the resolver's instructions cost ===");
+for (const a of adminCu) console.log(`  ${String(a.label).padEnd(34)} ${String(a.cu ?? "—").padStart(8)} CU`);
+
+// ---- the long window: why close_entry is not in this run ---------------------------------------
+// The attempt is kept as a measurement rather than deleted, because the result is the useful
+// part. `close_entry` needs `reveal_close + close_after`, and `reveal_close` is `outcome + 72 h`.
+// A test validator's clock can be warped — but only inside its epoch: the gain is
+// `(warp_slot mod 432 000) × 0.3 s`, measured across four values on 22.09.2026:
+//
+//     648 000 slots → +64 801 s      1 300 000 → +1 201 s
+//   2 000 000 slots → +81 601 s      2 630 631 → +11 590 s
+//
+// So one hop reaches at most ~36 h, and hops do not add up: every fresh chain starts back at the
+// wall clock, no matter which accounts are copied onto it. 72 h is therefore out of reach here.
+//
+// Where it IS proven: the program's own tests run on LiteSVM, whose clock is settable. They cover
+// the refusal before the date, the close after scoring, the close on a cancelled round, a
+// stranger closing on a player's behalf, and a thief trying to redirect the rent — and they print
+// the cost (9 138 CU), which is what the resolver's budget was corrected against.
+if (WARP) {
+  console.log("\n--- close_entry: not reachable here, and that is measured, not assumed");
+  console.log("  a warp reaches at most ~36 h (gain = (warp_slot mod 432 000) × 0.3 s),");
+  console.log("  and a fresh chain starts at the wall clock again — 72 h cannot be reached.");
+  console.log("  close_entry is covered in programs/observed/tests/observed.rs (LiteSVM clock),");
+  console.log("  measured there at 9 138 CU — the number the resolver's budget now carries.");
+}
+
 console.log(`\n${failures === 0 ? "ALL ROWS PASS" : `${failures} ROW(S) FAILED`} · ${rows.length} rows`);
-console.log("close_entry is not in this run: it needs the clock warp (72 h reveal window).");
+if (!WARP) console.log("close_entry is covered by the program tests, not here — pass --warp for why.");
 if (!KEEP) stopValidator();
 process.exit(failures === 0 ? 0 : 1);
