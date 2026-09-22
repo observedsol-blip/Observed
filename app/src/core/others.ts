@@ -113,3 +113,29 @@ export function verifiedSentences(args: {
 }
 
 const hexOf = (bytes: Uint8Array) => [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("");
+
+/**
+ * At most two sentences, and if it can be helped, from two different sides.
+ *
+ * Deterministic from the call's own id, so everybody who reveals the same call sees the same
+ * two — a screen that reshuffles on every refresh would be a different kind of screen. The
+ * order is stable (by payer) before the rotation, because the order the ledger happens to
+ * return them in is not stable.
+ *
+ * Two different sides, because two people agreeing reads as consensus, and consensus is exactly
+ * what a calibration app must not manufacture. If everyone who wrote took the same side, the
+ * second one is simply the next one — better a true pair than an invented disagreement.
+ */
+export function pickSentences(all: OthersSentence[], roundId: number, max = 2): OthersSentence[] {
+  if (all.length <= 1) return all.slice(0, max);
+  const ordered = [...all].sort((a, b) => a.payer.localeCompare(b.payer));
+  const start = ((roundId % ordered.length) + ordered.length) % ordered.length;
+  const rotated = [...ordered.slice(start), ...ordered.slice(0, start)];
+
+  const side = (o: OthersSentence) => (o.pBps > 5_000 ? "up" : o.pBps < 5_000 ? "down" : "none");
+  const picked = [rotated[0]];
+  const other = rotated.slice(1).find((o) => side(o) !== side(rotated[0]));
+  if (other) picked.push(other);
+  else if (rotated[1]) picked.push(rotated[1]);
+  return picked.slice(0, max);
+}

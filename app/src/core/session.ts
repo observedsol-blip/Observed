@@ -11,7 +11,7 @@ import { buildDaily } from "../chain/ix.ts";
 import { REVEAL_WINDOW_SECS, RoundStatus } from "../chain/ids.ts";
 import { findGenesisToken } from "../chain/sgt.ts";
 import { roundPda } from "../chain/pda.ts";
-import { verifiedSentences } from "./others.ts";
+import { pickSentences, verifiedSentences } from "./others.ts";
 import type { Entry, Round } from "../chain/layout.ts";
 import { sealMemo } from "./sentence.ts";
 import { Sealing } from "./sealing.ts";
@@ -207,12 +207,17 @@ export class Session {
   }
 
   /**
-   * The sentences of the others for one call, already checked against their seal memos. Its own
-   * method because it costs a history walk: the screen asks for it after the result is drawn.
+   * The sentences of the others for one call, already checked against their seal memos, and
+   * already narrowed to the two the screen shows (owner, 22.09.2026).
+   *
+   * Its own method because it costs a history walk: the screen asks for it after the result is
+   * drawn, never inside `day()`. No handle and no address goes out with them — the sentence is
+   * the whole point, who wrote it is not.
    */
   async othersFor(roundId: number, hidden?: Set<string>): Promise<string[]> {
     const transactions = await this.deps.chain.memoTransactionsOf(roundPda(roundId));
-    return verifiedSentences({ transactions, hidden, self: this.walletKey }).map((o) => o.sentence);
+    const verified = verifiedSentences({ transactions, hidden, self: this.walletKey });
+    return pickSentences(verified, roundId).map((o) => o.sentence);
   }
 
   private latestResult(

@@ -53,6 +53,7 @@ export function mockResult(state: ResultDesignState): ResultView | null {
   if (state === "nothing") return null;
   const buckets = Array.from({ length: 21 }, (_, i) => (i === 13 ? 63 : 0));
   const base: ResultView = {
+    roundId: 0,
     question: QUESTION,
     context: null,
     sentence: "Funding flipped negative overnight.",

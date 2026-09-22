@@ -23,6 +23,7 @@ export function useDay(config: LiveConfig | null) {
   const [settings, setSettings] = useState<SettingsView | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [others, setOthers] = useState<string[]>([]);
 
   // The session is built once, from the config. No wallet is opened here.
   useEffect(() => {
@@ -135,6 +136,32 @@ export function useDay(config: LiveConfig | null) {
   }, [session, refresh]);
 
   /**
+   * The sentences of the others, fetched AFTER the result is drawn — it costs a walk through the
+   * call's transaction history, and the evening must not wait for it. They only exist once this
+   * player has revealed: `day.result` is null until then (session.latestResult).
+   */
+  const resultRoundId = day?.result?.roundId ?? null;
+  useEffect(() => {
+    if (!session || resultRoundId === null) {
+      setOthers([]);
+      return;
+    }
+    let live = true;
+    void session
+      .othersFor(resultRoundId)
+      .then((list) => {
+        if (live) setOthers(list);
+      })
+      // A history walk that fails is not a state of the game: the screen simply stays empty.
+      .catch(() => {
+        if (live) setOthers([]);
+      });
+    return () => {
+      live = false;
+    };
+  }, [session, resultRoundId]);
+
+  /**
    * Reminders (E3). The notifier is built here, but nothing touches the permission: on start the
    * session only rebuilds a schedule that already exists, and `request()` lives behind the tap.
    */
@@ -169,8 +196,12 @@ export function useDay(config: LiveConfig | null) {
       }
     : null;
 
+  // The result carries the sentences it was drawn without: one view, filled in two steps.
+  const dayWithOthers =
+    day && day.result ? { ...day, result: { ...day.result, others } } : day;
+
   return {
-    day, record, settings, busy, error, reminders,
+    day: dayWithOthers, record, settings, busy, error, reminders,
     connect, save, seal, refresh, loadRecord, loadSettings, backup,
   };
 }

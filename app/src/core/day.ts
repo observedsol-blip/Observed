@@ -83,6 +83,8 @@ export function todayView(args: {
 }
 
 export type ResultView = {
+  /** Which call this is — the screen needs it to ask for the sentences of the others. */
+  roundId: number;
   question: string;
   context: string | null;
   /** §3: the sentence first, then the sealed answer, then the verdict, then the streak. */
@@ -126,6 +128,7 @@ export function resultView(args: {
           : copy.verdict.noSide;
 
   return {
+    roundId: args.round.roundId,
     question: args.calendar.question,
     context: args.calendar.context,
     sentence: args.record?.sentence ?? null,

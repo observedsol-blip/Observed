@@ -4,7 +4,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { PublicKey } from "@solana/web3.js";
-import { type MemoTransaction, verifiedSentences } from "../src/core/others.ts";
+import { pickSentences, type MemoTransaction, verifiedSentences } from "../src/core/others.ts";
 import { sha256Of } from "../src/core/sentence.ts";
 
 const hex = (b: Uint8Array) => [...b].map((x) => x.toString(16).padStart(2, "0")).join("");
@@ -171,4 +171,67 @@ test("two commit transactions from one wallet make both worthless", () => {
     ],
   });
   assert.deepEqual(out, [], "ambiguity is not resolved in the player's favour");
+});
+
+
+/* ------------------------------------------------------------------------------------------
+ * A2 — at most two sentences, two sides if there are two, the same two for everybody.
+ * ---------------------------------------------------------------------------------------- */
+
+const other = (payer: string, sentence: string, pBps: number) => ({
+  payer,
+  sentence,
+  pBps,
+  signature: `sig-${payer}`,
+});
+
+test("two sentences, and they take different sides when both sides wrote", () => {
+  const all = [
+    other("aaa", "up one", 8_000),
+    other("bbb", "up two", 7_000),
+    other("ccc", "down one", 2_000),
+  ];
+  const picked = pickSentences(all, 0);
+  assert.equal(picked.length, 2);
+  const sides = picked.map((o) => (o.pBps > 5_000 ? "up" : "down"));
+  assert.deepEqual([...new Set(sides)].sort(), ["down", "up"], "one of each");
+});
+
+test("when everyone took the same side it takes the next one, not an invented one", () => {
+  // Better a true pair than a manufactured disagreement.
+  const all = [other("aaa", "up one", 8_000), other("bbb", "up two", 9_000)];
+  const picked = pickSentences(all, 3);
+  assert.equal(picked.length, 2);
+  assert.ok(picked.every((o) => o.pBps > 5_000));
+});
+
+test("the same call always shows the same two, in the same order", () => {
+  // Everybody who reveals this call sees the same pair; a screen that reshuffles on refresh
+  // would be a different screen every time.
+  const all = [
+    other("ddd", "d", 8_000),
+    other("aaa", "a", 2_000),
+    other("ccc", "c", 7_000),
+    other("bbb", "b", 3_000),
+  ];
+  const once = pickSentences(all, 17).map((o) => o.sentence);
+  const again = pickSentences([...all].reverse(), 17).map((o) => o.sentence);
+  assert.deepEqual(once, again, "the ledger's order must not decide it");
+});
+
+test("different calls start at different sentences", () => {
+  const all = [
+    other("aaa", "a", 8_000),
+    other("bbb", "b", 2_000),
+    other("ccc", "c", 8_000),
+    other("ddd", "d", 2_000),
+  ];
+  const first = pickSentences(all, 0)[0].sentence;
+  const second = pickSentences(all, 1)[0].sentence;
+  assert.notEqual(first, second, "the round id rotates the start");
+});
+
+test("one sentence stays one, none stays none", () => {
+  assert.equal(pickSentences([other("aaa", "only one", 8_000)], 5).length, 1);
+  assert.equal(pickSentences([], 5).length, 0);
 });
