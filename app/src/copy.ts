@@ -74,6 +74,26 @@ export const copy = {
     return `You sealed: ${up ? "Up" : "Down"}, ${percent}% sure.`;
   },
 
+  /**
+   * The reveal, as a sequence (owner, 22.09.2026). The sentence stands alone first, and nothing
+   * of the outcome is on the screen until the player asks for it — that tap is the whole moment
+   * the app is built around.
+   */
+  faceIt: "Face it",
+
+  /**
+   * The memory question, behind a feature flag and skippable (owner, 22.09.2026).
+   *
+   * It is asked AFTER the outcome is shown, on purpose: what is being measured is the
+   * difference between what you sealed and what you now remember sealing, and that difference
+   * only exists once you know how it went. Asking before would measure recall, not drift.
+   */
+  memory: {
+    question: "How sure were you last night?",
+    sealedAndRemembered: (sealed: number, remembered: number) =>
+      `You sealed ${sealed}%. You remembered ${remembered}%.`,
+  },
+
   /** §11.3 — the daily result. */
   verdict: {
     called: "You called the side.",

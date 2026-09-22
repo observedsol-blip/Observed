@@ -65,6 +65,8 @@ export function mockResult(state: ResultDesignState): ResultView | null {
     crowd: { mean: 6_400, revealed: 63 },
     crowdBuckets: buckets,
     ownPercent: 80,
+    ownConfidence: 80,
+    remembered: null,
     others: [],
   };
   switch (state) {

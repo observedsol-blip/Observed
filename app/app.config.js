@@ -4,6 +4,10 @@
 // throwaway key, and Android refuses to install a differently signed APK over an existing one.
 // With its own id it sits beside the real app instead of blocking it (see docs/HANDOFF.md).
 module.exports = ({ config }) => {
+  // The tester build asks the memory question; it changes nothing else, so it needs no own id.
+  if (process.env.APP_VARIANT === "tester") {
+    return { ...config, extra: { ...(config.extra ?? {}), memoryQuestion: true } };
+  }
   const diagnostics = process.env.APP_VARIANT === "diagnostics";
   if (!diagnostics) return config;
   return {

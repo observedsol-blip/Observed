@@ -21,6 +21,12 @@ import season from './src/season1.json';
 const IS_DIAGNOSTICS = Constants.expoConfig?.extra?.diagnostics === true;
 
 /**
+ * The memory question after a reveal. On in the tester build (APP_VARIANT=tester), off
+ * everywhere else, so it can be tried on real evenings without shipping it by default.
+ */
+const ASK_MEMORY = Constants.expoConfig?.extra?.memoryQuestion === true;
+
+/**
  * The live configuration. Without an endpoint the app draws the design states from mockViews —
  * one screen, two data sources, so the design can be reviewed without a wallet and the screens
  * that ship are the ones that were reviewed.
@@ -111,7 +117,11 @@ export default function App() {
               }}
             />
           ) : area === 'Result' ? (
-            <Result view={resultView} />
+            <Result
+              view={resultView}
+              memoryQuestion={ASK_MEMORY}
+              onRemember={LIVE ? live.remember : undefined}
+            />
           ) : (
             <Record view={live.record ?? emptyRecord} />
           )}

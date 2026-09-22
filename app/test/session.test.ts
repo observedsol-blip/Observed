@@ -6,6 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Keypair, PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import { Session } from "../src/core/session.ts";
+import { copy } from "../src/copy.ts";
 import { MemoryStore } from "../src/core/store.ts";
 import { type Calendar, bytesToHex, hexToBytes } from "../src/chain/calendar.ts";
 import type { Entry, Round } from "../src/chain/layout.ts";
@@ -435,4 +436,45 @@ test("sealing still needs the wallet after a restored start", async () => {
   await session.evening();
   assert.equal(opened.sign, 1, "one signature, and it is the only time the wallet was used");
   assert.equal(opened.connect, 0, "MWA associates inside signAndSend, not before");
+});
+
+/* ------------------------------------------------------------------------------------------
+ * A4 — the memory question: this phone's note, next to the sealed answer.
+ * ---------------------------------------------------------------------------------------- */
+
+test("what you remembered is kept on this phone and comes back with the result", async () => {
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  fake.rounds.set(yesterday.roundId, makeRound(yesterday));
+  const { session, store } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+  fake.entries.set(yesterday.roundId, {
+    round: roundPda(yesterday.roundId),
+    sgtMint,
+    beneficiary: walletKey,
+    commitment: new Uint8Array(32),
+    committedAt: yesterday.commitOpen,
+    revealed: true,
+    pBps: 8_000,
+    scored: false,
+    scoredAsMissing: false,
+    scoreBps: 0,
+  } as never);
+
+  const before = await session.day();
+  assert.equal(before.result?.remembered, null, "unanswered until it is answered");
+  assert.equal(before.result?.ownConfidence, 80, "the seal on the input's own 50-100 scale");
+
+  await session.remember(yesterday.roundId, 65);
+  const after = await session.day();
+  assert.equal(after.result?.remembered, 65);
+});
+
+test("the sentence reads on the same scale on both sides", () => {
+  // "You sealed 80%. You remembered 65%." — two numbers, one unit. A seal of 20 % Down is
+  // 80 % sure of Down, and comparing 20 with 65 would be comparing two different questions.
+  assert.equal(
+    copy.memory.sealedAndRemembered(80, 65),
+    "You sealed 80%. You remembered 65%.",
+  );
 });

@@ -185,6 +185,16 @@ export function useDay(config: LiveConfig | null) {
       }
     : null;
 
+  /** The memory question's answer. It is written to this phone and to nothing else. */
+  const remember = useCallback(
+    async (roundId: number, confidence: number) => {
+      if (!session) return;
+      await session.remember(roundId, confidence);
+      await refresh();
+    },
+    [session, refresh],
+  );
+
   const backup = session
     ? {
         onExport: () => session.exportSecret(),
@@ -202,7 +212,7 @@ export function useDay(config: LiveConfig | null) {
 
   return {
     day: dayWithOthers, record, settings, busy, error, reminders,
-    connect, save, seal, refresh, loadRecord, loadSettings, backup,
+    connect, save, seal, refresh, loadRecord, loadSettings, backup, remember,
   };
 }
 

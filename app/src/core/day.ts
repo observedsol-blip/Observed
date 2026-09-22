@@ -100,6 +100,10 @@ export type ResultView = {
   crowdBuckets: number[];
   /** The player's own answer as a percentage, for the cursor in the distribution. */
   ownPercent: number;
+  /** The same answer as the input scale writes it: 50–100, the side taken out. */
+  ownConfidence: number;
+  /** What the player said they remembered, 50–100, or null while the question is unanswered. */
+  remembered: number | null;
   /** Sentences of others, already checked against their seal memos (E8). Empty until then. */
   others: string[];
 };
@@ -112,6 +116,8 @@ export function resultView(args: {
   streak: number;
   /** Already verified against their seal memos — this function does not check them. */
   others?: string[];
+  /** From this phone, not from the chain: what they said they remembered. */
+  remembered?: number | null;
 }): ResultView {
   const { kind, movedBps } = outcomeFor(args.entry, args.round);
   const moved = (Math.abs(movedBps) / 100).toFixed(2);
@@ -141,6 +147,12 @@ export function resultView(args: {
     crowd: { mean: crowdMean(args.round), revealed: args.round.revealCount },
     crowdBuckets: args.round.histogram,
     ownPercent: args.entry.pBps / 100,
+    // The seal is one number on a 0–100 scale; the input that produced it runs 50–100 with the
+    // side beside it. The memory question uses that same input, so both sides of
+    // "sealed vs remembered" have to be on the same scale or the comparison is nonsense.
+    ownConfidence:
+      args.entry.pBps >= 5_000 ? args.entry.pBps / 100 : (10_000 - args.entry.pBps) / 100,
+    remembered: args.remembered ?? null,
     others: args.others ?? [],
   };
 }

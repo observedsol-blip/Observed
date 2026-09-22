@@ -57,6 +57,9 @@ export type DayState = {
   blocked: "no-wallet" | "no-sgt" | null;
 };
 
+/** One key, one small map: round id -> the confidence the player says they remembered. */
+const REMEMBERED_KEY = "remembered";
+
 export class Session {
   private deps: SessionDeps;
   private walletKey: PublicKey | null = null;
@@ -198,7 +201,7 @@ export class Session {
         // Rent is only owed for an entry that does not exist yet.
         entryExists: sealable ? entries.has(sealable.roundId) : false,
       }),
-      result: this.latestResult(rounds, entries, records),
+      result: await this.latestResult(rounds, entries, records),
       openReveals: revealables.length,
       wallet: this.walletKey,
       sgtMint: this.sgtMint,
@@ -220,11 +223,25 @@ export class Session {
     return pickSentences(verified, roundId).map((o) => o.sentence);
   }
 
-  private latestResult(
+  /**
+   * What the player says they remembered, per call. It never leaves the phone and it never
+   * touches the chain: it is a note about a memory, not evidence about a market.
+   */
+  async remember(roundId: number, confidence: number): Promise<void> {
+    const kept = (await getJson<Record<string, number>>(this.deps.store, REMEMBERED_KEY)) ?? {};
+    await setJson(this.deps.store, REMEMBERED_KEY, { ...kept, [roundId]: confidence });
+  }
+
+  private async rememberedFor(roundId: number): Promise<number | null> {
+    const kept = await getJson<Record<string, number>>(this.deps.store, REMEMBERED_KEY);
+    return kept?.[roundId] ?? null;
+  }
+
+  private async latestResult(
     rounds: Map<number, Round>,
     entries: Map<number, Entry>,
     records: SealRecord[],
-  ): ResultView | null {
+  ): Promise<ResultView | null> {
     const revealed = [...entries.entries()]
       .filter(([, e]) => e.revealed)
       .sort((a, b) => b[0] - a[0]);
@@ -240,6 +257,7 @@ export class Session {
       calendar,
       entry,
       record: records.find((r) => r.roundId === roundId) ?? null,
+      remembered: await this.rememberedFor(roundId),
       // Only calls that actually reached an outcome can break or extend a streak.
       streak: streakOf(records, revealedIds, (id) => rounds.get(id)?.status === RoundStatus.Resolved),
     });
