@@ -82,11 +82,16 @@ function StepButton({
   );
 }
 
+/**
+ * `value === null` means nobody has touched it yet: the track and its ticks are drawn, the
+ * thumb is NOT. A cursor sitting at some number before the player has chosen one is a
+ * suggestion, and the memory question must not suggest anything (owner, 22.09.2026).
+ */
 function ScaleInput({
   value,
   onChange,
 }: {
-  value: number;
+  value: number | null;
   onChange: (next: number) => void;
 }) {
   const { width, onLayout } = useTrackWidth();
@@ -112,7 +117,7 @@ function ScaleInput({
     [onChange],
   );
 
-  const cursorX = xForInput(value, width);
+  const cursorX = value === null ? 0 : xForInput(value, width);
 
   return (
     <View>
@@ -122,11 +127,17 @@ function ScaleInput({
         accessible
         accessibilityRole="adjustable"
         accessibilityLabel="How sure"
-        accessibilityValue={{ min: INPUT_MIN, max: 100, now: value, text: `${value}%` }}
+        accessibilityValue={
+          value === null
+            ? { min: INPUT_MIN, max: 100 }
+            : { min: INPUT_MIN, max: 100, now: value, text: `${value}%` }
+        }
         accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
         onAccessibilityAction={(e) => {
-          if (e.nativeEvent.actionName === 'increment') onChange(snapInput(value + 5));
-          if (e.nativeEvent.actionName === 'decrement') onChange(snapInput(value - 5));
+          // From untouched, either direction starts in the middle of the track.
+          const from = value ?? 75;
+          if (e.nativeEvent.actionName === 'increment') onChange(snapInput(from + 5));
+          if (e.nativeEvent.actionName === 'decrement') onChange(snapInput(from - 5));
         }}
         style={{ height: TRACK_HEIGHT, justifyContent: 'center' }}
       >
@@ -158,7 +169,7 @@ function ScaleInput({
               />
             );
           })}
-        {width > 0 && (
+        {width > 0 && value !== null && (
           <View
             style={{
               position: 'absolute',
@@ -181,15 +192,16 @@ function ScaleInput({
       </View>
 
       <View style={{ flexDirection: 'row', gap: space.md, marginTop: space.lg }}>
+        {/* From untouched, either button starts in the middle of the track. */}
         <StepButton
           label="−5"
           accessibilityLabel="Lower by 5"
-          onPress={() => onChange(snapInput(value - 5))}
+          onPress={() => onChange(snapInput((value ?? 75) - 5))}
         />
         <StepButton
           label="+5"
           accessibilityLabel="Raise by 5"
-          onPress={() => onChange(snapInput(value + 5))}
+          onPress={() => onChange(snapInput((value ?? 75) + 5))}
         />
       </View>
     </View>
@@ -269,7 +281,7 @@ function ScaleDistribution({
 /* ------------------------------------------------------------------ */
 
 export type ScaleProps =
-  | { mode: 'input'; value: number; onChange: (next: number) => void }
+  | { mode: 'input'; value: number | null; onChange: (next: number) => void }
   | { mode: 'distribution'; buckets: number[]; ownValue: number; mean: number };
 
 export default function Scale(props: ScaleProps) {

@@ -13,8 +13,10 @@
 // now think you sealed — and that drift only exists once you know how it went. Asking first
 // would measure recall instead.
 //
-// Without a sentence there is nothing to stand alone, so the first stage shows the sealed
-// answer instead and the button still reads "Face it".
+// THE NUMBER MUST NOT BE ON THE SCREEN BEFORE THE QUESTION. A screen that shows "You sealed:
+// Up, 80% sure." and then asks how sure you were is not asking anything — it is reading the
+// answer out first. So: without a sentence the first stage shows the SIDE only, and the
+// confidence appears after the question has been answered or waved away.
 //
 // The Brier is deliberately absent: it lives on chain and in the verifier, not here (§11.3).
 import React, { useEffect, useState } from "react";
@@ -41,19 +43,19 @@ export default function Result({
   waiting?: string | null;
   /** The memory question is a build flag: on in the tester build, off by default. */
   memoryQuestion?: boolean;
-  onRemember?: (roundId: number, confidence: number) => void | Promise<void>;
+  /** `null` is a skip: the question was put and waved away, which is not the same as unasked. */
+  onRemember?: (roundId: number, confidence: number | null) => void | Promise<void>;
 }) {
   const roundId = view?.roundId ?? null;
   const [faced, setFaced] = useState(false);
-  const [asking, setAsking] = useState(true);
-  const [guess, setGuess] = useState(75);
+  // No default and no thumb: the answer only counts once the player has touched the scale,
+  // the same rule the seal follows.
+  const [guess, setGuess] = useState<number | null>(null);
 
-  // A new call is a new reveal: the sentence stands alone again, and the memory question comes
-  // back. Without this the second evening would open straight on the outcome.
+  // A new call is a new reveal: the sentence stands alone again.
   useEffect(() => {
     setFaced(false);
-    setAsking(true);
-    setGuess(75);
+    setGuess(null);
   }, [roundId]);
 
   if (!view) {
@@ -65,6 +67,10 @@ export default function Result({
       </Screen>
     );
   }
+
+  // The question is put once per entry; `memoryAsked` is true after an answer AND after a skip.
+  const ask = memoryQuestion && !view.memoryAsked;
+  const answered = view.remembered !== null;
 
   // 1 — what you wrote yesterday, before you knew. Nothing else is on the screen.
   if (!faced) {
@@ -83,8 +89,15 @@ export default function Result({
               {/* Literata italic, the real cut (03 §3). */}
               <Sentence style={{ marginTop: space.xs }}>{view.sentence}</Sentence>
             </>
+          ) : ask && view.sealedSide ? (
+            // No sentence to stand alone. The SIDE may be shown, the number may not — it is
+            // what the memory question is about. GAP: 03 has no line for "you sealed a side"
+            // without the percentage, so the bare approved word stands here for now.
+            <Body style={{ color: color.ink }}>{view.sealedSide}</Body>
+          ) : ask ? (
+            // A deliberate 50/50 has no side either, so this stage carries only the question.
+            null
           ) : (
-            // No sentence to stand alone, so the sealed answer takes the stage instead.
             <Body style={{ color: color.ink }}>{view.sealedAnswer}</Body>
           )}
         </Block>
@@ -97,9 +110,6 @@ export default function Result({
       </Screen>
     );
   }
-
-  const answered = view.remembered !== null;
-  const ask = memoryQuestion && asking && !answered;
 
   return (
     <Screen>
@@ -132,7 +142,7 @@ export default function Result({
         ) : null}
       </Block>
 
-      {/* 4 — the memory question, if this build asks it and it is still unanswered */}
+      {/* 4 — the memory question, if this build asks it and this entry has not been asked */}
       {ask ? (
         <Block>
           <Label style={{ color: color.ink }}>{copy.memory.question}</Label>
@@ -142,24 +152,28 @@ export default function Result({
           <View style={{ marginTop: space.md }}>
             <PrimaryButton
               label={copy.faceIt}
+              disabled={guess === null}
               onPress={() => void onRemember?.(view.roundId, guess)}
             />
           </View>
-          {/* Skippable by one tap. "Not now" is the word this app already uses for that. */}
-          <Pressable onPress={() => setAsking(false)} accessibilityRole="button">
+          {/* Skippable by one tap. "Not now" is the word this app already uses for that, and a
+              skip is recorded as such — asked once means asked once. */}
+          <Pressable onPress={() => void onRemember?.(view.roundId, null)} accessibilityRole="button">
             <Label style={{ marginTop: space.md, color: color.meta }}>{copy.notNow}</Label>
           </Pressable>
         </Block>
       ) : null}
 
-      {/* 5 — what you sealed, next to what you remembered. Only once it has been answered. */}
-      <Block>
-        <Body style={{ color: color.ink }}>
-          {answered
-            ? copy.memory.sealedAndRemembered(view.ownConfidence, view.remembered as number)
-            : view.sealedAnswer}
-        </Body>
-      </Block>
+      {/* 5 — the confidence, and only now: after the question, never before it */}
+      {ask ? null : (
+        <Block>
+          <Body style={{ color: color.ink }}>
+            {answered
+              ? copy.memory.sealedAndRemembered(view.ownConfidence, view.remembered as number)
+              : view.sealedAnswer}
+          </Body>
+        </Block>
+      )}
 
       <Hairline />
 

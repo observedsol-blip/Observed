@@ -438,6 +438,22 @@ test("sealing still needs the wallet after a restored start", async () => {
   assert.equal(opened.connect, 0, "MWA associates inside signAndSend, not before");
 });
 
+
+/** A revealed entry for this wallet, as the chain would hand it over. */
+const revealedEntry = (pBps: number) =>
+  ({
+    round: roundPda(yesterday.roundId),
+    sgtMint,
+    beneficiary: walletKey,
+    commitment: new Uint8Array(32),
+    committedAt: yesterday.commitOpen,
+    revealed: true,
+    pBps,
+    scored: false,
+    scoredAsMissing: false,
+    scoreBps: 0,
+  }) as never;
+
 /* ------------------------------------------------------------------------------------------
  * A4 — the memory question: this phone's note, next to the sealed answer.
  * ---------------------------------------------------------------------------------------- */
@@ -448,26 +464,66 @@ test("what you remembered is kept on this phone and comes back with the result",
   fake.rounds.set(yesterday.roundId, makeRound(yesterday));
   const { session, store } = makeRestorable(fake, now, walletKey);
   await keepSecret(store, walletKey, now);
-  fake.entries.set(yesterday.roundId, {
-    round: roundPda(yesterday.roundId),
-    sgtMint,
-    beneficiary: walletKey,
-    commitment: new Uint8Array(32),
-    committedAt: yesterday.commitOpen,
-    revealed: true,
-    pBps: 8_000,
-    scored: false,
-    scoredAsMissing: false,
-    scoreBps: 0,
-  } as never);
+  fake.entries.set(yesterday.roundId, revealedEntry(8_000));
 
   const before = await session.day();
   assert.equal(before.result?.remembered, null, "unanswered until it is answered");
   assert.equal(before.result?.ownConfidence, 80, "the seal on the input's own 50-100 scale");
 
+  assert.equal(before.result?.memoryAsked, false, "not asked yet");
+  assert.equal(before.result?.sealedSide, "Up", "the side may be shown, the number may not");
+
   await session.remember(yesterday.roundId, 65);
   const after = await session.day();
   assert.equal(after.result?.remembered, 65);
+  assert.equal(after.result?.memoryAsked, true);
+});
+
+test("the question is put once per entry, and a skip counts as put", async () => {
+  // Waving it away is an answer about the question, not about the memory: it must not come
+  // back tomorrow, and it must still be distinguishable from an entry nobody was ever asked
+  // about (owner, 22.09.2026).
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  fake.rounds.set(yesterday.roundId, makeRound(yesterday));
+  const { session, store } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+  fake.entries.set(yesterday.roundId, revealedEntry(8_000));
+
+  await session.remember(yesterday.roundId, null); // skipped
+  const after = await session.day();
+  assert.equal(after.result?.memoryAsked, true, "asked, and not again");
+  assert.equal(after.result?.remembered, null, "but nothing was remembered");
+
+  // a second answer cannot overwrite the first
+  await session.remember(yesterday.roundId, 90);
+  assert.equal((await session.day()).result?.remembered, null);
+});
+
+test("what is written down carries the entry's own address and the moment", async () => {
+  // Round id alone would collide between two wallets on one phone, and without a timestamp
+  // the answers cannot be evaluated later at all.
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  fake.rounds.set(yesterday.roundId, makeRound(yesterday));
+  const { session, store } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+  fake.entries.set(yesterday.roundId, revealedEntry(8_000));
+
+  await session.day();
+  await session.remember(yesterday.roundId, 65);
+
+  const kept = JSON.parse((await store.get("remembered")) as string) as Record<
+    string,
+    { confidence: number; atSeconds: number }
+  >;
+  const keys = Object.keys(kept);
+  assert.equal(keys.length, 1, "one note, for one entry");
+  // The key is an address, not a round number: the same call sealed from another wallet is
+  // another entry and gets its own note.
+  assert.equal(keys[0].length >= 32, true);
+  assert.notEqual(keys[0], String(yesterday.roundId));
+  assert.deepEqual(kept[keys[0]], { confidence: 65, atSeconds: now });
 });
 
 test("the sentence reads on the same scale on both sides", () => {

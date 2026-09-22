@@ -261,10 +261,9 @@ test("the streak counts revealed evenings in a row, and a close call does not br
 test("the record locks its diagnosis until twenty revealed calls", () => {
   assert.equal(copy.record.unlockAt, 20);
   assert.equal(copy.record.locked(8), "Unlocks after 20 revealed calls · you're at 8");
-  assert.equal(
-    copy.record.explain,
-    "Your side record counts calls. Your season score measures how sure you were.",
-  );
+  // The explaining line is gone with the Brier it explained (owner, 22.09.2026): nothing
+  // replaces it, so there is nothing left here to check.
+  assert.equal("explain" in copy.record, false);
 });
 
 test("an evening that only reveals does not ask for rent that was already paid", () => {

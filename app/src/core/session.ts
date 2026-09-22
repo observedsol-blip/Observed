@@ -10,7 +10,7 @@ import { type CalendarRound, hexToBytes, roundIsInTheCalendar } from "../chain/c
 import { buildDaily } from "../chain/ix.ts";
 import { REVEAL_WINDOW_SECS, RoundStatus } from "../chain/ids.ts";
 import { findGenesisToken } from "../chain/sgt.ts";
-import { roundPda } from "../chain/pda.ts";
+import { entryPda, roundPda } from "../chain/pda.ts";
 import { pickSentences, verifiedSentences } from "./others.ts";
 import type { Entry, Round } from "../chain/layout.ts";
 import { sealMemo } from "./sentence.ts";
@@ -57,8 +57,15 @@ export type DayState = {
   blocked: "no-wallet" | "no-sgt" | null;
 };
 
-/** One key, one small map: round id -> the confidence the player says they remembered. */
+/**
+ * One key, one small map: the entry's own address -> what the player said they remembered and
+ * when. The address, not the round id, because two wallets on one phone would otherwise share
+ * an answer. `confidence: null` is a skip — the question was put and waved away, which is a
+ * different thing from never having been asked, and both have to be told apart to evaluate
+ * anything later (owner, 22.09.2026).
+ */
 const REMEMBERED_KEY = "remembered";
+type RememberedNote = { confidence: number | null; atSeconds: number };
 
 export class Session {
   private deps: SessionDeps;
@@ -231,14 +238,29 @@ export class Session {
    * What the player says they remembered, per call. It never leaves the phone and it never
    * touches the chain: it is a note about a memory, not evidence about a market.
    */
-  async remember(roundId: number, confidence: number): Promise<void> {
-    const kept = (await getJson<Record<string, number>>(this.deps.store, REMEMBERED_KEY)) ?? {};
-    await setJson(this.deps.store, REMEMBERED_KEY, { ...kept, [roundId]: confidence });
+  async remember(roundId: number, confidence: number | null): Promise<void> {
+    await this.restore();
+    const key = this.memoryKey(roundId);
+    if (!key) return;
+    const kept = (await getJson<Record<string, RememberedNote>>(this.deps.store, REMEMBERED_KEY)) ?? {};
+    // Asked once: an answer that is already there is never overwritten.
+    if (kept[key]) return;
+    await setJson(this.deps.store, REMEMBERED_KEY, {
+      ...kept,
+      [key]: { confidence, atSeconds: this.deps.now() } satisfies RememberedNote,
+    });
   }
 
-  private async rememberedFor(roundId: number): Promise<number | null> {
-    const kept = await getJson<Record<string, number>>(this.deps.store, REMEMBERED_KEY);
-    return kept?.[roundId] ?? null;
+  private memoryKey(roundId: number): string | null {
+    if (!this.sgtMint) return null;
+    return entryPda(roundPda(roundId), this.sgtMint).toBase58();
+  }
+
+  private async rememberedFor(roundId: number): Promise<RememberedNote | null> {
+    const key = this.memoryKey(roundId);
+    if (!key) return null;
+    const kept = await getJson<Record<string, RememberedNote>>(this.deps.store, REMEMBERED_KEY);
+    return kept?.[key] ?? null;
   }
 
   private async latestResult(
@@ -253,6 +275,7 @@ export class Session {
     if (!latest) return null;
     const [roundId, entry] = latest;
     const round = rounds.get(roundId);
+    const noted = await this.rememberedFor(roundId);
     const calendar = this.deps.calendar.find((r) => r.roundId === roundId);
     if (!round || !calendar) return null;
     const revealedIds = new Set([...entries].filter(([, e]) => e.revealed).map(([id]) => id));
@@ -261,7 +284,8 @@ export class Session {
       calendar,
       entry,
       record: records.find((r) => r.roundId === roundId) ?? null,
-      remembered: await this.rememberedFor(roundId),
+      remembered: noted?.confidence ?? null,
+      memoryAsked: noted !== null,
       // Only calls that actually reached an outcome can break or extend a streak.
       streak: streakOf(records, revealedIds, (id) => rounds.get(id)?.status === RoundStatus.Resolved),
     });

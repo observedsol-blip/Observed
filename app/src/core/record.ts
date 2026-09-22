@@ -25,6 +25,12 @@ export type PastCall = {
   question: string;
   /** `You sealed: Up, 80% sure.` shortened to `Up, 80%` — the document's own wording. */
   sealed: string | null;
+  /**
+   * Whether this call has been opened on chain. Until it has, `sealed` is this phone's own
+   * note, and a build that asks "how sure were you last night?" must not print the answer in
+   * the list underneath (owner, 22.09.2026).
+   */
+  revealed: boolean;
   outcome: "Yes" | "No" | null;
   /** The states 03 §4 lists, word for word. */
   status: "called" | "missed" | "too close" | "no side" | "missing" | "no resolve" | "open";
@@ -151,6 +157,7 @@ function pastCalls(args: {
       date: dayLabel(call.commitClose),
       question: call.question,
       sealed: sealedPBps === null ? null : shortAnswer(sealedPBps),
+      revealed: entry?.revealed === true,
       outcome:
         round?.status === RoundStatus.Resolved
           ? round.outcome === Outcome.Yes

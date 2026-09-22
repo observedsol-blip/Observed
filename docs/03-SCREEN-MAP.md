@@ -90,9 +90,11 @@ bzw. „Outcome 16:00–16:01 UTC · missing“ — beide Fenster 60 s) · **Sam
 Zwei Zahlen und ein Satz (§11.5):
 - **Seiten-Record** groß: „4 of 6 calls“ — gezählt werden nur Runden mit einer Seite, ohne die
   knappen. Darunter die Serie.
-- **Saisonwert** (Brier, inklusive Versäumnissen, so beschriftet): „0.313 · 9 scored“.
-- Der Satz, der beide erklärt: `Your side record counts calls. Your season score measures how sure
-  you were.`
+- **Saisonwert: gestrichen (Owner, 22.09.2026).** Kein Brier auf diesem Schirm — nicht als
+  Saisonwert, nicht je Zeile, nicht als Vergleichswert („Always 50 %", „Crowd"). Die Zahl bleibt
+  auf der Kette und in `scripts/verify-round.mjs`; nur die Anzeige ist weg.
+- **Es gibt keinen Erklärsatz mehr.** Der alte erklärte den Saisonwert mit; ein Ersatz ist
+  ausdrücklich nicht vorgesehen (Owner, 22.09.2026).
 - Die drei ehrlichen Zahlen bleiben: **Commits · Reveals · Missing** (Beispiel „9 · 8 · 1“) mit
   Fußnote „missing counts as a full miss“.
 - Baselines: „Always 50%: 0.250 · Crowd: 0.211“.
@@ -211,6 +213,20 @@ Stufe die versiegelte Antwort, der Knopf bleibt derselbe.
 | Today, über `Seal today` | `No stakes. A {sol} SOL deposit comes back to this wallet by {date}.` |
 | Today, nur vor dem allerersten Siegel | `Your first call also opens your record: {sol} SOL, once, not returned.` |
 
+**Die Zahl darf vor der Frage nicht auf dem Schirm stehen.** Ein Bildschirm, der erst
+„You sealed: Up, 80% sure." zeigt und dann fragt, wie sicher man war, fragt nichts — er liest
+die Antwort vor. Ohne Satz trägt die erste Stufe deshalb **nur die Seite** (`Up` / `Down`; bei
+einer absichtlichen 50/50 gar nichts), und die Sicherheit erscheint erst, nachdem die Frage
+beantwortet oder weggewischt wurde. Dasselbe gilt für die Liste im Record: solange ein Call
+nicht aufgedeckt ist, steht dort im Tester-Build kein Wert.
+
+**Der Erinnerungs-Regler startet ohne Daumen.** Kein Vorgabewert, keine Markierung — er gilt
+erst nach einer Berührung, und der Knopf bleibt bis dahin gesperrt. Ein Cursor, der vor der
+Entscheidung irgendwo steht, ist ein Vorschlag.
+
+**Gefragt wird einmal je Eintrag.** Beantworten und Überspringen zählen beide als gefragt; die
+Notiz liegt unter der Adresse des Eintrags, mit Zeitpunkt, und wird nie überschrieben.
+
 Die Erinnerungsfrage kommt **nach** dem Ergebnis, nicht davor: gemessen wird der Abstand
 zwischen dem, was jemand versiegelt hat, und dem, was er jetzt glaubt versiegelt zu haben — und
 den gibt es erst, wenn der Ausgang bekannt ist. Beide Zahlen stehen auf der Reglerskala 50–100.
@@ -279,10 +295,8 @@ Der Brier-Wert steht **nicht** im täglichen Ergebnis, nur im Saison-Record.
 - Überschrift: `What others wrote`
 - Leer: `Nobody shared a sentence this time.`
 
-### 11.5 Record — zwei Zahlen, ein Satz (E11)
-- Seiten-Record (getroffene Seiten) **und** Saisonwert (Brier, inklusive Versäumnissen).
-- Der Satz, der beide erklärt: `Your side record counts calls. Your season score measures how
-  sure you were.`
+### 11.5 Record — eine Zahl (E11, geändert 22.09.2026)
+- Seiten-Record (getroffene Seiten). **Kein Saisonwert, kein Brier, kein Erklärsatz** — siehe §4.
 - Aussage über Übersicherheit erst ab **20 aufgedeckten Runden**.
 
 ### 11.6 Regeln hinter den Texten

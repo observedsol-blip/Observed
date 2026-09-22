@@ -19,7 +19,10 @@ import type { PastCall, RecordView } from "../core/record.ts";
 import { copy } from "../copy.ts";
 import { color, space, type } from "../tokens";
 
-function CallRow({ call }: { call: PastCall }) {
+function CallRow({ call, hideUnrevealed }: { call: PastCall; hideUnrevealed: boolean }) {
+  // A call that is sealed but not yet opened: the number is only on this phone, and in a build
+  // that asks what you remember, printing it here would answer the question in advance.
+  const sealed = hideUnrevealed && !call.revealed ? null : call.sealed;
   return (
     <View
       style={{
@@ -39,14 +42,21 @@ function CallRow({ call }: { call: PastCall }) {
           {call.question}
         </Label>
         <FiguresMeta style={{ marginTop: space.xs }}>
-          {[call.sealed ?? "—", call.outcome ?? "—", call.status].join(" · ")}
+          {[sealed ?? "—", call.outcome ?? "—", call.status].join(" · ")}
         </FiguresMeta>
       </View>
     </View>
   );
 }
 
-export default function Record({ view }: { view: RecordView }) {
+export default function Record({
+  view,
+  hideUnrevealedAnswer = false,
+}: {
+  view: RecordView;
+  /** On in the build that asks the memory question. */
+  hideUnrevealedAnswer?: boolean;
+}) {
   return (
     <Screen>
       {/* the side record, big — calls with a side, without the close ones */}
@@ -75,7 +85,7 @@ export default function Record({ view }: { view: RecordView }) {
         <Kicker>{copy.headings.calls}</Kicker>
         <View style={{ marginTop: space.sm }}>
           {view.calls.map((call) => (
-            <CallRow key={call.roundId} call={call} />
+            <CallRow key={call.roundId} call={call} hideUnrevealed={hideUnrevealedAnswer} />
           ))}
         </View>
       </Block>

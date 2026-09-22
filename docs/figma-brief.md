@@ -203,10 +203,10 @@ Der Brier-Wert steht hier **nicht**.
 ### 2.5 Record (§4 und §11.5, `copy.ts:54–60`)
 
 - Seiten-Record groß: `4 of 6 calls`
-- Saisonwert: `0.313 · 9 scored`
-- Der Satz: `Your side record counts calls. Your season score measures how sure you were.`
+- Saisonwert: **gestrichen 22.09.2026** — kein Brier auf dem Record, auch nicht je Zeile.
+- Erklärsatz: **gestrichen 22.09.2026**, ersatzlos.
 - Zähler: `Commits · Reveals · Missing` → `9 · 8 · 1`, Fußnote `missing counts as a full miss`
-- Baselines: `Always 50%: 0.250 · Crowd: 0.211`
+- Baselines: **gestrichen 22.09.2026** (auch Brier-Werte, ohne Saisonwert daneben ohne Aussage).
 - gesperrt: `Unlocks after 20 revealed calls · you're at {n}` — **Schwelle 20** (`copy.ts:58–59`)
 - Liste: Datum, Frage, `Up, 80%`, Ausgang, Status (`called / missed / too close / no side /
   missing / no resolve / open`)

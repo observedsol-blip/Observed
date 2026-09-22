@@ -187,7 +187,7 @@ export function useDay(config: LiveConfig | null) {
 
   /** The memory question's answer. It is written to this phone and to nothing else. */
   const remember = useCallback(
-    async (roundId: number, confidence: number) => {
+    async (roundId: number, confidence: number | null) => {
       if (!session) return;
       await session.remember(roundId, confidence);
       await refresh();

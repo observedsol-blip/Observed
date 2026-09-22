@@ -112,13 +112,11 @@ export const copy = {
   /**
    * §11.5 — the record.
    *
-   * `explain` and `headings.seasonScore` are NOT rendered since 22.09.2026: the owner took the
-   * Brier off this screen. They stay here because they are still in 03 §4/§11.5 and the number
-   * itself is unchanged on chain — only the display is gone. A one-sentence replacement for
-   * `explain` is open; it is written down as a GAP, not invented here.
+   * There is no explaining line any more: the Brier left this screen on 22.09.2026, and the
+   * owner decided the same day that nothing replaces it. `headings.seasonScore` stays only
+   * because Settings still names the number the program keeps.
    */
   record: {
-    explain: "Your side record counts calls. Your season score measures how sure you were.",
     sideRecord: (hits: number, calls: number) => `${hits} of ${calls} calls`,
     locked: (revealed: number) => `Unlocks after 20 revealed calls · you're at ${revealed}`,
     unlockAt: 20,

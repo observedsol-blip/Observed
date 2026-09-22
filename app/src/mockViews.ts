@@ -70,6 +70,8 @@ export function mockResult(state: ResultDesignState): ResultView | null {
     ownPercent: 80,
     ownConfidence: 80,
     remembered: null,
+    memoryAsked: false,
+    sealedSide: copy.side.up,
     others: [],
   };
   switch (state) {

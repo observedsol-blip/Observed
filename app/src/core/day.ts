@@ -131,8 +131,16 @@ export type ResultView = {
   ownPercent: number;
   /** The same answer as the input scale writes it: 50–100, the side taken out. */
   ownConfidence: number;
-  /** What the player said they remembered, 50–100, or null while the question is unanswered. */
+  /** What the player said they remembered, 50–100, or null if unanswered or skipped. */
   remembered: number | null;
+  /** Whether the memory question has already been put to this entry — asked once, never again. */
+  memoryAsked: boolean;
+  /**
+   * Only the side of the sealed answer, without the number: `Up`, `Down`, or null for a
+   * deliberate 50/50. The number must not be on the screen before the memory question, or the
+   * question answers itself (owner, 22.09.2026).
+   */
+  sealedSide: string | null;
   /** Sentences of others, already checked against their seal memos (E8). Empty until then. */
   others: string[];
 };
@@ -147,6 +155,8 @@ export function resultView(args: {
   others?: string[];
   /** From this phone, not from the chain: what they said they remembered. */
   remembered?: number | null;
+  /** Whether the question was already put — answering and skipping both count. */
+  memoryAsked?: boolean;
 }): ResultView {
   const { kind, movedBps } = outcomeFor(args.entry, args.round);
   const moved = (Math.abs(movedBps) / 100).toFixed(2);
@@ -182,6 +192,9 @@ export function resultView(args: {
     ownConfidence:
       args.entry.pBps >= 5_000 ? args.entry.pBps / 100 : (10_000 - args.entry.pBps) / 100,
     remembered: args.remembered ?? null,
+    memoryAsked: args.memoryAsked === true,
+    sealedSide:
+      args.entry.pBps === 5_000 ? null : args.entry.pBps > 5_000 ? copy.side.up : copy.side.down,
     others: args.others ?? [],
   };
 }

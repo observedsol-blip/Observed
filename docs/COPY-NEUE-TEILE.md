@@ -228,8 +228,14 @@ Ein eigenes Wort dafür ist **nicht** erfunden worden.
 
 Noch nicht in Gebrauch, kommt mit Block B: `Reveal only`, `Example`.
 
+## Gestrichen
+
+| Ort | Was |
+|---|---|
+| Record §4/§11.5, Erklärzeile | `Your side record counts calls. Your season score measures how sure you were.` — **ersatzlos gestrichen** (Owner, 22.09.2026). Sie erklärte den Season score mit, und den gibt es auf dem Schirm nicht mehr. Aus `copy.ts` und aus 03 entfernt; es kommt **keine** Zeile nach. |
+
 ## GAP — offen, nicht erfunden
 
 | Ort | Was fehlt |
 |---|---|
-| Record §4/§11.5, Erklärzeile | Seit 22.09. zeigt der Record **keinen** Season score mehr. Die freigegebene Zeile `Your side record counts calls. Your season score measures how sure you were.` verweist damit auf etwas, das nicht mehr auf dem Schirm steht. Sie wird deshalb nicht mehr gerendert. Es fehlt ein Einzeiler, der nur noch den Side record erklärt. |
+| Result, erste Stufe ohne Satz | Dort darf nur die Seite stehen, nicht die Sicherheit. 03 hat keine Zeile dafür, die eine Seite ohne Prozentzahl benennt — im Code steht deshalb das bloße freigegebene Wort (`Up` / `Down`). Eine richtige Zeile fehlt. |

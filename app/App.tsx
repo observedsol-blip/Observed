@@ -123,7 +123,7 @@ export default function App() {
               onRemember={LIVE ? live.remember : undefined}
             />
           ) : (
-            <Record view={live.record ?? emptyRecord} />
+            <Record view={live.record ?? emptyRecord} hideUnrevealedAnswer={ASK_MEMORY} />
           )}
         </View>
 
