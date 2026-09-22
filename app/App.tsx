@@ -126,6 +126,7 @@ export default function App() {
               actions={{
                 onSave: (pBps, sentence, share) => live.save(pBps, sentence, share),
                 onSeal: () => live.seal(),
+                onRevealOnly: LIVE ? () => live.revealOnly() : undefined,
                 onConnect: () => live.connect(),
               }}
             />

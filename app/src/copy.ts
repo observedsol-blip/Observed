@@ -59,6 +59,20 @@ export const copy = {
   /** The one button of the memory log (approved 22.09.2026). */
   copyButton: "Copy",
 
+  /**
+   * The quiet side path: open yesterday without sealing tonight (approved 22.09.2026).
+   *
+   * The normal evening is ONE approval for both — `revealsRideAlong` says so, and that is what
+   * the big button does. This is for the evening where somebody wants to look and not play.
+   */
+  revealOnly: "Reveal only",
+
+  /**
+   * Only once the reveal is on chain: before that there is nothing for a stranger to check
+   * (approved 22.09.2026).
+   */
+  checkYourself: "Check this call yourself →",
+
   /** §11.2 — the sentence field. */
   sentence: {
     headingFor: (pBps: number) =>

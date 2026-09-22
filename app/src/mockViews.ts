@@ -36,6 +36,7 @@ export function mockToday(state: DesignState): TodayView {
         confidence: null,
         sentenceHeading: copy.sentence.headingFor(5_000),
         openReveals: state === "open_with_reveals" ? 2 : 0,
+        pending: null,
         deposit: copy.deposit.line(solText(ENTRY_RENT_LAMPORTS), "30 DEC"),
         firstCall: copy.deposit.firstCall(solText(PLAYER_RENT_LAMPORTS)),
       };

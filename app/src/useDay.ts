@@ -143,6 +143,21 @@ export function useDay(config: LiveConfig | null) {
     [session, day, config, refresh],
   );
 
+  /** Reveal yesterday without sealing tonight — the same transaction minus the seal. */
+  const revealOnly = useCallback(async () => {
+    if (!session) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await session.revealOnly();
+      await refresh();
+    } catch (e) {
+      setError(message(e));
+    } finally {
+      setBusy(false);
+    }
+  }, [session, refresh]);
+
   const seal = useCallback(async () => {
     if (!session) return;
     setBusy(true);
@@ -235,7 +250,7 @@ export function useDay(config: LiveConfig | null) {
   return {
     day: dayWithOthers, record, settings, memoryLog, busy, error, reminders,
     introSeen, dismissIntro,
-    connect, save, seal, refresh, loadRecord, loadSettings, backup, remember,
+    connect, save, seal, revealOnly, refresh, loadRecord, loadSettings, backup, remember,
   };
 }
 

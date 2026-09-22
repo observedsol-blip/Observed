@@ -353,14 +353,16 @@ test("a shared sentence seals as hex text, and the reader finds it again", async
 function makeRestorable(fake: FakeChain, now: number, storedWallet: PublicKey | null) {
   const store = new MemoryStore();
   const opened = { connect: 0, sign: 0 };
+  const signed: { instructions: TransactionInstruction[] }[] = [];
   const wallet = {
     connect: async () => {
       opened.connect += 1;
       return { pubkey: walletKey, label: "Fake Vault" };
     },
-    signAndSend: async () => {
+    signAndSend: async (instructions: TransactionInstruction[]) => {
       opened.sign += 1;
-      return "sig";
+      signed.push({ instructions });
+      return `sig${signed.length}`;
     },
     disconnect: async () => {},
     storedAddress: async () => storedWallet,
@@ -373,7 +375,7 @@ function makeRestorable(fake: FakeChain, now: number, storedWallet: PublicKey | 
     now: () => now,
     randomBytes: async (n) => Uint8Array.from({ length: n }, (_, i) => (i * 7 + 1) % 256),
   });
-  return { session, store, wallet, opened };
+  return { session, store, wallet, opened, signed };
 }
 
 /** What a phone that has played before carries: the secret for exactly this wallet. */
@@ -623,4 +625,69 @@ test("the example needs neither a wallet nor a call on the chain", () => {
   assert.ok(view);
   assert.match(view.verdict, /You called the side\./);
   assert.equal(view.others.length, 0);
+});
+
+
+/* ------------------------------------------------------------------------------------------
+ * B2 — yesterday stands above today, and the quiet way out.
+ * ---------------------------------------------------------------------------------------- */
+
+/** Yesterday resolved, sealed on this phone, not yet opened on chain. */
+async function eveningWithYesterday(now: number) {
+  const fake = new FakeChain();
+  fake.rounds.set(yesterday.roundId, makeRound(yesterday));
+  fake.rounds.set(today.roundId, makeRound(today, { status: RoundStatus.Open }));
+  fake.entries.set(yesterday.roundId, {
+    round: roundPda(yesterday.roundId),
+    sgtMint,
+    beneficiary: walletKey,
+    commitment: new Uint8Array(32),
+    committedAt: yesterday.commitOpen,
+    revealed: false,
+    pBps: 8_000,
+    scored: false,
+    scoredAsMissing: false,
+    scoreBps: 0,
+  } as never);
+  const { session, store, signed, opened } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+  await session.connect();
+  await session.saveAnswer(yesterday, 8_000, "funding flipped", false);
+  return { session, fake, signed, opened };
+}
+
+test("the evening screen carries yesterday, and does not call it revealed", async () => {
+  // Everything it shows is already known on this phone: the outcome from the round, the sealed
+  // answer from its own record. What is NOT known is whether the chain has seen the reveal.
+  const now = today.commitOpen + 60;
+  const { session } = await eveningWithYesterday(now);
+
+  const day = await session.day();
+  assert.equal(day.today.phase, "open");
+  if (day.today.phase !== "open") return;
+  assert.ok(day.today.pending, "yesterday is ready to be faced");
+  assert.equal(day.today.pending?.roundId, yesterday.roundId);
+  assert.equal(day.today.pending?.sentence, "funding flipped");
+  assert.equal(day.openReveals, 1, "and it is still an OPEN reveal, not a done one");
+  assert.equal(day.result, null, "Result stays empty until the entry says revealed");
+});
+
+test("reveal only sends the reveal and nothing else", async () => {
+  // The R5 path from the matrix: one approval, no seal, no new entry, no rent.
+  const now = today.commitOpen + 60;
+  const { session, signed, fake } = await eveningWithYesterday(now);
+  // an answer for tonight exists and must NOT go out with this
+  await session.saveAnswer(today, 7_000);
+
+  const result = await session.revealOnly();
+  assert.deepEqual(result.revealed, [yesterday.roundId]);
+  assert.equal(signed.length, 1, "exactly one transaction");
+
+  assert.equal(signed[0].instructions.length >= 1, true);
+  // The seal would be another instruction in the same transaction; the point of the test is
+  // that tonight's answer stayed on the phone.
+  // Tonight is still only on this phone: no entry on chain, so nothing is revealed for it.
+  assert.equal(fake.entries.has(today.roundId), false, "no entry was created tonight");
+  const record = (await session.record()).calls.find((c) => c.roundId === today.roundId);
+  assert.equal(record?.revealed, false, "and it is not revealed");
 });

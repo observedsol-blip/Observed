@@ -226,7 +226,9 @@ dem Kalender (`lastDepositBack`).
 Übersprungen wird die Erinnerungsfrage mit einem Tipp auf das bereits freigegebene `Not now`.
 Ein eigenes Wort dafür ist **nicht** erfunden worden.
 
-Noch nicht in Gebrauch, kommt mit Block B: `Reveal only`, `Example`.
+`Reveal only` und `Example` sind seit Block B in Gebrauch (22.09.2026): `Reveal only` als
+leiser Nebenweg unter dem Siegel-Knopf, `Example` als Banner über dem Beispiel beim ersten
+Start. Dazu `Check this call yourself →`, das erst nach dem Aufdecken auf der Kette erscheint.
 
 ## Gestrichen
 

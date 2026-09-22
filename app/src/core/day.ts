@@ -34,6 +34,12 @@ export type TodayView =
       sealedAt?: number;
       blocked?: { kind: "no-sgt"; text: string } | { kind: "no-sol"; title: string; body: string };
       openReveals: number;
+      /**
+       * Yesterday's call, ready to be faced — built from this phone's own record and the round
+       * on chain. It is NOT revealed yet: that happens in tonight's transaction. Nothing that
+       * reads it may call it revealed (owner, 22.09.2026).
+       */
+      pending: ResultView | null;
       /** What the deposit is, shown before the wallet sheet opens. */
       deposit: string;
       /** Only before the very first seal: the amount that does not come back. Null otherwise. */
@@ -69,6 +75,8 @@ export function todayView(args: {
    * for it, and only the very first seal is told about it.
    */
   hasPlayerAccount?: boolean;
+  /** Built by the session, where the rounds and the seal records are both in hand. */
+  pending?: ResultView | null;
 }): TodayView {
   const round = args.calendar.find((r) => args.now >= r.commitOpen && args.now < r.commitClose);
   if (!round) {
@@ -99,6 +107,7 @@ export function todayView(args: {
     pBps,
     confidence: pBps === null ? null : copy.confidence(pBps),
     sentenceHeading: copy.sentence.headingFor(pBps ?? 5_000),
+    pending: args.pending ?? null,
     deposit: copy.deposit.line(solText(ENTRY_RENT_LAMPORTS), shortDay(backBy)),
     firstCall:
       args.hasPlayerAccount === false ? copy.deposit.firstCall(solText(PLAYER_RENT_LAMPORTS)) : null,

@@ -6,10 +6,11 @@
 // has decided BOTH halves — the side and how sure. A 50/50 nobody chose is not an answer, and
 // until 22.09.2026 a tap on `Up` alone was enough to arm the button (`core/answer.ts`).
 import React, { useState } from "react";
-import { Text, View } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import Screen from "../components/Screen";
 import Hairline from "../components/Hairline";
 import PrimaryButton from "../components/PrimaryButton";
+import RevealSequence from "../components/RevealSequence";
 import SentenceField from "../components/SentenceField";
 import SideConfidence from "../components/SideConfidence";
 import { type Side, canSeal, fromPBps, toPBps } from "../core/answer.ts";
@@ -29,6 +30,8 @@ export type TodayActions = {
   onSave: (pBps: number, sentence?: string, share?: boolean) => Promise<void> | void;
   /** The one approval of the day: reveal everything open, seal today. */
   onSeal: () => Promise<void> | void;
+  /** The quiet side path: open yesterday without sealing tonight. */
+  onRevealOnly?: () => Promise<void> | void;
   onConnect?: () => Promise<void> | void;
 };
 
@@ -105,6 +108,15 @@ export default function Today({
   return (
     <Screen>
       <Kicker>{`CALL ${view.roundId}`}</Kicker>
+
+      {/* Yesterday first: it is the thing that is finished, and it is why tonight matters.
+          It is NOT on chain yet — tonight's approval is what puts it there. */}
+      {view.pending ? (
+        <>
+          <RevealSequence view={view.pending} onChain={false} />
+          <Hairline />
+        </>
+      ) : null}
       <Block top={space.md}>
         <Question>{view.question}</Question>
         {view.context ? <MonoMeta style={{ marginTop: space.sm }}>{view.context}</MonoMeta> : null}
@@ -155,6 +167,16 @@ export default function Today({
                 {copy.revealsRideAlong}
               </Label>
             </Block>
+          ) : null}
+          {/* The quiet side path, under the button that does both (03 §11.0c). */}
+          {view.openReveals > 0 && actions.onRevealOnly ? (
+            <Pressable
+              accessibilityRole="button"
+              disabled={busy}
+              onPress={() => actions.onRevealOnly?.()}
+            >
+              <Label style={{ marginTop: space.md, color: color.meta }}>{copy.revealOnly}</Label>
+            </Pressable>
           ) : null}
           {/* What it costs, before the wallet sheet — never after (03 §2). */}
           <Block top={0}>

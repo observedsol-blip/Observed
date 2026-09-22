@@ -260,6 +260,26 @@ Memory log
 Ein Knopf: `Copy`, legt denselben Text in die Zwischenablage. **Kein Netzwerk, keine
 Wallet-Adresse, keine Sätze** — weder auf dem Schirm noch im Export.
 
+### 11.0c Gestern steht über heute (Owner, 22.09.2026)
+
+Im offenen Fenster zeigt Today **zuerst** das Aufdecken von gestern, in derselben zweistufigen
+Sequenz wie Result — Satz allein, `Face it`, Ausgang — und **danach** die heutige Frage.
+
+Alles darin ist auf diesem Telefon schon bekannt: der Ausgang aus der Runde, die versiegelte
+Antwort aus dem eigenen Datensatz. Was **nicht** bekannt ist: ob die Kette das Aufdecken
+gesehen hat. Deshalb gilt:
+
+- **Nichts heißt „revealed", bevor es on-chain ist.** Der Eintrag bleibt in „open calls".
+- `Check this call yourself →` erscheint **erst nach** dem Aufdecken auf der Kette — vorher gibt
+  es für einen Fremden nichts nachzusehen.
+- Die Erinnerungsfrage wartet ebenfalls auf die Kette: sie hängt an einem Eintrag, und den gibt
+  es vorher nicht.
+
+**Der Normalfall bleibt eine Freigabe für beides** — `Yesterday's call opens in the same
+approval.`, und genau das tut der große Knopf. Darunter steht leise `Reveal only` für den Abend,
+an dem jemand nachsehen, aber nicht spielen will (das ist der Weg, den Matrixzeile R5 misst:
+eine Freigabe, kein neuer Eintrag, keine Kaution).
+
 ### 11.1 Eingabe (E11)
 Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihenfolge.
 

@@ -221,6 +221,7 @@ export class Session {
         // Rent is only owed for an entry that does not exist yet.
         entryExists: sealable ? entries.has(sealable.roundId) : false,
         hasPlayerAccount: player !== null,
+        pending: this.pendingReveal(revealables, rounds),
       }),
       result: await this.latestResult(rounds, entries, records),
       openReveals: revealables.length,
@@ -228,6 +229,67 @@ export class Session {
       sgtMint: this.sgtMint,
       blocked: null,
     };
+  }
+
+  /**
+   * Yesterday's call as the evening screen shows it, BEFORE it is on chain.
+   *
+   * Everything in it is already known: the outcome from the round, the sealed answer from this
+   * phone's own record. What is not known is whether the chain has seen the reveal — it has
+   * not, until tonight's transaction lands. So the entry handed to `resultView` is synthetic
+   * and the screen that draws it is told `onChain={false}`.
+   */
+  private pendingReveal(
+    revealables: { round: CalendarRound; record: SealRecord }[],
+    rounds: Map<number, Round>,
+  ): ResultView | null {
+    const next = revealables[0];
+    if (!next) return null;
+    const round = rounds.get(next.round.roundId);
+    if (!round) return null;
+    return resultView({
+      round,
+      calendar: next.round,
+      // Only `pBps` is read out of it, and that number is this phone's own.
+      entry: { pBps: next.record.pBps } as Entry,
+      record: next.record,
+      streak: 0,
+    });
+  }
+
+  /**
+   * Reveal without sealing (R5 on the matrix). The normal evening is one approval for both;
+   * this is the quiet way out for somebody who wants to look and not play tonight.
+   */
+  async revealOnly(): Promise<{ signature: string; revealed: number[] }> {
+    const now = this.deps.now();
+    const records = await this.sealing!.all();
+    const ids = this.deps.calendar
+      .filter((r) => now >= r.commitOpen - 60 && now < r.outcomeTime + REVEAL_WINDOW_SECS)
+      .map((r) => r.roundId);
+    const [rounds, entries] = await Promise.all([
+      this.deps.chain.rounds(ids),
+      this.deps.chain.entries(ids, this.sgtMint!),
+    ]);
+    const revealables = revealableNow({
+      now,
+      calendar: this.deps.calendar,
+      records,
+      roundState: (id) => rounds.get(id) ?? null,
+      entryState: (id) => entries.get(id) ?? null,
+    });
+    if (revealables.length === 0) throw new Error("nothing to reveal");
+    const built = await this.buildEvening({
+      reveals: revealables.map((r) => ({
+        roundId: r.round.roundId,
+        pBps: r.record.pBps,
+        salt: hexToBytes(r.record.salt),
+      })),
+      shareSentences: revealables.filter((r) => r.record.share && r.record.sentence),
+    });
+    const signature = await this.deps.wallet.signAndSend(built.instructions, this.walletKey!);
+    await this.deps.chain.confirm(signature).catch(() => false);
+    return { signature, revealed: revealables.map((r) => r.round.roundId) };
   }
 
   /**
