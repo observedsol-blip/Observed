@@ -655,6 +655,45 @@ getrennt, und **jede** Berührung des Reglers zählt. Diese eine Änderung ist d
 nicht durch einen Test: Sie sitzt in der Verdrahtung zweier Komponenten, und eine
 Oberflächen-Testbibliothek gibt es auf Wunsch des Owners nicht.
 
+## Auftrag: E2E-Matrix (Owner, 22.09.2026) — **nach dem Mittwoch, vor dem Build am 26.09.**
+
+**Der Anlass ist größer als der Fehler.** Das Siegel-Memo ging als rohe Hash-Bytes raus und hätte
+jedem, der einen Satz teilt, die **ganze Tagestransaktion** zerstört — nach der Freigabe. Gefunden
+hat es kein Test, sondern der erste Ende-zu-Ende-Lauf, der ein geteiltes Memo wirklich abgeschickt
+hat. Die Klasse des Fehlers: **Tests bauen Transaktionen, die nie durch die echten Programme
+laufen.** Genau diese Lücke schließt die Matrix.
+
+**Jede Zeile wird wirklich gesendet und bestätigt**, danach von der App **und** von
+`verify-round.mjs` zurückgelesen — gegen einen lokalen Validator mit dem echten Memo-Programm.
+
+| Achse | Werte |
+|---|---|
+| Transaktionsform | erstes Siegel (nur Commit) · Abend (Reveal + Commit) · nur Reveal · Commit nach einem ausgelassenen Tag |
+| Seite | Up · Down · **absichtliche 50** |
+| Satz | keiner · privat · geteilt |
+| Wertung | `score_entry` in derselben Transaktion, wenn die Runde aufgelöst ist |
+| Wiederherstellung | Backup-Code einspielen, danach aufdecken |
+
+Je Zeile festzuhalten: **Signatur · bestätigt ja/nein · Compute Units · Bytes · Freigaben = 1 ·
+`verify-round` PASS**. Jeder Fehlschlag: beheben, **einen Test ergänzen, der durch das Programm
+sendet**, Matrix erneut fahren. Das Skript kommt ins Repo, damit es nach jeder Änderung am
+Transaktionsbau wieder läuft.
+
+Grundlage ist vorhanden: `spikes/e2e/prepare-app.mjs`, `drive-app.mjs` und `drive-session.mjs`
+fahren Validator, Kalender, Lesungen und den Abend über dieselbe `Session`, die auch die Knöpfe
+aufrufen.
+
+**Eine Frage ist schon beantwortet:** Der lokale Validator hat das **echte Memo-Programm**. Beleg
+ist der Lauf vom 22.09. — vorher starb die Transaktion an den rohen Hash-Bytes, nachher meldet der
+Prüfer `1 of 1 shared sentences match their seal memo`. Das Memo wurde also wirklich ausgeführt und
+gelesen, nicht simuliert.
+
+**Was die Matrix nicht abdecken kann:** die Wallet-Oberfläche. „Freigaben = 1" ist dort die **Zahl
+der Transaktionen**, nicht die Zahl der Blätter, die Seed Vault zeigt — das bleibt die Messung am
+Gerät vom 21.09. Ebenso die absichtliche 50: Sie steht als **erster Punkt** auf der
+Tester-Checkliste, weil sie in der Verdrahtung zweier Komponenten sitzt und ohne
+Oberflächen-Testbibliothek nicht automatisch prüfbar ist.
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|

@@ -106,10 +106,14 @@ including this one.**
 Short and honest is better than detailed. After your first evening, and then whenever something
 is odd:
 
-1. **How many approval sheets did the wallet show?** One or two?
-2. **Did you understand what you were being asked?** Where did you hesitate?
-3. **What did you do the next evening — did you open the app on your own, or did you forget?**
-4. **Anything that felt wrong, slow, or dishonest.**
+1. **The deliberate 50 — please check this one first.** Pick a side, then tap the scale once on 50
+   and leave it there. Does "Seal today" become active? It has to: a 50 you chose on purpose is a
+   real answer, and only an untouched scale is not. If the button stays grey, stop and tell me.
+   This is the one item on the list I could not test without a phone.
+2. **How many approval sheets did the wallet show?** One or two?
+3. **Did you understand what you were being asked?** Where did you hesitate?
+4. **What did you do the next evening — did you open the app on your own, or did you forget?**
+5. **Anything that felt wrong, slow, or dishonest.**
 
 And on day four or five, one question that matters more than the rest: **do you still remember
 what you wrote on day one — before you look?**
