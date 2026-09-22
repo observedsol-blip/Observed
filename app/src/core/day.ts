@@ -6,7 +6,7 @@
 import { RoundStatus } from "../chain/ids.ts";
 import type { CalendarRound } from "../chain/calendar.ts";
 import type { Entry, Round } from "../chain/layout.ts";
-import { copy } from "../copy.ts";
+import { type Sides, copy } from "../copy.ts";
 import type { SealRecord } from "./records.ts";
 import {
   ENTRY_RENT_LAMPORTS,
@@ -31,6 +31,8 @@ export type TodayView =
       pBps: number | null;
       confidence: string | null;
       sentenceHeading: string;
+      /** The two side words this question uses — the buttons take them from here. */
+      sides: Sides;
       sealedAt?: number;
       blocked?: { kind: "no-sgt"; text: string } | { kind: "no-sol"; title: string; body: string };
       openReveals: number;
@@ -46,6 +48,16 @@ export type TodayView =
       firstCall: string | null;
     }
   | { phase: "sealed"; roundId: number; question: string; sealedAt: number; openReveals: number };
+
+/**
+ * The side words of one call. The feeds are the sides only for the two-feed kind; for every
+ * other kind `feed` is one asset and the pair comes from the kind alone.
+ */
+export const sidesOf = (round: CalendarRound): Sides =>
+  copy.sides(round.kind, {
+    a: round.feed.split("/")[0],
+    b: (round.feedB ?? "").split("/")[0],
+  });
 
 const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
 
@@ -94,6 +106,7 @@ export function todayView(args: {
     };
   }
   const pBps = args.draftPBps ?? args.record?.pBps ?? null;
+  const sides = sidesOf(round);
   const backBy = lastDepositBack(args.calendar, REVEAL_WINDOW_SECS);
   const funding = checkFunding({
     balanceLamports: args.balanceLamports,
@@ -105,8 +118,9 @@ export function todayView(args: {
     question: round.question,
     context: round.context,
     pBps,
-    confidence: pBps === null ? null : copy.confidence(pBps),
-    sentenceHeading: copy.sentence.headingFor(pBps ?? 5_000),
+    confidence: pBps === null ? null : copy.confidence(pBps, sides),
+    sentenceHeading: copy.sentence.headingFor(pBps ?? 5_000, sides),
+    sides,
     pending: args.pending ?? null,
     deposit: copy.deposit.line(solText(ENTRY_RENT_LAMPORTS), shortDay(backBy)),
     firstCall:
@@ -186,7 +200,7 @@ export function resultView(args: {
     question: args.calendar.question,
     context: args.calendar.context,
     sentence: args.record?.sentence ?? null,
-    sealedAnswer: copy.sealedAnswer(args.entry.pBps),
+    sealedAnswer: copy.sealedAnswer(args.entry.pBps, sidesOf(args.calendar)),
     verdict,
     verdictDetail: kind === "too-close" ? copy.verdict.tooCloseDetail(feed, moved) : null,
     // "Too close to call." wins; "You didn't pick a side." moves underneath it.
@@ -202,7 +216,7 @@ export function resultView(args: {
       args.entry.pBps >= 5_000 ? args.entry.pBps / 100 : (10_000 - args.entry.pBps) / 100,
     remembered: args.remembered ?? null,
     memoryAsked: args.memoryAsked === true,
-    sealedSide: copy.sealedSideOnly(args.entry.pBps),
+    sealedSide: copy.sealedSideOnly(args.entry.pBps, sidesOf(args.calendar)),
     others: args.others ?? [],
   };
 }

@@ -15,6 +15,8 @@ export type CalendarRound = {
   sourceKind: number;
   feedId: string;
   priceAccount: string;
+  /** Only a two-feed question has a second feed; every other kind leaves it out. */
+  feedB?: string | null;
   offsetBps: number;
   maxConfBps: number;
   bandBps: number;

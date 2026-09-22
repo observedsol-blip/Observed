@@ -280,6 +280,38 @@ approval.`, und genau das tut der große Knopf. Darunter steht leise `Reveal onl
 an dem jemand nachsehen, aber nicht spielen will (das ist der Weg, den Matrixzeile R5 misst:
 eine Freigabe, kein neuer Eintrag, keine Kaution).
 
+### 11.0d Erster Start (Figma 11, freigegeben 22.09.2026)
+
+Drei Rahmen auf Seite 11 (`131:2`). Gebaut ist der erste; die anderen beiden stehen hier, weil
+sie freigegeben sind — sie ersetzen noch nichts.
+
+| Rahmen | Texte |
+|---|---|
+| `131:8` Intro | `Observed` · `One call a day. Seal it tonight, see it tomorrow.` · Knopf `Continue` |
+| `131:20` Fenster zu | `Observed` · `Next call opens 16:00 UTC · {local} where you are.` |
+| `131:24` Erinnerung | `Observed` · `A reminder when the call opens — 18:00 where you are.` · `Not now` |
+
+Ablauf beim allerersten Start: Intro → `Continue` → **ein** durchgespieltes Beispiel (Result
+mit Banner `Example`) → normaler Betrieb, für immer. Kein Kettenaufruf, keine Wallet in beiden
+Schritten.
+
+### 11.0e Die Seitenwörter (freigegeben 22.09.2026)
+
+Die zwei Antworten heißen nicht in jeder Frage gleich:
+
+| Fragetyp | Seite A | Seite B |
+|---|---|---|
+| Richtung (`kind = 0`) | `Up` | `Down` |
+| Bewegung (`kind = 1`) | `Moves` | `Stays` |
+| Zwei Feeds (`kind = 2`) | der erste Feed, z. B. `SOL` | der zweite, z. B. `ETH` |
+
+Eine Bewegungsfrage hat kein Oben und kein Unten — die zwei Antworten sind „sie bewegt sich so
+weit" und „sie tut es nicht". Sie `Up`/`Down` zu nennen benennt das Falsche.
+
+**Das Paar wird einmal je Runde aufgelöst und dann durchgereicht** (`core/day.ts`, `sidesOf`):
+Knöpfe, Reglerworte, Satzüberschrift, versiegelte Antwort und die Zeile im Record nehmen
+dasselbe Paar. Eine Runde kann damit nicht Knöpfe mit „Moves" und eine Antwort mit „Up" haben.
+
 ### 11.1 Eingabe (E11)
 Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihenfolge.
 

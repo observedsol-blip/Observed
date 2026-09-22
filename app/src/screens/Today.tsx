@@ -17,6 +17,7 @@ import { type Side, canSeal, fromPBps, toPBps } from "../core/answer.ts";
 import { Block, Body, Kicker, Label, Mono, MonoMeta, Question } from "../components/Type";
 import type { TodayView } from "../core/day.ts";
 import { copy } from "../copy.ts";
+import { COST_LINE } from "../core/settings.ts";
 import { color, space, type } from "../tokens";
 
 export type ReminderOffer = {
@@ -128,6 +129,7 @@ export default function Today({
           confidence={confidence}
           confidenceTouched={confidenceTouched}
           onSide={setSide}
+          sides={view.sides}
           onConfidence={(next) => {
             // Any touch counts, including one that lands on 50 again: the scale starts there,
             // and a deliberate 50 must be reachable without moving away and back.
@@ -207,10 +209,8 @@ export default function Today({
       ) : null}
 
       <Block top={space.xl}>
-        <MonoMeta>
-          No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the call
-          closes.
-        </MonoMeta>
+        {/* The same sentence as Settings, from the same constant (03 §2, Spec §11). */}
+        <MonoMeta>{COST_LINE}</MonoMeta>
       </Block>
     </Screen>
   );

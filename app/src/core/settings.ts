@@ -8,6 +8,7 @@
 import type { PublicKey } from "@solana/web3.js";
 import type { Config } from "../chain/layout.ts";
 import { copy } from "../copy.ts";
+import { ENTRY_RENT_LAMPORTS, SIGNATURE_FEE_LAMPORTS, solText } from "./funding.ts";
 
 export type SettingsView = {
   wallet: string | null;
@@ -26,10 +27,15 @@ const GENESIS_VERIFIED = "Genesis · verified";
 
 /**
  * The cost line, word for word the one on Today (03 §2 and Spec §11) — one sentence, two places,
- * one constant.
+ * one constant, and both numbers derived from what they actually are.
+ *
+ * Until 22.09.2026 this said "≈ 0.0001 SOL per day": twenty times the measured fee. An app that
+ * overstates what it costs by a factor of twenty is not being careful, it is being wrong.
  */
-export const COST_LINE =
-  "No app fees. Network ≈ 0.0001 SOL per day · ≈ 0.002 SOL deposit, refunded when the call closes.";
+export const COST_LINE = copy.costLine(
+  solText(SIGNATURE_FEE_LAMPORTS, 6),
+  solText(ENTRY_RENT_LAMPORTS),
+);
 
 export function settingsView(args: {
   wallet: PublicKey | null;

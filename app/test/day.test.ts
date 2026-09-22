@@ -5,11 +5,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { PublicKey } from "@solana/web3.js";
 import { copy } from "../src/copy.ts";
-import { resultView, sideRecord, streakOf, todayView } from "../src/core/day.ts";
+import { sidesOf, resultView, sideRecord, streakOf, todayView } from "../src/core/day.ts";
 import { type Calendar, hexToBytes } from "../src/chain/calendar.ts";
 import type { Entry, Round } from "../src/chain/layout.ts";
 import type { SealRecord } from "../src/core/records.ts";
-import { ENTRY_RENT_LAMPORTS, PLAYER_RENT_LAMPORTS, lastDepositBack, solText } from "../src/core/funding.ts";
+import { ENTRY_RENT_LAMPORTS, PLAYER_RENT_LAMPORTS, SIGNATURE_FEE_LAMPORTS, lastDepositBack, solText } from "../src/core/funding.ts";
+import { COST_LINE } from "../src/core/settings.ts";
+import { shortAnswer } from "../src/core/record.ts";
 import { RoundStatus } from "../src/chain/ids.ts";
 
 const cal: Calendar = JSON.parse(
@@ -349,4 +351,45 @@ test("only the very first call is told about the account that stays", () => {
     hasPlayerAccount: true,
   });
   assert.equal(later.phase === "open" ? later.firstCall : "x", null, "said once, not every evening");
+});
+
+test("the cost line says what an evening really costs", () => {
+  // Twenty times too high until 22.09.2026: the evening is ONE signature at 5 000 lamports,
+  // and the app sets no priority price. Both numbers come from the constants, so the sentence
+  // cannot go stale on its own.
+  assert.equal(solText(SIGNATURE_FEE_LAMPORTS), "0.0000");
+  assert.match(COST_LINE, /Network ≈ 0\.000005 SOL per day/);
+  assert.match(COST_LINE, /≈ 0\.0022 SOL deposit/);
+});
+
+test("the side words follow the question kind", () => {
+  // A movement question has no Up and no Down: the two answers are "it moves that far" and
+  // "it does not". Calling them Up and Down would name the wrong thing (owner, 22.09.2026).
+  assert.deepEqual(copy.sides(0), { up: "Up", down: "Down" });
+  assert.deepEqual(copy.sides(1), { up: "Moves", down: "Stays" });
+  assert.deepEqual(copy.sides(2, { a: "SOL", b: "ETH" }), { up: "SOL", down: "ETH" });
+  // A two-feed kind without feeds cannot invent them and falls back to the direction pair.
+  assert.deepEqual(copy.sides(2), { up: "Up", down: "Down" });
+});
+
+test("every sentence that names a side uses the same pair", () => {
+  // The whole point of threading the pair through the views: the buttons and the sealed answer
+  // cannot end up saying different things about one call.
+  const moves = copy.sides(1);
+  assert.equal(copy.confidence(8_000, moves), "Fairly sure: Moves");
+  assert.equal(copy.confidence(2_000, moves), "Fairly sure: Stays");
+  assert.equal(copy.sealedAnswer(8_000, moves), "You sealed: Moves, 80% sure.");
+  assert.equal(copy.sealedSideOnly(2_000, moves), "You sealed: Stays.");
+  assert.equal(copy.sentence.headingFor(8_000, moves), "What tipped you toward Moves?");
+  assert.equal(shortAnswer(8_000, moves), "Moves, 80%");
+});
+
+test("an event day in the real calendar gets the movement words", () => {
+  // Round 7 of season 1 is the jobs-report day: kind 1, threshold 1.7 %.
+  const event = cal.rounds.find((r) => r.kind === 1);
+  assert.ok(event);
+  assert.deepEqual(sidesOf(event), { up: "Moves", down: "Stays" });
+  const direction = cal.rounds.find((r) => r.kind === 0);
+  assert.ok(direction);
+  assert.deepEqual(sidesOf(direction), { up: "Up", down: "Down" });
 });

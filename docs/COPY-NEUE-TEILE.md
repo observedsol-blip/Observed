@@ -251,6 +251,26 @@ und `+xh`. `sealed` und `remembered` stammen wörtlich aus der freigegebenen Zei
 `You sealed {n}%. You remembered {m}%.`, `skipped` aus der Owner-Anweisung vom 22.09. Erfunden
 ist keines davon.
 
+## K. Erster Start und die Seitenwörter (freigegeben 22.09.2026)
+
+| Ort | Text |
+|---|---|
+| Erster Start, Intro (Figma `131:8`) | `Observed` · `One call a day. Seal it tonight, see it tomorrow.` |
+| dessen Knopf (`131:11`) | `Continue` |
+| Erster Start, Fenster zu (`131:20`) | `Next call opens 16:00 UTC · {local} where you are.` |
+| Erster Start, Erinnerung (`131:24`) | `A reminder when the call opens — 18:00 where you are.` |
+| Seiten, Bewegungsfrage | `Moves` / `Stays` |
+| Seiten, Zwei-Feed-Frage | die beiden Feeds, z. B. `SOL` / `ETH` |
+
+`Continue` stammt nicht aus der Owner-Nachricht, sondern aus der Figma-Datei selbst (`131:11`) —
+zur Bestätigung vorgelegt, nicht erfunden.
+
+Die Kostenzeile ist am 22.09.2026 korrigiert worden: `No app fees. Network ≈ 0.000005 SOL per
+day · ≈ 0.0022 SOL deposit, refunded when the call closes.` Beide Zahlen kommen aus den
+Konstanten. Der alte Wortlaut nannte die Gebühr zwanzigfach zu hoch; `00-SPEC.md` trägt ihn
+noch, der Änderungsvorschlag liegt in `docs/spec-patch-cost.md`.
+
 ## GAP — offen, nicht erfunden
 
-Zurzeit keines.
+Zurzeit keines. Die Seitenwörter für Bewegungs- und Zwei-Feed-Fragen sind seit dem 22.09.
+freigegeben und eingetragen.

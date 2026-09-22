@@ -14,12 +14,25 @@ export const ENTRY_RENT_LAMPORTS = (184 + 128) * 6_960;
  * amount a player really spends, so it is said out loud instead of hidden in a fee estimate.
  */
 export const PLAYER_RENT_LAMPORTS = (65 + 128) * 6_960;
+/**
+ * What one evening actually costs in fees: one signature at 5 000 lamports. The whole evening —
+ * reveals, the seal and the memos — is a single transaction with a single signature (matrix row
+ * R4), and the app sets no priority price, so the fee does not depend on the compute units it
+ * asks for.
+ */
+export const SIGNATURE_FEE_LAMPORTS = 5_000;
 /** Base fee plus room for a priority fee on a busy evening. */
 export const FEE_HEADROOM_LAMPORTS = 300_000;
 
-/** `0.0022` — two significant digits, the way the deposit lines write an amount. */
-export const solText = (lamports: number) =>
-  (Math.round((lamports / LAMPORTS_PER_SOL) * 10_000) / 10_000).toFixed(4);
+/**
+ * `0.0022` — the way the deposit lines write an amount. Four decimals by default, because that
+ * is what the approved lines show; the fee needs six, since four would round 0.000005 down to
+ * `0.0000` and the sentence would tell the player the evening is free.
+ */
+export const solText = (lamports: number, digits = 4) => {
+  const factor = 10 ** digits;
+  return (Math.round((lamports / LAMPORTS_PER_SOL) * factor) / factor).toFixed(digits);
+};
 
 /**
  * "30 Dec" — the day the LAST entry of the season can be closed, which is the honest answer to

@@ -7,7 +7,7 @@ import React from "react";
 import { Pressable, Text, View } from "react-native";
 import Scale from "./Scale";
 import { Label } from "./Type";
-import { copy } from "../copy.ts";
+import { type Sides, copy } from "../copy.ts";
 import { type Side, clampToStep, toPBps } from "../core/answer.ts";
 import { color, space, type } from "../tokens";
 
@@ -18,12 +18,15 @@ export default function SideConfidence({
   /** False until the player has touched the scale — the label and the seal button depend on it. */
   confidenceTouched = false,
   onSide,
+  sides,
   onConfidence,
 }: {
   side: Side;
   confidence: number;
   confidenceTouched?: boolean;
   onSide: (side: Side) => void;
+  /** The two words this question uses, from the view. */
+  sides: Sides;
   /**
    * Fires on **every** touch of the scale, even one that lands on the value it already had.
    * That is the point: setting the scale to 50 on purpose has to be possible, and the scale
@@ -39,8 +42,8 @@ export default function SideConfidence({
   return (
     <View>
       <View style={{ flexDirection: "row", gap: space.sm }}>
-        <SideButton label={copy.side.up} active={side === "up"} onPress={() => onSide("up")} />
-        <SideButton label={copy.side.down} active={side === "down"} onPress={() => onSide("down")} />
+        <SideButton label={sides.up} active={side === "up"} onPress={() => onSide("up")} />
+        <SideButton label={sides.down} active={side === "down"} onPress={() => onSide("down")} />
       </View>
 
       {/* The scale only means something once a side is chosen; until then it is a 50/50. */}

@@ -2,14 +2,34 @@
 // (owner-approved, 21.09.2026). One place, so the screens cannot drift from the document.
 //
 // Word rule (owner, 21.09.2026): user-facing it is a "call", never a "round".
+/** The two answers a question offers, in its own words. */
+export type Sides = { up: string; down: string };
+
 export const copy = {
+  /**
+   * The two sides, by question kind (approved 22.09.2026).
+   *
+   * A direction question has an Up and a Down. A movement question does not — there the two
+   * answers are "it moves that far" and "it does not", and calling them Up and Down would name
+   * the wrong thing. A two-feed question's sides are the two feeds themselves.
+   *
+   * Everything that writes a side word takes this pair, so a round cannot end up with the
+   * buttons saying one thing and the sealed answer another.
+   */
+  sides(kind: number, feeds?: { a: string; b: string }): Sides {
+    if (kind === 1) return { up: "Moves", down: "Stays" };
+    if (kind === 2 && feeds) return { up: feeds.a, down: feeds.b };
+    return { up: "Up", down: "Down" };
+  },
+
+  /** The direction pair, for the places that are only ever about a direction question. */
   side: { up: "Up", down: "Down" },
 
   /** §11.1 — the confidence words, symmetrical. */
-  confidence(pBps: number): string {
+  confidence(pBps: number, sides: Sides = { up: "Up", down: "Down" }): string {
     const up = pBps > 5_000;
     const p = up ? pBps : 10_000 - pBps;
-    const side = up ? "Up" : "Down";
+    const side = up ? sides.up : sides.down;
     if (p === 5_000) return "Could go either way";
     if (p <= 6_500) return `Leaning ${side}`;
     if (p <= 8_500) return `Fairly sure: ${side}`;
@@ -26,6 +46,25 @@ export const copy = {
   pickSideFirst: "Pick a side first.",
   howSure: "How sure?",
   waitingForWallet: "Waiting for your wallet.",
+
+  /**
+   * First start (Figma 11). Three frames, one built: the intro. The other two lines are the
+   * first-start variants of screens that already exist in another wording — they are written
+   * down here because they are approved, not because they replace anything yet.
+   *
+   * `continueButton` is not from the owner's message: it is the label on the Primary button of
+   * frame 131:8 in the file itself (131:11 → "Continue").
+   */
+  firstStart: {
+    wordmark: "Observed",
+    intro: "One call a day. Seal it tonight, see it tomorrow.",
+    continueButton: "Continue",
+    /** 131:20 — first start outside the sealing window. */
+    windowClosed: (localHhMm: string) =>
+      `Next call opens 16:00 UTC · ${localHhMm} where you are.`,
+    /** 131:24 — the reminder offer at first start. */
+    reminder: "A reminder when the call opens — 18:00 where you are.",
+  },
 
   /** The reminder offer (E3), approved 22.09.2026. */
   remindMe: "Remind me each evening",
@@ -75,10 +114,10 @@ export const copy = {
 
   /** §11.2 — the sentence field. */
   sentence: {
-    headingFor: (pBps: number) =>
+    headingFor: (pBps: number, sides: Sides = { up: "Up", down: "Down" }) =>
       pBps === 5_000
         ? "What makes this hard to call?"
-        : `What tipped you toward ${pBps > 5_000 ? "Up" : "Down"}?`,
+        : `What tipped you toward ${pBps > 5_000 ? sides.up : sides.down}?`,
     hint: "One sentence for tomorrow. Optional.",
     share: "Share it after the reveal",
     shareHint: "Private until you reveal. If shared, it's public and permanent on Solana.",
@@ -92,17 +131,17 @@ export const copy = {
    * exactly what the memory question asks about, so it may not be on the screen before it; the
    * side may. A deliberate 50/50 has no side and gets nothing at all.
    */
-  sealedSideOnly(pBps: number): string | null {
+  sealedSideOnly(pBps: number, sides: Sides = { up: "Up", down: "Down" }): string | null {
     if (pBps === 5_000) return null;
-    return `You sealed: ${pBps > 5_000 ? this.side.up : this.side.down}.`;
+    return `You sealed: ${pBps > 5_000 ? sides.up : sides.down}.`;
   },
 
   /** §3 — the sealed answer, read back word for word, with the exact number. */
-  sealedAnswer(pBps: number): string {
+  sealedAnswer(pBps: number, sides: Sides = { up: "Up", down: "Down" }): string {
     if (pBps === 5_000) return "You sealed: 50/50.";
     const up = pBps > 5_000;
     const percent = (up ? pBps : 10_000 - pBps) / 100;
-    return `You sealed: ${up ? "Up" : "Down"}, ${percent}% sure.`;
+    return `You sealed: ${up ? sides.up : sides.down}, ${percent}% sure.`;
   },
 
   /**
@@ -167,6 +206,17 @@ export const copy = {
     firstCall: (sol: string) =>
       `Your first call also opens your record: ${sol} SOL, once, not returned.`,
   },
+
+  /**
+   * The cost line — one sentence, two places, and no number typed by hand (Spec §11).
+   *
+   * The old wording said "≈ 0.0001 SOL per day", which was twenty times the measured fee: the
+   * evening is ONE signature at 5 000 lamports, and the app sets no priority price. Corrected
+   * on 22.09.2026; the Spec itself still carries the old line and needs `.spec-unlock`
+   * (docs/spec-patch-cost.md).
+   */
+  costLine: (feeSol: string, depositSol: string) =>
+    `No app fees. Network ≈ ${feeSol} SOL per day · ≈ ${depositSol} SOL deposit, refunded when the call closes.`,
 
   /** §2 — the states that block sealing. */
   notEnoughSol: {

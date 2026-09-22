@@ -73,6 +73,13 @@ export const MonoMeta = ({ children, style, ...rest }: Props) => (
 );
 
 /** Vertical rhythm helper — no card, no border, no radius. */
+/** The name of the app, once, on the first screen it ever shows (Figma 11, 131:9). */
+export const Wordmark = ({ children, style, ...rest }: Props) => (
+  <Text style={[type.reading, { color: color.ink }, style]} {...rest}>
+    {children}
+  </Text>
+);
+
 export const Block = ({
   children,
   top = space.xl,

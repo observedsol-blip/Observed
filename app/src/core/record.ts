@@ -11,9 +11,9 @@
 import { RoundStatus, Outcome, MAX_P_BPS } from "../chain/ids.ts";
 import type { CalendarRound } from "../chain/calendar.ts";
 import type { Entry, Player, Round } from "../chain/layout.ts";
-import { copy } from "../copy.ts";
+import { type Sides, copy } from "../copy.ts";
 import { brierBps } from "../chain/commitment.ts";
-import { crowdMean, sideRecord, streakOf } from "./day.ts";
+import { sidesOf, crowdMean, sideRecord, streakOf } from "./day.ts";
 import { outcomeFor } from "./revealing.ts";
 import type { SealRecord } from "./records.ts";
 
@@ -156,7 +156,7 @@ function pastCalls(args: {
       roundId: call.roundId,
       date: dayLabel(call.commitClose),
       question: call.question,
-      sealed: sealedPBps === null ? null : shortAnswer(sealedPBps),
+      sealed: sealedPBps === null ? null : shortAnswer(sealedPBps, sidesOf(call)),
       revealed: entry?.revealed === true,
       outcome:
         round?.status === RoundStatus.Resolved
@@ -171,11 +171,11 @@ function pastCalls(args: {
   return out.sort((a, b) => b.roundId - a.roundId);
 }
 
-/** `Up, 80%` — §4's own short form of the sealed answer. */
-export function shortAnswer(pBps: number): string {
+/** `Up, 80%` — §4's own short form of the sealed answer, in this question's own words. */
+export function shortAnswer(pBps: number, sides: Sides = { up: "Up", down: "Down" }): string {
   if (pBps === 5_000) return "50/50";
   const up = pBps > 5_000;
-  return `${up ? "Up" : "Down"}, ${(up ? pBps : 10_000 - pBps) / 100}%`;
+  return `${up ? sides.up : sides.down}, ${(up ? pBps : 10_000 - pBps) / 100}%`;
 }
 
 /** The seven states 03 §4 names. "open" is one of them — never "missing" before the window shuts. */

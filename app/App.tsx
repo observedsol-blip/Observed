@@ -11,6 +11,7 @@ import Record from './src/screens/Record';
 import Settings from './src/screens/Settings';
 import Diagnostics from './src/screens/Diagnostics';
 import SampleBanner from './src/components/SampleBanner';
+import FirstStart from './src/screens/FirstStart';
 import { useObservedFonts } from './src/fonts';
 import { color } from './src/tokens';
 import { mockResult, mockToday, type DesignState, type ResultDesignState } from './src/mockViews';
@@ -51,12 +52,21 @@ export default function App() {
   const live = useDay(LIVE);
 
   /**
-   * The very first start has nothing of its own to show: no seal, no outcome, no record. So it
-   * shows one worked example instead — the same Result screen, drawn from `mockViews`, under a
-   * banner that says what it is. No chain call, no wallet, and it is over the moment the player
-   * goes anywhere else (owner, 22.09.2026).
+   * The very first start, in two steps (Figma 11 and owner, 22.09.2026):
+   *
+   *   1. the intro — a wordmark, one line, `Continue`
+   *   2. one worked example — the same Result screen from `mockViews`, under a banner
+   *
+   * Then normal operation, for good. No chain call and no wallet in either step: on a fresh
+   * install there is nothing to read and nobody to ask.
+   *
+   * The step lives in component state, not in the store: an app that is killed between the two
+   * starts at the intro again, and that is the harmless direction to be wrong in.
    */
-  const showExample = LIVE !== null && live.introSeen === false;
+  const [introStep, setIntroStep] = useState<'intro' | 'example'>('intro');
+  const firstRun = LIVE !== null && live.introSeen === false;
+  const showIntro = firstRun && introStep === 'intro';
+  const showExample = firstRun && introStep === 'example';
   useEffect(() => {
     if (showExample) setArea('Result');
   }, [showExample]);
@@ -98,6 +108,18 @@ export default function App() {
 
   const todayView = LIVE && live.day ? live.day.today : mockToday(todayState);
   const resultView = LIVE ? (live.day?.result ?? null) : mockResult(resultState);
+
+  // The intro is the whole screen: no header, no tabs, nothing to press but `Continue`.
+  if (showIntro) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.ground }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: color.ground }}>
+          <StatusBar barStyle="light-content" backgroundColor={color.ground} />
+          <FirstStart onContinue={() => setIntroStep('example')} />
+        </SafeAreaView>
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: color.ground }}>
