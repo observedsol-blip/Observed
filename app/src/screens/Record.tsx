@@ -1,10 +1,15 @@
-// Record — two numbers and a sentence (03 §4 and §11.5), drawn from what the chain stores.
+// Record — the side record, the streak and the calls (03 §4), drawn from what the chain stores.
 //
-// Until 22.09.2026 this screen read from `app/src/mock.ts`: a cumulative Brier as the hero, the
-// word "rounds", the calibration lock at 21, and a missing reveal counted as 0.250. All four were
-// wrong. What is big now is the side record; the Brier is the season score underneath it, and
-// every number comes out of `recordView` — from the Player account, the rounds, the entries and
-// the seal records on this phone.
+// The Brier is deliberately NOT here (owner, 22.09.2026): not as a season score, not per call,
+// not as the "always 50 %" and crowd baselines that only mean something beside it. The number
+// itself has not changed — the program keeps it, `recordView` still computes it, and
+// scripts/verify-round.mjs still prints it. It is the display that is gone: a three-decimal
+// score under every call turns one question a day into a scoreboard, and that is the opposite
+// of what the record is for.
+//
+// Before 22.09.2026 this screen read from `app/src/mock.ts`: a cumulative Brier as the hero, the
+// word "rounds", the calibration lock at 21, and a missing reveal counted as 0.250. All four
+// were wrong. What is big now is the side record.
 import React from "react";
 import { Text, View } from "react-native";
 import Screen from "../components/Screen";
@@ -34,12 +39,7 @@ function CallRow({ call }: { call: PastCall }) {
           {call.question}
         </Label>
         <FiguresMeta style={{ marginTop: space.xs }}>
-          {[
-            call.sealed ?? "—",
-            call.outcome ?? "—",
-            call.brier ?? "—",
-            call.status,
-          ].join(" · ")}
+          {[call.sealed ?? "—", call.outcome ?? "—", call.status].join(" · ")}
         </FiguresMeta>
       </View>
     </View>
@@ -58,29 +58,12 @@ export default function Record({ view }: { view: RecordView }) {
         <Label>{view.streak}</Label>
       </Block>
 
-      {/* the season score: the program's own number, including what was never revealed */}
-      <Block>
-        <Kicker>{copy.headings.seasonScore}</Kicker>
-        <Text style={{ ...type.numberLarge, color: color.ink, marginTop: space.xs }}>
-          {view.seasonScore ? `${view.seasonScore.value} · ${view.seasonScore.scored} scored` : "—"}
-        </Text>
-        <Body style={{ marginTop: space.sm }}>{copy.record.explain}</Body>
-      </Block>
-
       <Block>
         <Label>Commits · Reveals · Missing</Label>
         <Text style={{ ...type.numberLarge, color: color.ink, marginTop: space.xs }}>
           {`${view.counts.commits} · ${view.counts.reveals} · ${view.counts.missing}`}
         </Text>
         <FiguresMeta style={{ marginTop: space.xs }}>missing counts as a full miss</FiguresMeta>
-      </Block>
-
-      <Block top={space.lg}>
-        <FiguresMeta>
-          {`Always 50%: ${view.baselines.always50}${
-            view.baselines.crowd === null ? "" : ` · Crowd: ${view.baselines.crowd}`
-          }`}
-        </FiguresMeta>
       </Block>
 
       <Hairline />

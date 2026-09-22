@@ -157,7 +157,7 @@ export default function Today({
             </Block>
           ) : null}
           <PrimaryButton
-            label="Seal today"
+            label={copy.button.sealToday}
             disabled={!ready || busy}
             onPress={async () => {
               await actions.onSave(pBps, sentence.trim() || undefined, share);
@@ -216,7 +216,7 @@ function OpenReveals({
     <Block top={space.xl}>
       <Label>{copy.openReveals(view.openReveals)}</Label>
       <View style={{ marginTop: space.md }}>
-        <PrimaryButton label="Reveal" disabled={busy} onPress={() => actions.onSeal()} />
+        <PrimaryButton label={copy.button.reveal} disabled={busy} onPress={() => actions.onSeal()} />
       </View>
       {busy ? <Label style={{ marginTop: space.sm }}>{copy.waitingForWallet}</Label> : null}
     </Block>
