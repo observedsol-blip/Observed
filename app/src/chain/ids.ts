@@ -67,15 +67,33 @@ export const TX_SIZE_LIMIT = 1232;
  * the wallet approval**, because 30 000 × 1.2 leaves only 35 850 usable units.
  *
  * That is the same shape of bug as the raw memo bytes: fine for most people on most days, and
- * ruinous for whoever draws the unlucky address. Over a season of 64 calls on twenty devices the
- * deepest search to expect is around ten steps, so this carries room for twenty. Asking for more
- * units than needed costs nothing here: the app sets no priority price, and the fee is per
- * signature, not per requested unit.
+ * ruinous for whoever draws the unlucky address.
  *
- * The cheaper fix belongs in the program — take the bump the client already knows and use
+ * **A commit pays for TWO searches, not one** (owner's question, 22.09.2026): the Entry PDA and
+ * the Player PDA, and the Player one is paid on every single call, not only the first — Anchor
+ * re-derives the address to check it whether or not the account already exists. The arithmetic,
+ * from the measurements:
+ *
+ *     base without any search                       22 060 CU
+ *     measured (entry 0 steps, player 3 steps)      26 650 CU
+ *     entry 20 + player 20 steps                    83 260 CU
+ *     entry 25 + player 25 steps                    98 560 CU
+ *
+ * A first attempt at this budget carried 60 000, which leaves 71 850 usable and covers 33 steps
+ * in total — enough for one unlucky PDA, not for two. 90 000 leaves 107 850 and covers 56.
+ *
+ * How unlucky is unlucky: each step has probability ½, so over a season of 64 calls on twenty
+ * devices, P(some Entry PDA needs ≥ 20 steps) ≈ 0.12 %, P(≥ 25) ≈ 0.004 %, and for the twenty
+ * Player PDAs P(≥ 15) ≈ 0.06 %. The budget covers both at 25 with room to spare.
+ *
+ * Asking for more units than needed costs nothing here: the app sets no priority price, and the
+ * fee is per signature, not per requested unit. The whole evening — three reveals, a seal and two
+ * memos — still asks for about 250 000 of the 1 400 000 a transaction may have.
+ *
+ * The cheaper fix belongs in the program — take the bumps the client already knows and use
  * `create_program_address`. That is a program change, and therefore not this week's.
  */
-export const CU_COMMIT = 60_000;
+export const CU_COMMIT = 90_000;
 export const CU_REVEAL = 22_000;
 /** The memo program is NOT cheap: a 42-byte memo cost 14 918 CU on the validator — it validates
  *  UTF-8 and logs the whole thing. Budgeting a thousand per memo (as this did at first) makes

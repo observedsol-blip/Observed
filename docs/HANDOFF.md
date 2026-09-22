@@ -732,6 +732,52 @@ Behoben im Resolver (`d16bcff`): 6 000 → **14 000**, `score_entry` 13 000 → 
 Tests, die die Budgets gegen die Messwerte halten — samt dem alten Wert als das, was sie
 verhindern sollen.
 
+### Befund M4 — die eigentliche Lücke war die Stille, nicht die Zahl
+
+Owner, 22.09.: „Der tiefere Fehler ist, dass es still gewesen wäre." Behoben im Resolver
+(`c436585`):
+
+- **`withReport` unterscheidet jetzt vier Ausgänge statt zwei.** „Schon erledigt"
+  (`AlreadyScored`, `AlreadyResolved`, `AlreadyCancelled`, Konto existiert) bleibt still — dann
+  funktioniert das System ja. Eine **Ablehnung durch das Programm** alarmiert **sofort**: Sie
+  wiederholt sich für immer, und auf drei zu warten hieße drei Stunden Schweigen. Ein **Senden,
+  das nicht landet**, ist Wetter; ab **drei in einem Lauf** ist es ein Ausfall.
+- **Der Backlog-Alarm schaut jetzt auf überfällige Schließungen:** Einträge, die zwei Stunden
+  nach ihrem Termin noch offen sind, heißen „die Rückzahlung scheitert". Genau der Zustand, den
+  `close_entry` mit zu kleinem Budget erzeugt hätte.
+- **Ein Ping, alle Gründe.** Die Alarmprüfungen waren eine `else if`-Kette — das zweite Problem
+  verschwand hinter dem ersten. Jetzt werden die Gründe gesammelt und gemeinsam gemeldet.
+
+**Fünf Tests**, darunter die beiden verlangten: erzwungener CU-Fehlschlag (21 ungewertete
+Einträge, drei Stapel) → **genau ein** Alarm mit „did not land this run"; überfälliger Eintrag →
+**genau ein** Alarm mit „deposits are not going back". Dazu die Gegenprobe (ein Lauf, der
+schließt, was fällig ist, sagt nichts) und die beiden Unterscheidungen.
+
+### Befund M5 — das Commit-Budget deckte nur **eine** der beiden Suchen
+
+Die Frage des Owners hat einen Fehler in meiner eigenen M1-Korrektur aufgedeckt. Ein Commit
+leitet **zwei** Adressen her, Entry **und** Player, und zahlt für beide bei **jedem** Aufruf —
+Anchor prüft die Seeds auch dann neu, wenn das Konto längst existiert. Die Rechnung aus den
+Messwerten:
+
+| Fall | Kosten |
+|---|---|
+| Basis ohne jede Suche | 22 060 CU |
+| gemessen (Entry 0 Schritte, Player 3) | 26 650 CU |
+| Entry 20 + Player 20 | 83 260 CU |
+| Entry 25 + Player 25 | 98 560 CU |
+
+`CU_COMMIT = 60 000` ließ 71 850 nutzbar und deckte **33** Schritte — genug für eine unglückliche
+Adresse, nicht für zwei. Jetzt **90 000**: 107 850 nutzbar, **56** Schritte. Wahrscheinlichkeiten,
+weil „unglücklich" eine Zahl verdient: Über eine Saison mit 64 Calls auf zwanzig Geräten ist
+P(irgendein Entry-PDA ≥ 20 Schritte) ≈ 0,12 %, P(≥ 25) ≈ 0,004 %; für die zwanzig Player-PDAs ist
+P(≥ 15) ≈ 0,06 %. Ein Player-PDA mit tiefem Bump hätte **jeden Abend** dieses Geräts gekostet,
+nicht nur einen.
+
+Zu großzügig anzufordern kostet weiterhin nichts: kein Prioritätspreis, Gebühr je Signatur. Der
+ganze Abend — drei Aufdeckungen, ein Siegel, zwei Memos — fragt jetzt rund 250 000 von 1 400 000
+möglichen Einheiten an.
+
 ### Warum `close_entry` nicht auf dem Validator messbar ist — gemessen, nicht vermutet
 
 Es braucht `outcome + 72 h`. Die Uhr eines Test-Validators lässt sich vorstellen, **aber nur
