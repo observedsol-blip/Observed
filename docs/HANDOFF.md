@@ -861,6 +861,55 @@ Gerät vom 21.09. Ebenso die absichtliche 50: Sie steht als **erster Punkt** auf
 Tester-Checkliste, weil sie in der Verdrahtung zweier Komponenten sitzt und ohne
 Oberflächen-Testbibliothek nicht automatisch prüfbar ist.
 
+## Basisraten über ein Jahr, 22.09.2026 abends — die Ereignistage sind belegt
+
+Quelle: `spikes/baserate/windows.mjs --days 365`, Coinbase-Minutenkerzen, 22.09.2025–21.09.2026,
+524 748 Minuten je Feed. Fenster A = **04:02 → 16:00 UTC**, unseres. Coinbase-Kurs, nicht die
+Pyth-Aggregation — gut für eine Rate über Monate, nie für eine einzelne Runde.
+
+Makrotermine aus den Primärquellen geholt (federalreserve.gov, bls.gov, 22.09.2026). CPI und
+Jobs-Bericht erscheinen 08:30 ET = **12:30 UTC**, also **innerhalb** unseres Fensters. Die
+FOMC-Erklärung kommt 14:00 ET = 18:00 UTC, also **danach** — deshalb ist nicht der Sitzungstag
+der Ereignistag, sondern der **Tag danach**, an dem mit bekannter Entscheidung gesiegelt wird.
+Genau so behandelt der Kalender den 29.10.
+
+### BTC, Bewegung im Fenster
+
+| Gruppe | > 1,0 % | > 1,5 % | **> 1,7 %** | > 2,0 % | n |
+|---|---|---|---|---|---|
+| Makrotag gesamt | 61,3 % | 48,4 % | **45,2 %** | 35,5 % | 31 |
+| davon CPI | 50,0 % | 41,7 % | 41,7 % | 33,3 % | 12 |
+| davon Jobs-Bericht | 81,8 % | 54,5 % | 45,5 % | 27,3 % | 11 |
+| davon Tag nach FOMC | 50,0 % | 50,0 % | 50,0 % | 50,0 % | 8 |
+| alle anderen Tage | 44,0 % | 25,6 % | **22,6 %** | 18,4 % | 332 |
+
+**Die Schwelle 1,7 % trifft an Makrotagen doppelt so oft wie sonst — 45,2 % gegen 22,6 %.** Das
+bestätigt die Annahme, auf der die fünf Ereignistage beruhen. Median der Bewegung: 116 bps an
+Makrotagen, 88 bps sonst.
+
+**Wichtig für die Methode:** dieselbe Rechnung über **90 Tage** (n = 8 Makrotage) sagte 25,0 %
+gegen 23,2 % — also *kein* Unterschied. Nicht weil es keinen gibt, sondern weil acht Tage nichts
+entscheiden. Wer diese Frage über ein Quartal stellt, bekommt Rauschen zurück.
+
+### SOL gegen ETH im selben Fenster (Kandidat Zwei-Feed-Frage)
+
+| Gruppe | P(SOL > ETH) | innerhalb ±0,1 % | innerhalb ±0,25 % | n |
+|---|---|---|---|---|
+| alle | **48,2 %** | 8,8 % | 20,4 % | 363 |
+| Werktag | **50,0 %** | 8,1 % | 18,1 % | 260 |
+| Wochenende | 43,7 % | 10,7 % | 26,2 % | 103 |
+
+Ausgeglichener als die Richtungsfrage selbst. Aber: mit dem Band von **25 bps** wären **20,4 %**
+aller Tage „Too close to call" — jeder fünfte Abend ohne Treffer und ohne Fehlschlag.
+
+### Zum Vergleich, Richtungsfrage (ABOVE 0), ein Jahr
+
+| Feed | alle | Werktag | Wochenende |
+|---|---|---|---|
+| SOL | 46,0 % | 46,5 % | 44,7 % |
+| BTC | 49,3 % | 47,3 % | 54,4 % |
+| ETH | 48,2 % | 45,0 % | 56,3 % |
+
 ## Offen — mit Besitzer
 | # | Was | Wer | Bis |
 |---|---|---|---|
