@@ -91,7 +91,9 @@ export const TX_SIZE_LIMIT = 1232;
  * memos — still asks for about 250 000 of the 1 400 000 a transaction may have.
  *
  * The cheaper fix belongs in the program — take the bumps the client already knows and use
- * `create_program_address`. That is a program change, and therefore not this week's.
+ * `create_program_address`. The owner parked it on 22.09.2026: the budget above solves the
+ * problem completely, and a program change after submission would collide with the open
+ * code-freeze question (E14). Only worth revisiting if the season runs past 10.11.2026.
  */
 export const CU_COMMIT = 90_000;
 export const CU_REVEAL = 22_000;

@@ -695,8 +695,8 @@ Reserve für zwanzig Suchschritte fest.
 
 **Am Programm wurde nichts geändert.** Die billigere Lösung liegt dort — den Bump mitschicken,
 den der Client ohnehin kennt, und `create_program_address` statt der Suche benutzen. Das ist eine
-Programmänderung und gehört damit nicht in diese Woche; sie steht als Vorschlag für nach dem
-9. Oktober.
+Programmänderung und gehört damit nicht in diese Woche. **Zurückgestellt** — siehe den Kasten am
+Ende von M5.
 
 ### Befund M2 — der Prüfer meldete eine offene Runde als Fehler
 
@@ -777,6 +777,23 @@ nicht nur einen.
 Zu großzügig anzufordern kostet weiterhin nichts: kein Prioritätspreis, Gebühr je Signatur. Der
 ganze Abend — drei Aufdeckungen, ein Siegel, zwei Memos — fragt jetzt rund 250 000 von 1 400 000
 möglichen Einheiten an.
+
+#### Bump-Parameter — zurückgestellt (Owner-Entscheidung, 22.09.2026)
+
+Der Vorschlag aus M1, den Bump als Parameter zu übergeben und `create_program_address` statt der
+Suche zu benutzen, **wird nicht umgesetzt** — weder vor dem Deploy noch direkt nach dem
+9. Oktober. Zwei Gründe, beide vom Owner:
+
+1. **Das Budget löst es vollständig.** 90 000 CU decken 56 Suchschritte; zwei Suchen von je 25
+   Schritten sind in `app/test/budget.test.ts` festgenagelt. Es bleibt kein offenes Risiko, nur
+   eine Zahl, die größer ist als nötig — und das kostet nichts (kein Prioritätspreis, Gebühr je
+   Signatur).
+2. **Eine Programmänderung nach der Einreichung kollidiert mit der offenen Code-Freeze-Frage**
+   (E14, Punkt 11 unter „Offen — mit Besitzer"): Bis die Veranstalter antworten, plant das
+   Drehbuch mit „nein".
+
+**Wieder aufgreifen nur, wenn die Saison über den 10.11. hinaus weiterläuft.** Bis dahin ist hier
+keine Entscheidung mehr nötig; der Punkt steht deshalb bewusst **nicht** in der Owner-Liste.
 
 ### Warum `close_entry` nicht auf dem Validator messbar ist — gemessen, nicht vermutet
 
