@@ -197,6 +197,32 @@ verhindert, dass es später hineinrutscht.
 Vom Owner freigegeben (E8, E11, E13). **Wörtlich so in den Code**, App-Sprache Englisch.
 Ersetzt die widersprechenden Stellen in §2, §3 und §4.
 
+### 11.0 Aufdecken als Sequenz und die Kaution (Owner, 22.09.2026)
+
+Das Ergebnis liegt nicht offen da, wenn der Bildschirm aufgeht. Zuerst steht der eigene Satz
+allein; erst ein Tipp auf `Face it` holt den Ausgang dazu. Gibt es keinen Satz, trägt die erste
+Stufe die versiegelte Antwort, der Knopf bleibt derselbe.
+
+| Ort | Text |
+|---|---|
+| Result, Stufe 1 → Ergebnis | `Face it` |
+| Result, Erinnerungsfrage (Flag, im Tester-Build an) | `How sure were you last night?` |
+| Result, nach beantworteter Erinnerungsfrage | `You sealed {n}%. You remembered {m}%.` |
+| Today, über `Seal today` | `No stakes. A {sol} SOL deposit comes back to this wallet by {date}.` |
+| Today, nur vor dem allerersten Siegel | `Your first call also opens your record: {sol} SOL, once, not returned.` |
+
+Die Erinnerungsfrage kommt **nach** dem Ergebnis, nicht davor: gemessen wird der Abstand
+zwischen dem, was jemand versiegelt hat, und dem, was er jetzt glaubt versiegelt zu haben — und
+den gibt es erst, wenn der Ausgang bekannt ist. Beide Zahlen stehen auf der Reglerskala 50–100.
+Sie ist überspringbar (`Not now`), sie bleibt auf dem Telefon, und sie geht in keine Transaktion.
+
+Die Reihenfolge danach: höchstens **zwei** fremde Sätze, dann die Serie als Fußnote.
+
+Die Beträge stehen nirgends im Text: sie kommen aus den Kontogrößen und dem Kalender.
+
+**Kein Brier auf dem Record (Owner, 22.09.2026):** kein Season score, keine Zahl je Zeile, keine
+Vergleichswerte. Die Zahl bleibt auf der Kette und im Prüfer — nur die Anzeige ist weg.
+
 ### 11.1 Eingabe (E11)
 Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihenfolge.
 

@@ -204,3 +204,32 @@ Code nicht öffnen lassen.
 
 Der vierte Fall ist der Grund für die Änderung: Die alte Vorlage sagte dort `0 restored.` — das
 liest sich wie ein Erfolg, obwohl entweder der Code falsch war oder es nichts zu holen gab.
+
+
+## I. Aufdecken als Sequenz und die Kaution (freigegeben 22.09.2026, Block A)
+
+Alle Zeilen sind in `app/src/copy.ts` und im Code in Gebrauch.
+
+| Ort | Text |
+|---|---|
+| Result, Stufe 1 → Ergebnis | `Face it` |
+| Result, Erinnerungsfrage (Flag, im Tester-Build an) | `How sure were you last night?` |
+| Result, nach beantworteter Erinnerungsfrage | `You sealed {n}%. You remembered {m}%.` |
+| Today, über `Seal today` | `No stakes. A {sol} SOL deposit comes back to this wallet by {date}.` |
+| Today, nur vor dem allerersten Siegel | `Your first call also opens your record: {sol} SOL, once, not returned.` |
+
+`{n}` und `{m}` stehen beide auf der Skala des Reglers, **50–100**: ein Siegel von 20 % Down ist
+80 % sicher in Down, und 20 neben 65 zu stellen wäre ein anderer Vergleich. `{sol}` und `{date}`
+werden nie in den Text geschrieben — sie kommen aus den Kontogrößen (`core/funding.ts`) und aus
+dem Kalender (`lastDepositBack`).
+
+Übersprungen wird die Erinnerungsfrage mit einem Tipp auf das bereits freigegebene `Not now`.
+Ein eigenes Wort dafür ist **nicht** erfunden worden.
+
+Noch nicht in Gebrauch, kommt mit Block B: `Reveal only`, `Example`.
+
+## GAP — offen, nicht erfunden
+
+| Ort | Was fehlt |
+|---|---|
+| Record §4/§11.5, Erklärzeile | Seit 22.09. zeigt der Record **keinen** Season score mehr. Die freigegebene Zeile `Your side record counts calls. Your season score measures how sure you were.` verweist damit auf etwas, das nicht mehr auf dem Schirm steht. Sie wird deshalb nicht mehr gerendert. Es fehlt ein Einzeiler, der nur noch den Side record erklärt. |
