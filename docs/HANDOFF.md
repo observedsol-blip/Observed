@@ -671,8 +671,11 @@ laufen.** Genau diese Lücke schließt die Matrix.
 | Transaktionsform | erstes Siegel (nur Commit) · Abend (Reveal + Commit) · nur Reveal · Commit nach einem ausgelassenen Tag |
 | Seite | Up · Down · **absichtliche 50** |
 | Satz | keiner · privat · geteilt |
-| Wertung | `score_entry` in derselben Transaktion, wenn die Runde aufgelöst ist |
+| Wertung | **getrennt** (Owner, 22.09.2026): Der Resolver wertet, die App schickt `score_entry` nicht mit. Die Zeile prüft, was danach noch stimmt — der nächste Abend (Reveal + Commit) bestätigt, der Record zeigt den gewerteten Call, und `close_entry` funktioniert nach dem Fenster |
 | Wiederherstellung | Backup-Code einspielen, danach aufdecken |
+
+**Am Transaktionsbau ändert sich vor dem Build nichts** (Owner, 22.09.2026). `buildDaily` kennt
+Reveal, Commit und Memos — dabei bleibt es. Die Matrix ist eine Messung, kein Umbau.
 
 Je Zeile festzuhalten: **Signatur · bestätigt ja/nein · Compute Units · Bytes · Freigaben = 1 ·
 `verify-round` PASS**. Jeder Fehlschlag: beheben, **einen Test ergänzen, der durch das Programm
