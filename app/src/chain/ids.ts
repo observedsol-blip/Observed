@@ -56,10 +56,27 @@ export const Outcome = { Unset: 0, Yes: 1, No: 2 } as const;
 
 /** Transaction limits the daily transaction has to respect (measured in tests/capacity.rs). */
 export const TX_SIZE_LIMIT = 1232;
-/** Measured on a validator (spikes/e2e/drive-app.mjs): commit 26 500 CU, reveal 16 032 CU.
- *  LiteSVM says 28 868 for the commit; the larger of the two is the one budgeted. */
-export const CU_COMMIT = 30_000;
-export const CU_REVEAL = 17_000;
+/**
+ * Measured on a validator: commit 26 650 CU, reveal 16 182 CU (`spikes/e2e/matrix.mjs`, 22.09.2026).
+ *
+ * The budget sits far above those numbers on purpose, and the reason is a finding rather than
+ * caution. `commit` lets the program derive the Entry PDA with `find_program_address`, which
+ * tries bumps from 255 downwards and pays roughly 1 530 CU for each candidate it rejects. Almost
+ * every call lands on 255 and costs nothing extra — but in the matrix run one call out of twelve
+ * had bump **246**: nine extra steps, about 13 800 CU, and the daily transaction failed **after
+ * the wallet approval**, because 30 000 × 1.2 leaves only 35 850 usable units.
+ *
+ * That is the same shape of bug as the raw memo bytes: fine for most people on most days, and
+ * ruinous for whoever draws the unlucky address. Over a season of 64 calls on twenty devices the
+ * deepest search to expect is around ten steps, so this carries room for twenty. Asking for more
+ * units than needed costs nothing here: the app sets no priority price, and the fee is per
+ * signature, not per requested unit.
+ *
+ * The cheaper fix belongs in the program — take the bump the client already knows and use
+ * `create_program_address`. That is a program change, and therefore not this week's.
+ */
+export const CU_COMMIT = 60_000;
+export const CU_REVEAL = 22_000;
 /** The memo program is NOT cheap: a 42-byte memo cost 14 918 CU on the validator — it validates
  *  UTF-8 and logs the whole thing. Budgeting a thousand per memo (as this did at first) makes
  *  the evening transaction fail after the approval, which is the worst possible moment.

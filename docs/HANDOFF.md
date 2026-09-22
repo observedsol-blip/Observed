@@ -655,6 +655,65 @@ getrennt, und **jede** Berührung des Reglers zählt. Diese eine Änderung ist d
 nicht durch einen Test: Sie sitzt in der Verdrahtung zweier Komponenten, und eine
 Oberflächen-Testbibliothek gibt es auf Wunsch des Owners nicht.
 
+## E2E-Matrix gelaufen, 22.09.2026 nachts — **13 von 13 Zeilen bestanden**, zwei Befunde
+
+`spikes/e2e/matrix.mjs` — ein Befehl, rund fünf Minuten: eigener Validator mit dem echten
+Programm und dem echten Memo-Programm, zwölf Calls, jede Zeile wirklich gesendet und bestätigt,
+danach zweimal zurückgelesen — durch die App (`Session`) und durch `verify-round.mjs`.
+
+| Zeile | Form | CU verbraucht | budgetiert | Bytes | Freigaben | verify |
+|---|---|---|---|---|---|---|
+| R1 | erstes Siegel · Up 80 · kein Satz | 26 650 | 72 000 | 514 | 1 | PASS |
+| R2 | erstes Siegel · Down 80 · Satz privat | 26 650 | 72 000 | 514 | 1 | PASS |
+| R3 | erstes Siegel · **absichtliche 50** · Satz geteilt | 50 833 | 96 288 | 613 | 1 | PASS |
+| R4 | Abend: Reveal + Siegel, beide Sätze geteilt | 73 890 | 137 568 | 745 | 1 | PASS |
+| R5 | **nur** Aufdecken, kein Siegel in der Transaktion | 16 182 | 26 400 | 384 | 1 | PASS |
+| R6 | Siegeln nach einem ausgelassenen Tag | 42 682 | 98 400 | 628 | 1 | PASS |
+| R7 | Backup-Code einspielen, dann aufdecken | 16 182 | 26 400 | 384 | 1 | PASS |
+| R8 | Resolver wertet getrennt, danach der nächste Abend | 32 650 | 72 000 | 514 | 1 | PASS |
+| R8a | das Siegel, das gewertet wurde · **unglücklicher PDA-Bump** | **40 150** | 72 000 | 514 | 1 | PASS |
+
+Signaturen stehen im Lauf-Protokoll; sie gelten nur für die Kette dieses Laufs. R7 hat Call 9
+zurückgeholt (`recovered: 9, lost: 0`), R6 hat den ausgelassenen Tag leer gelassen
+(`missedStayedEmpty: true`), R8 zeigt `scoredByResolver: true, scoreBps: 225` und
+`recordShowsIt: true`.
+
+### Befund M1 — das Commit-Budget reichte nicht, und zwar zufällig
+
+**Dieselbe Transaktionsform kostete 26 650 CU auf elf Calls und 40 150 auf einem.** Der Grund ist
+gemessen, nicht vermutet: Das Programm lässt Anchor den Entry-PDA mit `find_program_address`
+suchen, und jeder verworfene Bump kostet rund 1 530 CU. Elf der zwölf Calls landeten auf Bump 255
+(null Schritte), Call 10 auf **246** — neun Schritte, etwa 13 800 CU mehr. Das alte Budget
+(30 000 × 1,2 = 36 000, davon 150 für die Budget-Instruktion selbst) ließ 35 850 übrig: zu wenig.
+**Die Tagestransaktion wäre nach der Wallet-Freigabe gescheitert** — dieselbe Klasse wie der
+Memo-Fehler, nur seltener und darum tückischer.
+
+Behoben in der App: `CU_COMMIT` 30 000 → **60 000**, `CU_REVEAL` 17 000 → **22 000**. Das kostet
+nichts — die App setzt keinen Prioritätspreis, und die Gebühr hängt an der Signatur, nicht an den
+angeforderten Einheiten. Vier neue Tests (`app/test/budget.test.ts`) halten die Messwerte samt
+Reserve für zwanzig Suchschritte fest.
+
+**Am Programm wurde nichts geändert.** Die billigere Lösung liegt dort — den Bump mitschicken,
+den der Client ohnehin kennt, und `create_program_address` statt der Suche benutzen. Das ist eine
+Programmänderung und gehört damit nicht in diese Woche; sie steht als Vorschlag für nach dem
+9. Oktober.
+
+### Befund M2 — der Prüfer meldete eine offene Runde als Fehler
+
+Gefunden beim ersten Matrixlauf: Eine Runde ohne Referenz hat Null-Lesungen, und
+`verify-round.mjs` prüfte sie trotzdem — drei FAILs für einen Call, der einfach noch offen ist.
+Behoben (`c744f7b`): Abschnitt 2 prüft nur, was es schon gibt.
+
+### Was die Matrix nicht abdeckt
+
+**`close_entry`** braucht `reveal_close + close_after`, und `reveal_close` ist `outcome + 72 h` aus
+einer Programmkonstante. Die Uhr des Validators folgt der Wanduhr — **aber sie lässt sich
+vorstellen**: `--warp-slot 648000` ergab gemessen **+64 792 s** (rund 0,1 s je Slot). Der Weg
+dorthin ist also: Konten des Laufs sichern, frischen Validator mit `--warp-slot 2 592 000` und
+diesen Konten starten, dann `close_entry`. Das ist der nächste Schritt und noch nicht gebaut.
+
+**„Freigaben = 1"** zählt Transaktionen, nicht Wallet-Blätter — das bleibt die Messung am Gerät.
+
 ## Auftrag: E2E-Matrix (Owner, 22.09.2026) — **nach dem Mittwoch, vor dem Build am 26.09.**
 
 **Der Anlass ist größer als der Fehler.** Das Siegel-Memo ging als rohe Hash-Bytes raus und hätte
