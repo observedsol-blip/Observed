@@ -136,9 +136,9 @@ export type ResultView = {
   /** Whether the memory question has already been put to this entry — asked once, never again. */
   memoryAsked: boolean;
   /**
-   * Only the side of the sealed answer, without the number: `Up`, `Down`, or null for a
-   * deliberate 50/50. The number must not be on the screen before the memory question, or the
-   * question answers itself (owner, 22.09.2026).
+   * `You sealed: Up.` — the sealed answer without its number, or null for a deliberate 50/50.
+   * The number is exactly what the memory question asks about, so it must not be on the screen
+   * before it (owner, 22.09.2026).
    */
   sealedSide: string | null;
   /** Sentences of others, already checked against their seal memos (E8). Empty until then. */
@@ -193,8 +193,7 @@ export function resultView(args: {
       args.entry.pBps >= 5_000 ? args.entry.pBps / 100 : (10_000 - args.entry.pBps) / 100,
     remembered: args.remembered ?? null,
     memoryAsked: args.memoryAsked === true,
-    sealedSide:
-      args.entry.pBps === 5_000 ? null : args.entry.pBps > 5_000 ? copy.side.up : copy.side.down,
+    sealedSide: copy.sealedSideOnly(args.entry.pBps),
     others: args.others ?? [],
   };
 }

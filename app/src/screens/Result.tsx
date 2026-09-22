@@ -90,9 +90,8 @@ export default function Result({
               <Sentence style={{ marginTop: space.xs }}>{view.sentence}</Sentence>
             </>
           ) : ask && view.sealedSide ? (
-            // No sentence to stand alone. The SIDE may be shown, the number may not — it is
-            // what the memory question is about. GAP: 03 has no line for "you sealed a side"
-            // without the percentage, so the bare approved word stands here for now.
+            // No sentence to stand alone. The side may be shown, the number may not — it is
+            // what the memory question is about (03 §11.0).
             <Body style={{ color: color.ink }}>{view.sealedSide}</Body>
           ) : ask ? (
             // A deliberate 50/50 has no side either, so this stage carries only the question.

@@ -16,8 +16,9 @@ import type { Entry, Round } from "../chain/layout.ts";
 import { sealMemo } from "./sentence.ts";
 import { Sealing } from "./sealing.ts";
 import { SeasonSecret } from "./secret.ts";
+import { type MemoryLogRow, memoryLogRows } from "./memory.ts";
 import { type ResultView, type TodayView, resultView, streakOf, todayView } from "./day.ts";
-import { type RecordView, recordView } from "./record.ts";
+import { dayLabel, type RecordView, recordView } from "./record.ts";
 import { type SettingsView, settingsView } from "./settings.ts";
 import { revealableNow } from "./revealing.ts";
 import { type SealRecord, sealKey } from "./records.ts";
@@ -65,7 +66,14 @@ export type DayState = {
  * anything later (owner, 22.09.2026).
  */
 const REMEMBERED_KEY = "remembered";
-type RememberedNote = { confidence: number | null; atSeconds: number };
+type RememberedNote = {
+  confidence: number | null;
+  atSeconds: number;
+  /** Kept with the note so the log can be built without deriving addresses backwards. */
+  roundId: number;
+  /** When the seal went out, for "how long after sealing was this asked". */
+  sealedAt: number | null;
+};
 
 export class Session {
   private deps: SessionDeps;
@@ -245,9 +253,17 @@ export class Session {
     const kept = (await getJson<Record<string, RememberedNote>>(this.deps.store, REMEMBERED_KEY)) ?? {};
     // Asked once: an answer that is already there is never overwritten.
     if (kept[key]) return;
+    const record = (await this.sealing?.all())?.find((r) => r.roundId === roundId);
     await setJson(this.deps.store, REMEMBERED_KEY, {
       ...kept,
-      [key]: { confidence, atSeconds: this.deps.now() } satisfies RememberedNote,
+      [key]: {
+        confidence,
+        atSeconds: this.deps.now(),
+        roundId,
+        // `sentAt` is the moment the seal actually went out; `savedAt` is when the answer was
+        // written down. The first is the honest start of "how long after sealing".
+        sealedAt: record?.sentAt ?? record?.savedAt ?? null,
+      } satisfies RememberedNote,
     });
   }
 
@@ -561,6 +577,36 @@ export class Session {
   }
 
   /** Settings: the addresses that decide what this game is, each read from its own account. */
+  /**
+   * The memory log (owner, 22.09.2026). Only the build that asks the question shows it.
+   *
+   * It names calls, never the wallet, and it carries no sentences. The sealed confidence is
+   * only filled in once the call has been opened on chain — before that the number is this
+   * phone's own note about a question that has not been asked yet.
+   */
+  async memoryLog(): Promise<MemoryLogRow[]> {
+    await this.restore();
+    const kept = await getJson<Record<string, RememberedNote>>(this.deps.store, REMEMBERED_KEY);
+    const notes = Object.values(kept ?? {}).filter((n) => typeof n.roundId === "number");
+    if (notes.length === 0 || !this.sgtMint) return [];
+    const entries = await this.deps.chain.entries(
+      notes.map((n) => n.roundId),
+      this.sgtMint,
+    );
+    return memoryLogRows({
+      notes,
+      dateOf: (roundId) => {
+        const call = this.deps.calendar.find((r) => r.roundId === roundId);
+        return call ? dayLabel(call.commitClose) : String(roundId);
+      },
+      sealedConfidenceOf: (roundId) => {
+        const entry = entries.get(roundId);
+        if (!entry?.revealed) return null;
+        return entry.pBps >= 5_000 ? entry.pBps / 100 : (10_000 - entry.pBps) / 100;
+      },
+    });
+  }
+
   async settings(): Promise<SettingsView> {
     await this.restore();
     const now = this.deps.now();

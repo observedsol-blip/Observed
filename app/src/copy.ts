@@ -52,7 +52,12 @@ export const copy = {
     seasonScore: "Season score",
     calls: "Calls",
     reminders: "Reminders",
+    /** Only in the build that asks the memory question (approved 22.09.2026). */
+    memoryLog: "Memory log",
   },
+
+  /** The one button of the memory log (approved 22.09.2026). */
+  copyButton: "Copy",
 
   /** §11.2 — the sentence field. */
   sentence: {
@@ -64,6 +69,18 @@ export const copy = {
     share: "Share it after the reveal",
     shareHint: "Private until you reveal. If shared, it's public and permanent on Solana.",
     limit: 140,
+  },
+
+  /**
+   * §3 — the sealed answer with the side but WITHOUT the number (approved 22.09.2026).
+   *
+   * The first stage of the reveal, when there is no sentence to stand alone. The percentage is
+   * exactly what the memory question asks about, so it may not be on the screen before it; the
+   * side may. A deliberate 50/50 has no side and gets nothing at all.
+   */
+  sealedSideOnly(pBps: number): string | null {
+    if (pBps === 5_000) return null;
+    return `You sealed: ${pBps > 5_000 ? this.side.up : this.side.down}.`;
   },
 
   /** §3 — the sealed answer, read back word for word, with the exact number. */

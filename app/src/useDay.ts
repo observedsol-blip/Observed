@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import * as Crypto from "expo-crypto";
 import { Chain } from "./chain/rpc.ts";
 import { Session, type DayState } from "./core/session.ts";
+import type { MemoryLogRow } from "./core/memory.ts";
 import type { RecordView } from "./core/record.ts";
 import type { SettingsView } from "./core/settings.ts";
 import { SecureStoreAdapter } from "./platform/secureStore.ts";
@@ -24,6 +25,7 @@ export function useDay(config: LiveConfig | null) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [others, setOthers] = useState<string[]>([]);
+  const [memoryLog, setMemoryLog] = useState<MemoryLogRow[]>([]);
 
   // The session is built once, from the config. No wallet is opened here.
   useEffect(() => {
@@ -83,6 +85,13 @@ export function useDay(config: LiveConfig | null) {
       setSettings(await session.settings());
     } catch (e) {
       setError(message(e));
+    }
+    // The memory log rides along with Settings: it is only ever looked at there, and it costs
+    // one account read per answered call.
+    try {
+      setMemoryLog(await session.memoryLog());
+    } catch {
+      setMemoryLog([]);
     }
   }, [session]);
 
@@ -211,7 +220,7 @@ export function useDay(config: LiveConfig | null) {
     day && day.result ? { ...day, result: { ...day.result, others } } : day;
 
   return {
-    day: dayWithOthers, record, settings, busy, error, reminders,
+    day: dayWithOthers, record, settings, memoryLog, busy, error, reminders,
     connect, save, seal, refresh, loadRecord, loadSettings, backup, remember,
   };
 }

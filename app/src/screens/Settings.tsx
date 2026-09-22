@@ -16,8 +16,49 @@ import {
   type DesignState,
   type ResultDesignState,
 } from '../mockViews';
+import * as Clipboard from 'expo-clipboard';
 import { type SettingsView, settingsCopy, shortAddress } from '../core/settings.ts';
+import { type MemoryLogRow, memoryLogText } from '../core/memory.ts';
 import { copy } from '../copy.ts';
+
+
+/**
+ * The memory log — only in the build that asks the memory question (owner, 22.09.2026).
+ *
+ * One line per call: what was sealed (once the call is open), what was remembered, and how long
+ * after sealing the question was answered. No wallet address, no sentences, no network — the
+ * whole point is that the experiment can be read off a phone without anything leaving it.
+ */
+function MemoryLog({ rows }: { rows: MemoryLogRow[] }) {
+  const [copied, setCopied] = React.useState(false);
+  return (
+    <Block>
+      <Kicker>{copy.headings.memoryLog}</Kicker>
+      {rows.length === 0 ? (
+        <MonoMeta style={{ marginTop: space.xs }}>—</MonoMeta>
+      ) : (
+        rows.map((r) => (
+          <MonoMeta key={r.roundId} style={{ marginTop: space.xs }}>
+            {`${r.date} · ${r.sealedConfidence === null ? "sealed —" : `sealed ${r.sealedConfidence}`}` +
+              ` · ${r.remembered === null ? "skipped" : `remembered ${r.remembered}`}` +
+              `${r.hoursAfterSeal === null ? "" : ` · +${r.hoursAfterSeal}h`}`}
+          </MonoMeta>
+        ))
+      )}
+      <Pressable
+        accessibilityRole="button"
+        onPress={async () => {
+          await Clipboard.setStringAsync(memoryLogText(rows));
+          setCopied(true);
+        }}
+      >
+        <Label style={{ marginTop: space.md, color: copied ? color.meta : color.ink }}>
+          {copy.copyButton}
+        </Label>
+      </Pressable>
+    </Block>
+  );
+}
 
 function Choice({
   label,
@@ -55,6 +96,7 @@ function Address({ label, value }: { label: string; value: string | null }) {
 export default function Settings({
   view,
   backup = null,
+  memoryLog = null,
   todayState,
   onTodayState,
   resultState,
@@ -64,6 +106,8 @@ export default function Settings({
   view: SettingsView | null;
   /** null while the app draws design states — there is no secret to export then. */
   backup?: BackupActions | null;
+  /** Only handed in by the build that asks the memory question; null hides the whole entry. */
+  memoryLog?: MemoryLogRow[] | null;
   todayState: DesignState;
   onTodayState: (s: DesignState) => void;
   resultState: ResultDesignState;
@@ -107,6 +151,8 @@ export default function Settings({
           </MonoMeta>
         </Block>
       ) : null}
+
+      {memoryLog ? <MemoryLog rows={memoryLog} /> : null}
 
       <Backup actions={backup} />
 

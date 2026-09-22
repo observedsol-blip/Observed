@@ -215,8 +215,9 @@ Stufe die versiegelte Antwort, der Knopf bleibt derselbe.
 
 **Die Zahl darf vor der Frage nicht auf dem Schirm stehen.** Ein Bildschirm, der erst
 „You sealed: Up, 80% sure." zeigt und dann fragt, wie sicher man war, fragt nichts — er liest
-die Antwort vor. Ohne Satz trägt die erste Stufe deshalb **nur die Seite** (`Up` / `Down`; bei
-einer absichtlichen 50/50 gar nichts), und die Sicherheit erscheint erst, nachdem die Frage
+die Antwort vor. Ohne Satz trägt die erste Stufe deshalb die versiegelte Antwort **ohne ihre
+Zahl**: `You sealed: Up.` bzw. `You sealed: Down.` (Seitenwort aus `copy.side`; bei einer
+absichtlichen 50/50 steht dort nichts). Die Sicherheit erscheint erst, nachdem die Frage
 beantwortet oder weggewischt wurde. Dasselbe gilt für die Liste im Record: solange ein Call
 nicht aufgedeckt ist, steht dort im Tester-Build kein Wert.
 
@@ -238,6 +239,26 @@ Die Beträge stehen nirgends im Text: sie kommen aus den Kontogrößen und dem K
 
 **Kein Brier auf dem Record (Owner, 22.09.2026):** kein Season score, keine Zahl je Zeile, keine
 Vergleichswerte. Die Zahl bleibt auf der Kette und im Prüfer — nur die Anzeige ist weg.
+
+### 11.0b Memory log — nur im Tester-Build (Owner, 22.09.2026)
+
+Ein Eintrag in Settings, sichtbar nur, wenn dieser Build die Erinnerungsfrage stellt
+(`ASK_MEMORY`). Eine Zeile je gefragtem Eintrag, in Festbreite:
+
+```
+Memory log
+6 OCT · sealed 80 · remembered 65 · +14.2h
+7 OCT · sealed — · skipped · +2.1h
+```
+
+- **Datum** ist der Tag des Calls in UTC, dieselbe Schreibweise wie im Record.
+- **sealed** steht nur, wenn der Call aufgedeckt ist — vorher ist die Zahl die Notiz dieses
+  Telefons über eine Frage, die noch nicht gestellt wurde, und dann steht dort `—`.
+- **remembered** oder `skipped`; Überspringen ist eine Antwort über die Frage, kein fehlender Wert.
+- **+xh** ist der Abstand vom Absenden des Siegels bis zur beantworteten Frage.
+
+Ein Knopf: `Copy`, legt denselben Text in die Zwischenablage. **Kein Netzwerk, keine
+Wallet-Adresse, keine Sätze** — weder auf dem Schirm noch im Export.
 
 ### 11.1 Eingabe (E11)
 Erst die Seite, dann die Sicherheit — dieselben Daten wie vorher, andere Reihenfolge.

@@ -234,8 +234,21 @@ Noch nicht in Gebrauch, kommt mit Block B: `Reveal only`, `Example`.
 |---|---|
 | Record §4/§11.5, Erklärzeile | `Your side record counts calls. Your season score measures how sure you were.` — **ersatzlos gestrichen** (Owner, 22.09.2026). Sie erklärte den Season score mit, und den gibt es auf dem Schirm nicht mehr. Aus `copy.ts` und aus 03 entfernt; es kommt **keine** Zeile nach. |
 
+## J. Erste Stufe ohne Satz, und das Memory log (freigegeben 22.09.2026)
+
+| Ort | Text |
+|---|---|
+| Result, erste Stufe ohne Satz | `You sealed: Up.` / `You sealed: Down.` — die versiegelte Antwort ohne ihren Prozentteil, Seitenwort aus `copy.side`. Bei absichtlicher 50/50 steht dort nichts. |
+| Settings, nur Tester-Build | `Memory log` |
+| Settings, nur Tester-Build | `Copy` |
+
+Damit ist das GAP „Seite ohne Prozent" **geschlossen**.
+
+Die Zeilen des Logs selbst sind keine Prosa, sondern Felder: `sealed`, `remembered`, `skipped`
+und `+xh`. `sealed` und `remembered` stammen wörtlich aus der freigegebenen Zeile
+`You sealed {n}%. You remembered {m}%.`, `skipped` aus der Owner-Anweisung vom 22.09. Erfunden
+ist keines davon.
+
 ## GAP — offen, nicht erfunden
 
-| Ort | Was fehlt |
-|---|---|
-| Result, erste Stufe ohne Satz | Dort darf nur die Seite stehen, nicht die Sicherheit. 03 hat keine Zeile dafür, die eine Seite ohne Prozentzahl benennt — im Code steht deshalb das bloße freigegebene Wort (`Up` / `Down`). Eine richtige Zeile fehlt. |
+Zurzeit keines.

@@ -99,6 +99,7 @@ export default function App() {
             <Settings
               view={live.settings}
               backup={LIVE ? live.backup : null}
+              memoryLog={ASK_MEMORY && LIVE ? live.memoryLog : null}
               todayState={todayState}
               onTodayState={setTodayState}
               resultState={resultState}

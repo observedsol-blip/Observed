@@ -7,6 +7,7 @@ import { join } from "node:path";
 import { Keypair, PublicKey, type TransactionInstruction } from "@solana/web3.js";
 import { Session } from "../src/core/session.ts";
 import { copy } from "../src/copy.ts";
+import { memoryLogText } from "../src/core/memory.ts";
 import { MemoryStore } from "../src/core/store.ts";
 import { type Calendar, bytesToHex, hexToBytes } from "../src/chain/calendar.ts";
 import type { Entry, Round } from "../src/chain/layout.ts";
@@ -471,7 +472,11 @@ test("what you remembered is kept on this phone and comes back with the result",
   assert.equal(before.result?.ownConfidence, 80, "the seal on the input's own 50-100 scale");
 
   assert.equal(before.result?.memoryAsked, false, "not asked yet");
-  assert.equal(before.result?.sealedSide, "Up", "the side may be shown, the number may not");
+  assert.equal(
+    before.result?.sealedSide,
+    "You sealed: Up.",
+    "the side may be shown, the number may not",
+  );
 
   await session.remember(yesterday.roundId, 65);
   const after = await session.day();
@@ -515,7 +520,7 @@ test("what is written down carries the entry's own address and the moment", asyn
 
   const kept = JSON.parse((await store.get("remembered")) as string) as Record<
     string,
-    { confidence: number; atSeconds: number }
+    { confidence: number; atSeconds: number; roundId: number; sealedAt: number | null }
   >;
   const keys = Object.keys(kept);
   assert.equal(keys.length, 1, "one note, for one entry");
@@ -523,7 +528,14 @@ test("what is written down carries the entry's own address and the moment", asyn
   // another entry and gets its own note.
   assert.equal(keys[0].length >= 32, true);
   assert.notEqual(keys[0], String(yesterday.roundId));
-  assert.deepEqual(kept[keys[0]], { confidence: 65, atSeconds: now });
+  // The note carries what the memory log needs: which call, and how long after the seal the
+  // question was answered. Here nothing was sealed on this phone, so `sealedAt` is null.
+  assert.deepEqual(kept[keys[0]], {
+    confidence: 65,
+    atSeconds: now,
+    roundId: yesterday.roundId,
+    sealedAt: null,
+  });
 });
 
 test("the sentence reads on the same scale on both sides", () => {
@@ -533,4 +545,56 @@ test("the sentence reads on the same scale on both sides", () => {
     copy.memory.sealedAndRemembered(80, 65),
     "You sealed 80%. You remembered 65%.",
   );
+});
+
+
+/* ------------------------------------------------------------------------------------------
+ * The memory log — readable on the phone, and carrying nothing that is not about a call.
+ * ---------------------------------------------------------------------------------------- */
+
+test("the memory log names calls and never the wallet or a sentence", async () => {
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  fake.rounds.set(yesterday.roundId, makeRound(yesterday));
+  fake.entries.set(yesterday.roundId, revealedEntry(8_000));
+  const { session, store } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+
+  await session.day();
+  await session.remember(yesterday.roundId, 65);
+
+  const rows = await session.memoryLog();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].roundId, yesterday.roundId);
+  assert.equal(rows[0].remembered, 65);
+  assert.equal(rows[0].sealedConfidence, 80, "the call is open, so the seal may be shown");
+
+  const text = memoryLogText(rows);
+  assert.match(text, /Memory log/);
+  assert.match(text, /remembered 65/);
+  assert.equal(text.includes(walletKey.toBase58()), false, "no wallet address");
+  assert.equal(text.includes(sgtMint.toBase58()), false, "no mint either");
+});
+
+test("an unopened call shows no sealed number in the log", async () => {
+  // Same rule as the screen: before the reveal the number is this phone's note about a
+  // question that has not been asked yet.
+  const fake = new FakeChain();
+  const now = today.commitOpen + 60;
+  const { session, store } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+
+  await session.day();
+  await session.remember(today.roundId, 70);
+  const rows = await session.memoryLog();
+  assert.equal(rows.length, 1);
+  assert.equal(rows[0].sealedConfidence, null);
+  assert.match(memoryLogText(rows), /sealed —/);
+});
+
+test("a skipped question reads as skipped, not as a missing answer", () => {
+  const text = memoryLogText([
+    { roundId: 3, date: "27 SEP", sealedConfidence: 90, remembered: null, hoursAfterSeal: 14.5 },
+  ]);
+  assert.equal(text, "Memory log\n27 SEP · call 3 · sealed 90 · skipped · +14.5h");
 });
