@@ -65,13 +65,54 @@ export class Session {
   private secretBytes: Uint8Array | null = null;
   private sealing: Sealing | null = null;
   private draft: { roundId: number; pBps: number } | null = null;
+  /** Set once `restore()` has run, so it does not walk the store on every refresh. */
+  private restoreTried = false;
 
   constructor(deps: SessionDeps) {
     this.deps = deps;
   }
 
+  /**
+   * Picks the last session up again WITHOUT opening the wallet: the address from the store, the
+   * Genesis Token from the chain (a read), the secret from the keystore.
+   *
+   * Everything the evening screen shows can be had this way — the wallet is only needed to
+   * SIGN. Until 22.09.2026 the app asked for an authorisation before it drew anything at all,
+   * so a cold start showed an empty screen and a button where yesterday's answer should be.
+   *
+   * It creates nothing. No stored secret means there is nothing of this player's on this
+   * phone, and then the honest screen is the one that asks them to connect.
+   */
+  private async restore(): Promise<void> {
+    if (this.walletKey || this.restoreTried) return;
+    this.restoreTried = true;
+    const stored = await this.deps.wallet.storedAddress?.();
+    if (!stored) return;
+
+    const secrets = new SeasonSecret({
+      store: this.deps.store,
+      now: this.deps.now,
+      randomBytes: this.deps.randomBytes,
+    });
+    const kept = await secrets.stored();
+    if (!kept || kept.wallet !== stored.toBase58()) return;
+
+    const sgt = await findGenesisToken(
+      { tokenAccountsOf: (o) => this.deps.chain.tokenAccountsOf(o), accountData: (k) => this.deps.chain.accountData(k) },
+      stored,
+    );
+    if (!sgt.ok) return;
+
+    this.walletKey = stored;
+    this.sgtMint = sgt.mint;
+    this.sgtToken = sgt.tokenAccount;
+    this.secretBytes = hexToBytes(kept.secretHex);
+    this.sealing = this.makeSealing();
+  }
+
   /** Opens the wallet once, finds the Genesis Token, prepares the secret. */
   async connect(): Promise<{ ok: boolean; reason?: "no-sgt" }> {
+    this.restoreTried = true; // an explicit connect replaces whatever was stored
     const session = await this.deps.wallet.connect();
     this.walletKey = session.pubkey;
 
@@ -114,6 +155,7 @@ export class Session {
 
   /** What the two screens draw. One round trip to the chain. */
   async day(): Promise<DayState> {
+    await this.restore();
     const now = this.deps.now();
     if (!this.walletKey) {
       return { today: this.emptyToday(now), result: null, openReveals: 0, wallet: null, sgtMint: null, blocked: "no-wallet" };
@@ -367,6 +409,7 @@ export class Session {
    * zeros rather than with an invented empty state.
    */
   async record(): Promise<RecordView> {
+    await this.restore();
     const now = this.deps.now();
     if (!this.sgtMint) {
       return recordView({
@@ -468,6 +511,7 @@ export class Session {
 
   /** Settings: the addresses that decide what this game is, each read from its own account. */
   async settings(): Promise<SettingsView> {
+    await this.restore();
     const now = this.deps.now();
     const [config, upgradeAuthority] = await Promise.all([
       this.deps.chain.config(),

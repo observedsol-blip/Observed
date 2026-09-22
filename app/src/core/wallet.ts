@@ -19,6 +19,15 @@ export type WalletSession = {
 export interface Wallet {
   /** Opens the wallet, returns the session. Throws if the player declines. */
   connect(): Promise<WalletSession>;
+  /**
+   * The address of the last session, WITHOUT opening the wallet. Optional, because a fake in a
+   * test does not have to have one.
+   *
+   * This is the whole difference between a cold start that shows yesterday and one that shows
+   * an empty screen with a button. Reading the chain needs an address, not a signature, and the
+   * address of the last session is already on this phone.
+   */
+  storedAddress?(): Promise<PublicKey | null>;
   /** Signs and sends one transaction. Returns the signature. */
   signAndSend(instructions: TransactionInstruction[], payer: PublicKey): Promise<string>;
   /** Forgets the session. Called when the auth token is rejected. */

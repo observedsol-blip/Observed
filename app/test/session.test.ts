@@ -341,3 +341,98 @@ test("a shared sentence seals as hex text, and the reader finds it again", async
   const stored = JSON.parse((await store.get(`seal:${today.roundId}`)) ?? "{}");
   assert.equal(text, sealMemo(stored.salt, "Funding flipped negative overnight."));
 });
+
+/* ------------------------------------------------------------------------------------------
+ * A1 — the first screen without opening the wallet (owner, 22.09.2026).
+ * ---------------------------------------------------------------------------------------- */
+
+/** The same fake wallet, plus the address of the last session and a count of every opening. */
+function makeRestorable(fake: FakeChain, now: number, storedWallet: PublicKey | null) {
+  const store = new MemoryStore();
+  const opened = { connect: 0, sign: 0 };
+  const wallet = {
+    connect: async () => {
+      opened.connect += 1;
+      return { pubkey: walletKey, label: "Fake Vault" };
+    },
+    signAndSend: async () => {
+      opened.sign += 1;
+      return "sig";
+    },
+    disconnect: async () => {},
+    storedAddress: async () => storedWallet,
+  };
+  const session = new Session({
+    chain: chainFor(fake),
+    wallet,
+    store,
+    calendar: cal.rounds,
+    now: () => now,
+    randomBytes: async (n) => Uint8Array.from({ length: n }, (_, i) => (i * 7 + 1) % 256),
+  });
+  return { session, store, wallet, opened };
+}
+
+/** What a phone that has played before carries: the secret for exactly this wallet. */
+const keepSecret = async (store: MemoryStore, wallet: PublicKey, now: number) =>
+  store.set(
+    "secret",
+    JSON.stringify({ secretHex: "ab".repeat(32), wallet: wallet.toBase58(), createdAt: now }),
+  );
+
+test("a cold start draws the day without opening the wallet", async () => {
+  // The point of the change: the wallet is needed to SIGN, not to READ. Everything the evening
+  // screen shows can be had from the stored address, the keystore and a public RPC.
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  fake.rounds.set(yesterday.roundId, makeRound(yesterday));
+  const { session, store, opened } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+
+  const day = await session.day();
+
+  assert.equal(opened.connect, 0, "not one association with the wallet");
+  assert.equal(day.blocked, null, "the day is playable, not 'no-wallet'");
+  assert.equal(day.wallet?.toBase58(), walletKey.toBase58());
+  assert.ok(day.sgtMint, "the Genesis Token was found by reading, not by asking the wallet");
+});
+
+test("without a stored address the screen still asks for the wallet", async () => {
+  // A phone that has never played has nothing to restore, and inventing a state would be worse
+  // than the honest empty screen.
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  const { session, opened } = makeRestorable(fake, now, null);
+
+  const day = await session.day();
+
+  assert.equal(day.blocked, "no-wallet");
+  assert.equal(opened.connect, 0, "and it still does not open the wallet by itself");
+});
+
+test("a secret that belongs to another wallet is not picked up", async () => {
+  // Two wallets on one phone: the stored answers belong to whoever sealed them. Restoring the
+  // wrong pair would show one player another player's evening.
+  const fake = new FakeChain();
+  const now = yesterday.outcomeTime + 3_600;
+  const stranger = new PublicKey(Uint8Array.from(Array(32).fill(0x33)));
+  const { session, store } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, stranger, now);
+
+  assert.equal((await session.day()).blocked, "no-wallet");
+});
+
+test("sealing still needs the wallet after a restored start", async () => {
+  // The whole promise of the change is that NOTHING else moved: reading is free, signing is not.
+  const fake = new FakeChain();
+  const now = today.commitOpen + 60;
+  const { session, store, opened } = makeRestorable(fake, now, walletKey);
+  await keepSecret(store, walletKey, now);
+
+  await session.day();
+  assert.equal(opened.sign, 0);
+  await session.saveAnswer(today, 7_000);
+  await session.evening();
+  assert.equal(opened.sign, 1, "one signature, and it is the only time the wallet was used");
+  assert.equal(opened.connect, 0, "MWA associates inside signAndSend, not before");
+});
