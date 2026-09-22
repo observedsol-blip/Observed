@@ -8,6 +8,7 @@ import { Keypair, PublicKey, type TransactionInstruction } from "@solana/web3.js
 import { Session } from "../src/core/session.ts";
 import { copy } from "../src/copy.ts";
 import { memoryLogText } from "../src/core/memory.ts";
+import { mockResult } from "../src/mockViews.ts";
 import { MemoryStore } from "../src/core/store.ts";
 import { type Calendar, bytesToHex, hexToBytes } from "../src/chain/calendar.ts";
 import type { Entry, Round } from "../src/chain/layout.ts";
@@ -597,4 +598,29 @@ test("a skipped question reads as skipped, not as a missing answer", () => {
     { roundId: 3, date: "27 SEP", sealedConfidence: 90, remembered: null, hoursAfterSeal: 14.5 },
   ]);
   assert.equal(text, "Memory log\n27 SEP · call 3 · sealed 90 · skipped · +14.5h");
+});
+
+
+/* ------------------------------------------------------------------------------------------
+ * B1 — the example reveal on the very first start.
+ * ---------------------------------------------------------------------------------------- */
+
+test("the example is offered once and never again", async () => {
+  const fake = new FakeChain();
+  const now = today.commitOpen + 60;
+  const { session, opened } = makeRestorable(fake, now, null);
+
+  assert.equal(await session.introSeen(), false, "a fresh install has not seen it");
+  await session.markIntroSeen();
+  assert.equal(await session.introSeen(), true);
+  assert.equal(opened.connect, 0, "and it never asks the wallet for any of this");
+});
+
+test("the example needs neither a wallet nor a call on the chain", () => {
+  // It is the same Result screen, drawn from the design states — nothing is read and nothing
+  // is invented about this player.
+  const view = mockResult("called");
+  assert.ok(view);
+  assert.match(view.verdict, /You called the side\./);
+  assert.equal(view.others.length, 0);
 });

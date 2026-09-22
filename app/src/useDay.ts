@@ -26,6 +26,8 @@ export function useDay(config: LiveConfig | null) {
   const [error, setError] = useState<string | null>(null);
   const [others, setOthers] = useState<string[]>([]);
   const [memoryLog, setMemoryLog] = useState<MemoryLogRow[]>([]);
+  /** null while it is being read: the example must not flash on a start that has seen it. */
+  const [introSeen, setIntroSeen] = useState<boolean | null>(null);
 
   // The session is built once, from the config. No wallet is opened here.
   useEffect(() => {
@@ -98,6 +100,17 @@ export function useDay(config: LiveConfig | null) {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (!session) return;
+    void session.introSeen().then(setIntroSeen);
+  }, [session]);
+
+  const dismissIntro = useCallback(async () => {
+    if (!session) return;
+    setIntroSeen(true);
+    await session.markIntroSeen();
+  }, [session]);
 
   const connect = useCallback(async () => {
     if (!session) return;
@@ -221,6 +234,7 @@ export function useDay(config: LiveConfig | null) {
 
   return {
     day: dayWithOthers, record, settings, memoryLog, busy, error, reminders,
+    introSeen, dismissIntro,
     connect, save, seal, refresh, loadRecord, loadSettings, backup, remember,
   };
 }

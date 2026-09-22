@@ -10,6 +10,7 @@ import Result from './src/screens/Result';
 import Record from './src/screens/Record';
 import Settings from './src/screens/Settings';
 import Diagnostics from './src/screens/Diagnostics';
+import SampleBanner from './src/components/SampleBanner';
 import { useObservedFonts } from './src/fonts';
 import { color } from './src/tokens';
 import { mockResult, mockToday, type DesignState, type ResultDesignState } from './src/mockViews';
@@ -48,6 +49,17 @@ export default function App() {
   const [resultState, setResultState] = useState<ResultDesignState>('called');
 
   const live = useDay(LIVE);
+
+  /**
+   * The very first start has nothing of its own to show: no seal, no outcome, no record. So it
+   * shows one worked example instead — the same Result screen, drawn from `mockViews`, under a
+   * banner that says what it is. No chain call, no wallet, and it is over the moment the player
+   * goes anywhere else (owner, 22.09.2026).
+   */
+  const showExample = LIVE !== null && live.introSeen === false;
+  useEffect(() => {
+    if (showExample) setArea('Result');
+  }, [showExample]);
 
   // Record and Settings cost their own reads, so they are fetched when their screen opens.
   const { loadRecord, loadSettings } = live;
@@ -118,11 +130,18 @@ export default function App() {
               }}
             />
           ) : area === 'Result' ? (
-            <Result
-              view={resultView}
-              memoryQuestion={ASK_MEMORY}
-              onRemember={LIVE ? live.remember : undefined}
-            />
+            showExample ? (
+              <>
+                <SampleBanner text="Example" />
+                <Result view={mockResult('called')} />
+              </>
+            ) : (
+              <Result
+                view={resultView}
+                memoryQuestion={ASK_MEMORY}
+                onRemember={LIVE ? live.remember : undefined}
+              />
+            )
           ) : (
             <Record view={live.record ?? emptyRecord} hideUnrevealedAnswer={ASK_MEMORY} />
           )}
@@ -131,6 +150,9 @@ export default function App() {
         <TabBar
           active={onSettings ? null : area}
           onChange={(next) => {
+            // Leaving the example is how it ends — no extra word for "skip", because there is
+            // no approved one and the tab bar already says "go somewhere else".
+            if (showExample) void live.dismissIntro();
             setOnSettings(false);
             setArea(next);
           }}

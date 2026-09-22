@@ -66,6 +66,8 @@ export type DayState = {
  * anything later (owner, 22.09.2026).
  */
 const REMEMBERED_KEY = "remembered";
+/** Set the first time the player leaves the example behind. One line, one install. */
+const INTRO_KEY = "intro-seen";
 type RememberedNote = {
   confidence: number | null;
   atSeconds: number;
@@ -605,6 +607,19 @@ export class Session {
         return entry.pBps >= 5_000 ? entry.pBps / 100 : (10_000 - entry.pBps) / 100;
       },
     });
+  }
+
+  /**
+   * Whether the example reveal has already been shown. It costs no chain call and no wallet:
+   * the first start has nothing of its own to show yet, and an empty Result on day one teaches
+   * nobody what the evening is for.
+   */
+  async introSeen(): Promise<boolean> {
+    return (await this.deps.store.get(INTRO_KEY)) === "1";
+  }
+
+  async markIntroSeen(): Promise<void> {
+    await this.deps.store.set(INTRO_KEY, "1");
   }
 
   async settings(): Promise<SettingsView> {
