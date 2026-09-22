@@ -9,7 +9,7 @@ import { resultView, sideRecord, streakOf, todayView } from "../src/core/day.ts"
 import { type Calendar, hexToBytes } from "../src/chain/calendar.ts";
 import type { Entry, Round } from "../src/chain/layout.ts";
 import type { SealRecord } from "../src/core/records.ts";
-import { ENTRY_RENT_LAMPORTS } from "../src/core/funding.ts";
+import { ENTRY_RENT_LAMPORTS, PLAYER_RENT_LAMPORTS, lastDepositBack, solText } from "../src/core/funding.ts";
 import { RoundStatus } from "../src/chain/ids.ts";
 
 const cal: Calendar = JSON.parse(
@@ -295,4 +295,59 @@ test("an evening that only reveals does not ask for rent that was already paid",
   });
   assert.equal(withEntry.phase, "open");
   assert.equal(withEntry.phase === "open" && withEntry.blocked, undefined, "nothing to top up");
+});
+
+/* ------------------------------------------------------------------------------------------
+ * A5 — what the deposit is, said before the wallet sheet opens (owner, 22.09.2026).
+ * ---------------------------------------------------------------------------------------- */
+
+test("the deposit line carries the amount the account size produces", () => {
+  // 184 bytes + 128 overhead, 6960 lamports per byte: 2 171 520 → 0.0022 SOL. If the Entry ever
+  // grows, this line has to move with it, and it does, because nothing here is typed by hand.
+  assert.equal(solText(ENTRY_RENT_LAMPORTS), "0.0022");
+  assert.equal(solText(PLAYER_RENT_LAMPORTS), "0.0013");
+  assert.equal(
+    copy.deposit.line(solText(ENTRY_RENT_LAMPORTS), "30 DEC"),
+    "No stakes. A 0.0022 SOL deposit comes back to this wallet by 30 DEC.",
+  );
+  assert.equal(
+    copy.deposit.firstCall(solText(PLAYER_RENT_LAMPORTS)),
+    "Your first call also opens your record: 0.0013 SOL, once, not returned.",
+  );
+});
+
+test("the date comes from the calendar, not from a string", () => {
+  // The last entry of the season closes 30 days after its reveal window; the floor of 9 Nov
+  // only binds the early ones. Reading it off the calendar means the line cannot go stale.
+  const last = lastDepositBack(cal.rounds, 72 * 3600);
+  assert.equal(new Date(last * 1000).toISOString().slice(0, 10), "2026-12-30");
+});
+
+test("only the very first call is told about the account that stays", () => {
+  const open = todayView({
+    now: cal.rounds[0].commitOpen + 60,
+    calendar: cal.rounds,
+    record: null,
+    draftPBps: null,
+    openReveals: 0,
+    hasGenesisToken: true,
+    balanceLamports: 50_000_000,
+    hasPlayerAccount: false,
+  });
+  assert.equal(open.phase, "open");
+  if (open.phase !== "open") return;
+  assert.match(open.deposit, /No stakes\. A 0\.0022 SOL deposit/);
+  assert.match(open.firstCall ?? "", /0\.0013 SOL, once, not returned/);
+
+  const later = todayView({
+    now: cal.rounds[0].commitOpen + 60,
+    calendar: cal.rounds,
+    record: null,
+    draftPBps: null,
+    openReveals: 0,
+    hasGenesisToken: true,
+    balanceLamports: 50_000_000,
+    hasPlayerAccount: true,
+  });
+  assert.equal(later.phase === "open" ? later.firstCall : "x", null, "said once, not every evening");
 });

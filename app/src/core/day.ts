@@ -8,7 +8,15 @@ import type { CalendarRound } from "../chain/calendar.ts";
 import type { Entry, Round } from "../chain/layout.ts";
 import { copy } from "../copy.ts";
 import type { SealRecord } from "./records.ts";
-import { checkFunding, needAboutSol } from "./funding.ts";
+import {
+  ENTRY_RENT_LAMPORTS,
+  PLAYER_RENT_LAMPORTS,
+  checkFunding,
+  lastDepositBack,
+  needAboutSol,
+  solText,
+} from "./funding.ts";
+import { REVEAL_WINDOW_SECS } from "../chain/ids.ts";
 import { outcomeFor } from "./revealing.ts";
 
 export type TodayView =
@@ -26,8 +34,20 @@ export type TodayView =
       sealedAt?: number;
       blocked?: { kind: "no-sgt"; text: string } | { kind: "no-sol"; title: string; body: string };
       openReveals: number;
+      /** What the deposit is, shown before the wallet sheet opens. */
+      deposit: string;
+      /** Only before the very first seal: the amount that does not come back. Null otherwise. */
+      firstCall: string | null;
     }
   | { phase: "sealed"; roundId: number; question: string; sealedAt: number; openReveals: number };
+
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+
+/** "30 Dec" — the same day the record's list writes, in UTC, shorter. */
+const shortDay = (unixSeconds: number) => {
+  const d = new Date(unixSeconds * 1000);
+  return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]}`;
+};
 
 export function todayView(args: {
   now: number;
@@ -44,6 +64,11 @@ export function todayView(args: {
    * (audit 21.09.2026, finding 8).
    */
   entryExists?: boolean;
+  /**
+   * Whether this wallet already has a Player account on chain. Only the very first seal pays
+   * for it, and only the very first seal is told about it.
+   */
+  hasPlayerAccount?: boolean;
 }): TodayView {
   const round = args.calendar.find((r) => args.now >= r.commitOpen && args.now < r.commitClose);
   if (!round) {
@@ -61,6 +86,7 @@ export function todayView(args: {
     };
   }
   const pBps = args.draftPBps ?? args.record?.pBps ?? null;
+  const backBy = lastDepositBack(args.calendar, REVEAL_WINDOW_SECS);
   const funding = checkFunding({
     balanceLamports: args.balanceLamports,
     needsNewEntry: args.entryExists !== true,
@@ -73,6 +99,9 @@ export function todayView(args: {
     pBps,
     confidence: pBps === null ? null : copy.confidence(pBps),
     sentenceHeading: copy.sentence.headingFor(pBps ?? 5_000),
+    deposit: copy.deposit.line(solText(ENTRY_RENT_LAMPORTS), shortDay(backBy)),
+    firstCall:
+      args.hasPlayerAccount === false ? copy.deposit.firstCall(solText(PLAYER_RENT_LAMPORTS)) : null,
     blocked: !args.hasGenesisToken
       ? { kind: "no-sgt", text: copy.noGenesisToken }
       : funding.ok

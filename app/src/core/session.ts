@@ -171,10 +171,13 @@ export class Session {
       (r) => now >= r.commitOpen - 60 && now < r.outcomeTime + REVEAL_WINDOW_SECS,
     );
     const ids = openCalls.map((r) => r.roundId);
-    const [rounds, entries, balance] = await Promise.all([
+    const [rounds, entries, balance, player] = await Promise.all([
       this.deps.chain.rounds(ids),
       this.deps.chain.entries(ids, this.sgtMint),
       this.deps.chain.balance(this.walletKey),
+      // One more account read, in the same batch: only the very first seal pays for the Player
+      // account, and only the very first seal should be told what it costs.
+      this.deps.chain.player(this.sgtMint),
     ]);
     const records = await this.sealing!.all();
 
@@ -200,6 +203,7 @@ export class Session {
         balanceLamports: balance,
         // Rent is only owed for an entry that does not exist yet.
         entryExists: sealable ? entries.has(sealable.roundId) : false,
+        hasPlayerAccount: player !== null,
       }),
       result: await this.latestResult(rounds, entries, records),
       openReveals: revealables.length,

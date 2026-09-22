@@ -5,6 +5,7 @@
 // round in docs/03-SCREEN-MAP.md ("Beispielzahlen") — a real call of the real calendar.
 import type { ResultView, TodayView } from "./core/day.ts";
 import { copy } from "./copy.ts";
+import { ENTRY_RENT_LAMPORTS, PLAYER_RENT_LAMPORTS, solText } from "./core/funding.ts";
 
 export type DesignState =
   | "open"
@@ -26,8 +27,8 @@ export function mockToday(state: DesignState): TodayView {
     case "sealed":
       return { phase: "sealed", roundId: 11, question: QUESTION, sealedAt: 0, openReveals: 0 };
     default: {
-      const base: TodayView = {
-        phase: "open",
+      const base = {
+        phase: "open" as const,
         roundId: 11,
         question: QUESTION,
         context: null,
@@ -35,6 +36,8 @@ export function mockToday(state: DesignState): TodayView {
         confidence: null,
         sentenceHeading: copy.sentence.headingFor(5_000),
         openReveals: state === "open_with_reveals" ? 2 : 0,
+        deposit: copy.deposit.line(solText(ENTRY_RENT_LAMPORTS), "30 DEC"),
+        firstCall: copy.deposit.firstCall(solText(PLAYER_RENT_LAMPORTS)),
       };
       if (state === "open_no_sol") {
         return { ...base, blocked: { kind: "no-sol", title: copy.notEnoughSol.title(0.003), body: copy.notEnoughSol.body } };

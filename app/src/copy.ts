@@ -124,6 +124,21 @@ export const copy = {
     unlockAt: 20,
   },
 
+  /**
+   * What the deposit is, said BEFORE the wallet sheet opens (owner, 22.09.2026).
+   *
+   * Both amounts are handed in, never written into the text: they come from the account sizes
+   * in core/funding.ts, and the date comes from the calendar. A number typed into a string is a
+   * number that goes stale without anybody noticing.
+   */
+  deposit: {
+    line: (sol: string, backBy: string) =>
+      `No stakes. A ${sol} SOL deposit comes back to this wallet by ${backBy}.`,
+    /** Only before the very first seal: the one amount that does not come back. */
+    firstCall: (sol: string) =>
+      `Your first call also opens your record: ${sol} SOL, once, not returned.`,
+  },
+
   /** §2 — the states that block sealing. */
   notEnoughSol: {
     title: (needSol: number) => `Not enough SOL to seal · you need about ${needSol} SOL`,

@@ -7,8 +7,35 @@
 export const LAMPORTS_PER_SOL = 1_000_000_000;
 /** Rent-exemption of one Entry: (184 + 128) × 6960 lamports. It comes back when the call closes. */
 export const ENTRY_RENT_LAMPORTS = (184 + 128) * 6_960;
+/**
+ * Rent-exemption of the Player account: (65 + 128) × 6960 lamports. Paid once, with the very
+ * first seal — and it does NOT come back: the program has no instruction that closes a Player
+ * (there is exactly one `close =` in lib.rs, and it belongs to the Entry). That is the one
+ * amount a player really spends, so it is said out loud instead of hidden in a fee estimate.
+ */
+export const PLAYER_RENT_LAMPORTS = (65 + 128) * 6_960;
 /** Base fee plus room for a priority fee on a busy evening. */
 export const FEE_HEADROOM_LAMPORTS = 300_000;
+
+/** `0.0022` — two significant digits, the way the deposit lines write an amount. */
+export const solText = (lamports: number) =>
+  (Math.round((lamports / LAMPORTS_PER_SOL) * 10_000) / 10_000).toFixed(4);
+
+/**
+ * "30 Dec" — the day the LAST entry of the season can be closed, which is the honest answer to
+ * "when do I get it back". Derived from the calendar, never written down twice: each round may
+ * be closed at `max(reveal_close + close_after_secs, earliest_close_unix)` (lib.rs:445-450).
+ */
+export function lastDepositBack(
+  calendar: { outcomeTime: number; closeAfterSecs: number; earliestCloseUnix: number }[],
+  revealWindowSecs: number,
+): number {
+  return calendar.reduce(
+    (latest, r) =>
+      Math.max(latest, Math.max(r.outcomeTime + revealWindowSecs + r.closeAfterSecs, r.earliestCloseUnix)),
+    0,
+  );
+}
 
 export type FundingCheck = {
   ok: boolean;

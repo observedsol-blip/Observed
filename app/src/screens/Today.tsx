@@ -156,6 +156,13 @@ export default function Today({
               </Label>
             </Block>
           ) : null}
+          {/* What it costs, before the wallet sheet — never after (03 §2). */}
+          <Block top={0}>
+            <Label style={{ color: color.meta }}>{view.deposit}</Label>
+            {view.firstCall ? (
+              <Label style={{ color: color.meta, marginTop: space.xs }}>{view.firstCall}</Label>
+            ) : null}
+          </Block>
           <PrimaryButton
             label={copy.button.sealToday}
             disabled={!ready || busy}
