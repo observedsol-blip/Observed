@@ -272,5 +272,16 @@ noch, der Änderungsvorschlag liegt in `docs/spec-patch-cost.md`.
 
 ## GAP — offen, nicht erfunden
 
-Zurzeit keines. Die Seitenwörter für Bewegungs- und Zwei-Feed-Fragen sind seit dem 22.09.
-freigegeben und eingetragen.
+| Ort | Was fehlt | Vorschlag |
+|---|---|---|
+| Seiten einer **Schwellenfrage** (`ABOVE` mit Offset ≠ 0, z. B. „SOL mehr als +1 %") | Es gibt kein Paar dafür. Heute bekommt sie `Up` / `Down`, und das benennt das Falsche: gefragt ist nicht die Richtung, sondern ob eine Schwelle überschritten wird. | **`Above` / `Below`** — vom Owner vorgeschlagen, **noch nicht freigegeben**. Bis dahin bleibt `Up` / `Down` im Code. |
+
+Die Richtungsfrage (Offset 0) behält `Up` / `Down` in jedem Fall.
+
+Vorbereitet ist: `copy.sides(kind, feeds)` löst das Paar schon heute je Frageart auf, und
+`app/test/day.test.ts` hält den heutigen Zustand für eine echte Freitagsrunde aus v3b fest — mit
+der Zeile daneben, die er wird, sobald die Freigabe da ist. Es ist genau eine Bedingung in
+`copy.sides` und eine Zeile im Test.
+
+Die Seitenwörter für Bewegungs- und Zwei-Feed-Fragen sind seit dem 22.09. freigegeben und
+eingetragen.

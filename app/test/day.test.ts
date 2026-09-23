@@ -393,3 +393,23 @@ test("an event day in the real calendar gets the movement words", () => {
   assert.ok(direction);
   assert.deepEqual(sidesOf(direction), { up: "Up", down: "Down" });
 });
+
+test("a threshold question still says Up/Down — the words for it are not decided", () => {
+  // v3b's Friday is `SOL more than +1 %`: an ABOVE question with a threshold, which is neither
+  // a direction ("higher?") nor a movement ("moves at all?"). `Above` / `Below` is proposed for
+  // it and NOT approved yet, so nothing has been switched on — this test pins what the app does
+  // today, and is the one line that flips when the decision comes (GAP in COPY-NEUE-TEILE).
+  const v3b: Calendar = JSON.parse(
+    readFileSync(
+      join(import.meta.dirname, "../../tests/fixtures/calendar/season1-v3b.json"),
+      "utf8",
+    ),
+  );
+  const friday = v3b.rounds.find((r) => r.kind === 0 && r.offsetBps === 100);
+  assert.ok(friday, "v3b has a threshold question");
+  assert.match(friday.question, /more than 1% above its 04:02 price/);
+
+  assert.deepEqual(sidesOf(friday), { up: "Up", down: "Down" }, "today: the direction pair");
+  // When it is approved, this is what it becomes:
+  //   assert.deepEqual(sidesOf(friday), { up: "Above", down: "Below" });
+});

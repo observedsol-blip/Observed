@@ -304,6 +304,11 @@ Die zwei Antworten heißen nicht in jeder Frage gleich:
 | Richtung (`kind = 0`) | `Up` | `Down` |
 | Bewegung (`kind = 1`) | `Moves` | `Stays` |
 | Zwei Feeds (`kind = 2`) | der erste Feed, z. B. `SOL` | der zweite, z. B. `ETH` |
+| Schwelle (`kind = 0`, Offset ≠ 0) | **offen** — Vorschlag `Above` | **offen** — Vorschlag `Below` |
+
+Die Schwellenfrage („SOL mehr als +1 %") hat noch kein freigegebenes Paar und bekommt bis dahin
+`Up` / `Down`. Das benennt das Falsche — gefragt ist nicht die Richtung, sondern ob eine
+Schwelle überschritten wird — und steht deshalb als GAP in `COPY-NEUE-TEILE.md`.
 
 Eine Bewegungsfrage hat kein Oben und kein Unten — die zwei Antworten sind „sie bewegt sich so
 weit" und „sie tut es nicht". Sie `Up`/`Down` zu nennen benennt das Falsche.
