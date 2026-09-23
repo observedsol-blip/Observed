@@ -32,6 +32,33 @@ cargo test --test observed        # 2. alle Programmtests (46)
 cargo test --test season          # 3. Saisonlauf (64 Runden, 20 Geräte, ~37 s)
 cargo clippy --all-targets -- -D warnings
 ```
+**Der Kalenderschritt.** Er gehört dazu, und er ist für beide Kalender derselbe Befehl — der
+Generator rechnet die Wurzel aus den Regeln neu und vergleicht sie mit der erwarteten. Weicht
+sie ab, bricht er ab.
+
+```
+# die Saison, wie sie heute steht (Start Do 24.09.)
+node services/calendar/generate.mjs --season 1 --start 2026-09-24 --leaves 64 \
+  --check 5ae91bdab786e6a040ba91664223a03ff4f85f57474606ded064dff780d08c89
+
+# der Kandidat v3b (Start Sa 26.09., eine Frageart je Wochentag) — NICHT veröffentlicht
+node services/calendar/generate.mjs --season 1 --start 2026-09-26 --leaves 64 --rotation v3b \
+  --check 1e95c80370fc64f18791cdd70c938a6d16402a0e66b0fc9019a1c16074736ce5
+```
+
+Danach muss `git status` sauber sein. Ist es das nicht, hat sich der erzeugte Kalender geändert,
+und dann ist die Frage nicht „welche Wurzel", sondern „warum".
+
+**Es gibt drei Kandidaten, und nur einer ist im Repo veröffentlichungsfertig:**
+
+| | Start | Rotation | Wurzel | im Repo |
+|---|---|---|---|---|
+| **v3** | Do 24.09. | wie bisher | `5ae91bda…0d08c89` | ja, `season1.json` |
+| v3 mit Samstagsstart | Sa 26.09. | wie bisher | `55bf584e…acf8c80` | nein, nur reproduzierbar |
+| **v3b** | Sa 26.09. | eine Art je Wochentag | `1e95c803…4736ce5` | ja, `season1-v3b.json`, **Kandidat** |
+
+`publish_calendar` nimmt genau **eine** Wurzel. Welche, ist eine Entscheidung, keine Ableitung.
+
 Erst wenn alle vier grün sind, geht es weiter. **Was getestet wurde, wird deployt — dieselbe
 Datei, nicht ein neuer Build.** Mit `--features mainnet` ändert sich das Binary allerdings
 (DEPLOY_AUTHORITY), also gilt: erst 1a, dann bauen, dann testen, dann deployen, ohne noch einmal

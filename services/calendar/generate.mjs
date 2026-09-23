@@ -34,6 +34,26 @@ const FEEDS = {
  *  inside the 25 bps band in 15 % of cases for SOL but 25 % for ETH and 37 % for BTC. */
 const WEEKDAY_DIRECTION = ["SOL", "BTC", "ETH"];
 const WEEKEND_DIRECTION = ["SOL"];
+/**
+ * v3b — a CANDIDATE, not a replacement (owner, 23.09.2026). Nothing about it is published; it
+ * exists so the two can be compared on the same measured year before the calendar is fixed.
+ *
+ * One question kind per weekday of the MEASURED day, on the feeds the season already uses.
+ * Event days win over the slot, exactly as they do in v3 — so a Wednesday that is also a CPI
+ * day is the movement question on BTC, not the Wednesday slot.
+ *
+ * `--rotation v3b` selects it and writes `season<N>-v3b.json`. Without the flag not one byte of
+ * v3 changes, and `npm run …`-style regeneration of v3 is expected to leave git clean.
+ */
+const ROTATION_V3B = {
+  1: { feed: "BTC", kind: 0, offsetBps: 0 },    // Mo  BTC direction
+  2: { feed: "SOL", kind: 0, offsetBps: 0 },    // Di  SOL direction
+  3: { feed: "SOL", kind: 1, offsetBps: 150 },  // Mi  SOL movement > 1.5 %
+  4: { feed: "ETH", kind: 0, offsetBps: 0 },    // Do  ETH direction
+  5: { feed: "SOL", kind: 0, offsetBps: 100 },  // Fr  SOL more than +1 %
+  6: { feed: "SOL", kind: 0, offsetBps: 0 },    // Sa  SOL direction
+  0: { feed: "SOL", kind: 0, offsetBps: 0 },    // So  SOL direction
+};
 /** Event days keep the movement question with a context line: on those days something happens
  *  inside the measured window, and "how far" is the more interesting question than "which way".
  *  1.7 %, because on the twelve jobs-report Fridays of the past year BTC and ETH moved more than
@@ -149,6 +169,11 @@ const startDay = arg("start", "2026-09-24"); // day of the first commit window, 
 const leafCount = Number(arg("leaves", LEAVES));
 const firstRoundId = Number(arg("first-round", 0));
 const expectRoot = arg("check", null);
+/** `v3` (the season's own rotation) or `v3b` (the candidate). Anything else is refused. */
+const rotation = arg("rotation", "v3");
+if (!["v3", "v3b"].includes(rotation)) throw new Error("--rotation must be v3 or v3b");
+/** The candidate writes beside v3, never over it. */
+const suffix = rotation === "v3" ? "" : `-${rotation}`;
 
 if (!/^\d{4}-\d{2}-\d{2}$/.test(startDay)) throw new Error("--start must be YYYY-MM-DD");
 if (leafCount < 1 || leafCount > LEAVES) throw new Error("--leaves must be 1..64");
@@ -171,13 +196,16 @@ for (let i = 0; i < leafCount; i++) {
   const event = EVENT_DAYS[measuredDate];
   // Event days keep their feed no matter where the rotation stands, and they do not consume a
   // rotation step — the standard rounds keep cycling as if the event day were not there.
+  const slot = rotation === "v3b" ? ROTATION_V3B[measured.getUTCDay()] : null;
   const key = event
     ? event.feed
-    : weekend
-      ? WEEKEND_DIRECTION[weekendN++ % WEEKEND_DIRECTION.length]
-      : WEEKDAY_DIRECTION[weekdayN++ % WEEKDAY_DIRECTION.length];
-  const kind = event ? KIND_MOVE : KIND_ABOVE;
-  const offsetBps = event ? EVENT_OFFSET_BPS : 0;
+    : slot
+      ? slot.feed
+      : weekend
+        ? WEEKEND_DIRECTION[weekendN++ % WEEKEND_DIRECTION.length]
+        : WEEKDAY_DIRECTION[weekdayN++ % WEEKDAY_DIRECTION.length];
+  const kind = event ? KIND_MOVE : slot ? slot.kind : KIND_ABOVE;
+  const offsetBps = event ? EVENT_OFFSET_BPS : slot ? slot.offsetBps : 0;
   const feed = FEEDS[key];
   const terms = {
     season,
@@ -207,9 +235,12 @@ for (let i = 0; i < leafCount; i++) {
     measuredDay: `${DAYS[measured.getUTCDay()]} ${measured.toISOString().slice(0, 10)}`,
     // Informational only; the client builds the sentence from docs/03-SCREEN-MAP.md.
     // "more than" is strict in the program: exactly x % is No.
-    question: event
-      ? `Will ${key} move more than ${offsetBps / 100}% up or down between 04:02 and 16:00 UTC on ${measuredDate}?`
-      : `Will ${key} be higher at 16:00 than at 04:02 UTC on ${measuredDate}?`,
+    question:
+      kind === KIND_MOVE
+        ? `Will ${key} move more than ${offsetBps / 100}% up or down between 04:02 and 16:00 UTC on ${measuredDate}?`
+        : offsetBps === 0
+          ? `Will ${key} be higher at 16:00 than at 04:02 UTC on ${measuredDate}?`
+          : `Will ${key} be more than ${offsetBps / 100}% above its 04:02 price at 16:00 UTC on ${measuredDate}?`,
     // display only, never hashed; the client takes the wording from docs/03-SCREEN-MAP.md
     context: event ? event.context : null,
     revealCloseUtc: new Date((outcomeTime + REVEAL_WINDOW_SECS) * 1000).toISOString(),
@@ -235,6 +266,9 @@ const out = {
   generatedBy: "services/calendar/generate.mjs",
   note: "Review this file before anything goes on chain. publish_calendar takes season, root and leafCount only.",
   season,
+  // Only the candidate says so. v3 must keep producing byte-for-byte the file that is already
+  // in the repo, or a diff appears the day before a deploy for no reason at all.
+  ...(rotation === "v3" ? {} : { rotation }),
   startDay,
   leafCount,
   firstRoundId,
@@ -247,8 +281,14 @@ const out = {
     maxAgeSecs: MAX_AGE_SECS,
     maxConfBps: MAX_CONF_BPS,
     bandBps: BAND_BPS,
-    weekday: WEEKDAY_DIRECTION.join(", ") + " (direction, no threshold)",
-    weekend: WEEKEND_DIRECTION.join(", ") + " (direction, no threshold)",
+    weekday:
+      rotation === "v3b"
+        ? "one kind per weekday (v3b candidate)"
+        : WEEKDAY_DIRECTION.join(", ") + " (direction, no threshold)",
+    weekend:
+      rotation === "v3b"
+        ? "SOL direction (v3b candidate)"
+        : WEEKEND_DIRECTION.join(", ") + " (direction, no threshold)",
     eventDays: Object.entries(EVENT_DAYS).map(([d, e]) => `${d} ${e.feed} ${EVENT_OFFSET_BPS / 100}% — ${e.context}`),
     times: "commit 16:00–04:00 UTC, reference 04:02, outcome 16:00, reveal 72 h after the outcome",
   },
@@ -259,15 +299,17 @@ const out = {
 };
 mkdirSync(join(ROOT, "tests/fixtures/calendar"), { recursive: true });
 mkdirSync(join(ROOT, "docs/generated"), { recursive: true });
-const jsonPath = join(ROOT, `tests/fixtures/calendar/season${season}.json`);
+const jsonPath = join(ROOT, `tests/fixtures/calendar/season${season}${suffix}.json`);
 writeFileSync(jsonPath, `${JSON.stringify(out, null, 2)}\n`);
 
 const md = [
   `# Calendar season ${season} — generated, review before publishing`,
   "",
-  `Generator: \`node services/calendar/generate.mjs --season ${season} --start ${startDay} --leaves ${leafCount}\``,
+  `Generator: \`node services/calendar/generate.mjs --season ${season} --start ${startDay} --leaves ${leafCount}${rotation === "v3" ? "" : ` --rotation ${rotation}`}\``,
   `Rules: terms v${VERSION}; standard question "direction" (threshold 0, strict, equality is No); source: sponsored Pyth account (upgraded stack), W = ${WINDOW_SECS} s, A = ${MAX_AGE_SECS} s, max_conf_bps ${MAX_CONF_BPS}, measurement band ${BAND_BPS} bps.`,
-  `Mon–Fri rotate ${WEEKDAY_DIRECTION.join(", ")}; Sat/Sun ${WEEKEND_DIRECTION.join(", ")} only.`,
+  rotation === "v3b"
+    ? "v3b CANDIDATE — one question kind per weekday: Mon BTC direction, Tue SOL direction, Wed SOL movement > 1.5 %, Thu ETH direction, Fri SOL more than +1 %, Sat/Sun SOL direction. Nothing here is published."
+    : `Mon–Fri rotate ${WEEKDAY_DIRECTION.join(", ")}; Sat/Sun ${WEEKEND_DIRECTION.join(", ")} only.`,
   `Event days (movement, ${EVENT_OFFSET_BPS / 100} %): ${Object.entries(EVENT_DAYS).map(([d, e]) => `${d} ${e.feed}`).join(", ")}. The context line is display only and not part of the hash.`,
   "Times (UTC): commit 16:00–04:00, reference 04:02 (two minutes after sealing closes), outcome 16:00, reveal for 72 h after the outcome.",
   `Unused leaves: sha256(0x00 || [0;32]) = ${out.emptyLeaf}`,
@@ -280,7 +322,7 @@ const md = [
   ...rounds.map((r) => `| ${r.roundId} | ${r.measuredDay} | ${r.feed} | ${r.kind === KIND_ABOVE ? "higher?" : `more than ±${r.offsetBps / 100} % — ${r.context}`} | \`${r.priceAccount}\` | \`${r.termsHash}\` |`),
   "",
 ].join("\n");
-const mdPath = join(ROOT, `docs/generated/CALENDAR-season${season}.md`);
+const mdPath = join(ROOT, `docs/generated/CALENDAR-season${season}${suffix}.md`);
 writeFileSync(mdPath, md);
 
 console.log(`season ${season}: ${leafCount} rounds, first window ${startDay} 16:00 UTC → last outcome ${out.lastOutcomeUtc}`);
