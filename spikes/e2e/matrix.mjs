@@ -102,7 +102,11 @@ mkdirSync(join(DIR, "accounts"), { recursive: true });
 const player = Keypair.fromSeed(Uint8Array.from(Array(32).fill(7)));
 const authority = Keypair.fromSeed(Uint8Array.from(Array(32).fill(1))); // DEPLOY_AUTHORITY
 const PLAYER_FILE = join(DIR, "player.json");
+// The same deterministic test key the run already uses, on disk for the published script to
+// sign with. It lives in the run directory and goes with it; nothing is generated here.
+const AUTHORITY_FILE = join(DIR, "authority.json");
 writeFileSync(PLAYER_FILE, JSON.stringify([...player.secretKey]), { mode: 0o600 });
+writeFileSync(AUTHORITY_FILE, JSON.stringify([...authority.secretKey]), { mode: 0o600 });
 
 const accounts = [];
 for (const name of ["sgt/sgt-group", "sgt/sgt-mint"]) {
@@ -336,6 +340,15 @@ async function setup() {
       i64(r.commitOpen), i64(r.commitClose), i64(r.referenceTime), i64(r.outcomeTime),
     ]);
     const proof = Buffer.concat([u32(r.proof.length), ...r.proof.map((p) => Buffer.from(p, "hex"))]);
+    // The LAST round is created by the script the README hands to strangers, not by this
+    // harness. A page that says "anyone can do this" is worth nothing until the commands on it
+    // have been run against the real program — so they are, on every matrix run.
+    if (r.roundId === plan.rounds[plan.rounds.length - 1].roundId) {
+      const out = runPublished("create", r.roundId, ["--calendar", PLAN_FILE]);
+      console.log(`  create_round ${r.roundId} via scripts/resolve-round.mjs: ${out.ok ? "ok" : "FAILED"}`);
+      if (!out.ok) throw new Error(`published create_round failed:\n${out.output}`);
+      continue;
+    }
     await send([ix(
       [meta(authority.publicKey, true, true), meta(config, false, true), meta(roundPda(r.roundId), false, true),
         meta(SystemProgram.programId, false, false)],
@@ -428,6 +441,17 @@ async function txFacts(signature) {
   return { confirmed: false, cu: null };
 }
 
+/**
+ * Runs `scripts/resolve-round.mjs` — the script the README gives to anybody who wants to
+ * resolve a round themselves. Running it here is the proof that the page is not fiction.
+ */
+function runPublished(command, roundId, extra = []) {
+  const result = spawnSync("node", [join(REPO, "scripts/resolve-round.mjs"), command,
+    "--round", String(roundId), "--rpc", RPC, "--keypair", AUTHORITY_FILE, ...extra],
+    { encoding: "utf8" });
+  return { ok: result.status === 0, output: `${result.stdout ?? ""}${result.stderr ?? ""}` };
+}
+
 function verifyRound(roundId) {
   const result = spawnSync("node", [join(REPO, "scripts/verify-round.mjs"),
     "--round", String(roundId), "--rpc", RPC, "--calendar", PLAN_FILE, "--deep"],
@@ -436,6 +460,8 @@ function verifyRound(roundId) {
 }
 
 // ---- rows ---------------------------------------------------------------------------------------
+/** What the published script printed, so the run can show it instead of claiming it. */
+const publishedProof = [];
 const rows = [];
 const record = async (id, what, seen, extra = {}) => {
   const facts = await Promise.all(seen.signatures.map(txFacts));
@@ -506,10 +532,20 @@ const CANCEL_ID = 7;
 const toRead = yesterdayIds.filter((id) => id !== CANCEL_ID);
 // The first one alone, so its cost is visible on its own; the rest batched, as the resolver
 // does it. Both numbers matter: the single one for the budget, the batch for the window.
-await send([readingIx("set_reference", toRead[0])], [authority], "set_reference (single)");
+{
+  const out = runPublished("reference", toRead[0]);
+  console.log(`  set_reference ${toRead[0]} via scripts/resolve-round.mjs: ${out.ok ? "ok" : "FAILED"}`);
+  if (!out.ok) throw new Error(`published set_reference failed:\n${out.output}`);
+  publishedProof.push(out.output.trim());
+}
 await inBatches(toRead.slice(1), (id) => readingIx("set_reference", id), "set_reference");
 await waitFor(yesterday.outcomeTime + 1, "resolve");
-await send([readingIx("resolve", toRead[0])], [authority], "resolve (single)");
+{
+  const out = runPublished("resolve", toRead[0]);
+  console.log(`  resolve ${toRead[0]} via scripts/resolve-round.mjs: ${out.ok ? "ok" : "FAILED"}`);
+  if (!out.ok) throw new Error(`published resolve failed:\n${out.output}`);
+  publishedProof.push(out.output.trim());
+}
 await inBatches(toRead.slice(1), (id) => readingIx("resolve", id), "resolve");
 console.log(`  ${toRead.length} calls referenced and resolved, call ${CANCEL_ID} left unread on purpose`);
 
@@ -657,6 +693,9 @@ for (const row of rows) {
   for (const s of row.signatures) console.log(`     sig ${s}`);
 }
 // ---- what the program searches for, and what that costs -------------------------------------
+console.log("\n=== scripts/resolve-round.mjs, run against this validator ===");
+for (const block of publishedProof) console.log(block.split("\n").map((l) => `  ${l}`).join("\n"));
+
 console.log("\n=== PDA derivation: where the program searches instead of computing ===");
 console.log("Only `commit` searches (lib.rs: entry `bump`, player `bump`). Every other account,");
 console.log("and every instruction the resolver sends, carries a stored bump — constant cost.");
