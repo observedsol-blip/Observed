@@ -20,6 +20,53 @@
 - **Priority-Fee-Schätzung ist beeinflussbar.** Der Resolver liest die jüngsten Fees der betroffenen Konten; wer dorthin schreibt, kann sie anheben. Gedeckelt auf 1 000 000 µLamports pro Transaktion, Schaden also auf wenige Lamports begrenzt.
 - **Keine Rotation der Autoritäten.** `calendar_authority` und `pause_authority` lassen sich nicht umsetzen; ein Schlüsselverlust ist nur über ein Programm-Upgrade heilbar.
 
+**npm audit, aufgeteilt (23.09.2026, `app/`):** 23 Befunde — 14 moderate, 9 high. Dahinter
+stecken **vier** echte Advisories; die übrigen 19 Pakete sind nur betroffen, weil sie auf eines
+davon zeigen. Nichts ist aktualisiert worden; das hier ist der Befund, keine Maßnahme.
+
+| Advisory | Paket | wo es sitzt | landet im APK? |
+|---|---|---|---|
+| ICNS/JXL/HEIF-Parser, Endlosschleife (high, ×2) | `image-size` | nur unter `metro` | **nein** |
+| `sourceMappingURL`: Pfad-Traversal und XSS (high ×2, moderate ×2) | `postcss` | nur unter `@expo/metro-config` | **nein** |
+| Filter sind O(Tiefe²), DoS (moderate) | `stream-json` | nur `jayson/lib/utils.js` — die **Server**-Hälfte | **nein** |
+| fehlende Puffergrenze in v3/v5/v6, wenn `buf` übergeben wird (moderate) | `uuid` | `jayson/node_modules/uuid@8.3.2` und `xcode` | **ja**, über `jayson` |
+
+**Nur Build und Werkzeug, 13 Pakete:** `@expo/cli`, `@expo/config`, `@expo/config-plugins`,
+`@expo/metro`, `@expo/metro-config`, `@expo/prebuild-config`, `metro`, `metro-config`,
+`metro-transform-worker`, `postcss`, `image-size`, `xcode`, `stream-json`. Sie laufen auf dem
+Rechner, der baut, und sind in keinem Bundle. Das schließt `stream-json` ein — siehe unten.
+
+**Im APK, 10 Pakete:** `expo`, `expo-constants`, `expo-asset`, `expo-notifications`,
+`expo-updates`, `expo-manifests`, `@solana/web3.js`, `@solana-mobile/mobile-wallet-adapter-protocol-web3js`,
+`jayson`, `uuid`. **Von diesen zehn hat keines ein eigenes Advisory.** Die sechs Expo-Pakete
+sind ausschließlich über `@expo/config` → `@expo/config-plugins` → `xcode` → `uuid` markiert,
+also über eine Kette, die nur beim Bauen läuft. `@solana/web3.js` und das Wallet-Adapter-Paket
+sind über `jayson` markiert.
+
+**Der eine Pfad, der wirklich mitfliegt — und was daran gemessen ist:**
+`app/node_modules/@solana/web3.js/lib/index.native.js` importiert genau
+`jayson/lib/client/browser`. Von dort aus sind — durch die `require`-Kette verfolgt — exakt zwei
+Dateien erreichbar (`client/browser/index.js`, `generateRequest.js`) und genau ein fremdes
+Paket: `uuid`. **`stream-json` ist von dort aus nicht erreichbar**, es hängt allein an
+`jayson/lib/utils.js`, das der Browser-Client nicht anfasst.
+
+`uuid` liegt also wirklich im Bundle. Benutzt wird es an allen drei Stellen als `require('uuid').v4`
+und **ohne Argument** aufgerufen. Das Advisory betrifft `v3`, `v5` und `v6`, und auch dort nur,
+wenn ein `buf` übergeben wird. **Der verwundbare Pfad wird nicht benutzt.**
+
+**Ist ein Update ohne Bruch möglich?** Nein, in beide Richtungen nicht:
+- Für `uuid` meldet npm `fixAvailable: false`. `jayson@4.3.0` verlangt `uuid: ^8.3.2`, die
+  behobene Fassung ist `≥ 11.1.1` — das geht nur, wenn `jayson` seine Abhängigkeit ändert oder
+  `@solana/web3.js` `jayson` ablegt. Ein `override` wäre möglich, hieße aber, eine
+  Hauptversion unter eine Bibliothek zu schieben, die nicht darauf getestet ist, für eine
+  Funktion, die wir nicht aufrufen.
+- Für alles Expo-seitige lautet der Vorschlag `expo@57.0.24`, also **zwei Hauptversionen** über
+  dem aktuellen `expo@54.0.37`, `isSemVerMajor: true`. Nicht drei Tage vor einem Tester-Build.
+
+**Empfehlung:** nichts vor dem 9. Oktober anfassen. Danach der Reihe nach prüfen, ob
+`@solana/web3.js` inzwischen ohne `jayson` auskommt — das würde `uuid` und `stream-json` in
+einem Zug aus dem Baum nehmen.
+
 **Threat model:** docs/01-PROGRAM.md §5b. **Tests:** `anchor test` with fixtures in `tests/fixtures/` (account snapshots, no keys).
 
 **Report a vulnerability:** _contact_ — please do not open a public issue for exploitable findings.
