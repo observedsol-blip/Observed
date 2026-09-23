@@ -14,6 +14,7 @@ import SampleBanner from './src/components/SampleBanner';
 import FirstStart from './src/screens/FirstStart';
 import { useObservedFonts } from './src/fonts';
 import { color } from './src/tokens';
+import { copy } from './src/copy.ts';
 import { mockResult, mockToday, type DesignState, type ResultDesignState } from './src/mockViews';
 import { recordView } from './src/core/record.ts';
 import { useDay, type LiveConfig } from './src/useDay';
@@ -108,6 +109,9 @@ export default function App() {
 
   const todayView = LIVE && live.day ? live.day.today : mockToday(todayState);
   const resultView = LIVE ? (live.day?.result ?? null) : mockResult(resultState);
+  // The same call Today shows above tonight's question, for the evening where it is not on
+  // chain yet. One state, two screens (owner, 23.09.2026).
+  const pendingView = LIVE ? (live.day?.pending ?? null) : null;
 
   // The intro is the whole screen: no header, no tabs, nothing to press but `Continue`.
   if (showIntro) {
@@ -161,6 +165,8 @@ export default function App() {
             ) : (
               <Result
                 view={resultView}
+                pending={pendingView}
+                waiting={pendingView ? copy.revealsRideAlong : null}
                 memoryQuestion={ASK_MEMORY}
                 onRemember={LIVE ? live.remember : undefined}
               />

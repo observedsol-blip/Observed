@@ -669,7 +669,10 @@ test("the evening screen carries yesterday, and does not call it revealed", asyn
   assert.equal(day.today.pending?.roundId, yesterday.roundId);
   assert.equal(day.today.pending?.sentence, "funding flipped");
   assert.equal(day.openReveals, 1, "and it is still an OPEN reveal, not a done one");
-  assert.equal(day.result, null, "Result stays empty until the entry says revealed");
+  assert.equal(day.result, null, "the chain has nothing revealed for this call");
+  // One state, two screens: Result draws the SAME view Today does, and says which state it is
+  // in. Until 23.09.2026 it said "Nothing revealed yet." while Today showed the outcome.
+  assert.equal(day.pending?.roundId, yesterday.roundId, "and Result is handed the same call");
 });
 
 test("reveal only sends the reveal and nothing else", async () => {

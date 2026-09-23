@@ -51,6 +51,11 @@ export type DayState = {
   result: ResultView | null;
   /** What the evening transaction would reveal right now. */
   openReveals: number;
+  /**
+   * Yesterday's call, ready to be faced but NOT yet on chain. It sits here and not only inside
+   * the open phase because Result shows it too: one state, two screens (owner, 23.09.2026).
+   */
+  pending: ResultView | null;
   /** null while no wallet is connected. */
   wallet: PublicKey | null;
   sgtMint: PublicKey | null;
@@ -178,10 +183,10 @@ export class Session {
     await this.restore();
     const now = this.deps.now();
     if (!this.walletKey) {
-      return { today: this.emptyToday(now), result: null, openReveals: 0, wallet: null, sgtMint: null, blocked: "no-wallet" };
+      return { today: this.emptyToday(now), result: null, openReveals: 0, pending: null, wallet: null, sgtMint: null, blocked: "no-wallet" };
     }
     if (!this.sgtMint) {
-      return { today: this.emptyToday(now), result: null, openReveals: 0, wallet: this.walletKey, sgtMint: null, blocked: "no-sgt" };
+      return { today: this.emptyToday(now), result: null, openReveals: 0, pending: null, wallet: this.walletKey, sgtMint: null, blocked: "no-sgt" };
     }
 
     const openCalls = this.deps.calendar.filter(
@@ -225,6 +230,7 @@ export class Session {
       }),
       result: await this.latestResult(rounds, entries, records),
       openReveals: revealables.length,
+      pending: this.pendingReveal(revealables, rounds),
       wallet: this.walletKey,
       sgtMint: this.sgtMint,
       blocked: null,
